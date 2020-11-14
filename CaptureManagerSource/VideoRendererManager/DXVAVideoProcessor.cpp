@@ -154,10 +154,11 @@ namespace CaptureManager
 				}
 
 				DXVAVideoProcessor::DXVAVideoProcessor():
-					mSubStreamCount(0),
-					mAverageTimePerFrame(170000),
-					mVideoRenderTargetFormat(D3DFMT_X8R8G8B8),
-					mBackgroundColor(D3DCOLOR_XRGB(0x10, 0x10, 0x10))
+					mSubStreamCount(0)
+					, mAverageTimePerFrame(170000)
+					, mVideoRenderTargetFormat(D3DFMT_X8R8G8B8)
+					, mBackgroundColor(D3DCOLOR_XRGB(0x10, 0x10, 0x10))
+					, mOneStreamOnly(FALSE)
 				{
 				}
 
@@ -1975,7 +1976,12 @@ namespace CaptureManager
 
 					if (FAILED(lresult) || formats == nullptr)
 					{
-						return FALSE;
+						mOneStreamOnly = TRUE;
+
+						if (mMainVideoDesc.Format == pDesc->Format)
+							return TRUE;
+
+						return pDesc->Format == (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
 					}
 
 					for (i = 0; i < count; i++)
@@ -2407,10 +2413,30 @@ namespace CaptureManager
 
 							samples[lStreamIndex].SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
 
+							CComPtrCustom<IDirect3DSurface9> lSurface;
+
+							lSurface = mBackSurface;
+
+							if (mOneStreamOnly != FALSE && m_InputStreams.size() > 0)
+							{
+								CComPtrCustom<IMFMediaBuffer> lBuffer;
+
+								m_InputStreams[0].mSample->GetBufferByIndex(0, &lBuffer);
+
+								lSurface.Release();
+
+								// Get the surface from the buffer.
+								LOG_INVOKE_MF_FUNCTION(MFGetService,
+									lBuffer, MR_BUFFER_SERVICE, IID_PPV_ARGS(&lSurface));
+								if (FAILED(lresult))
+								{
+									break;
+								}
+							}
 							
 							D3DSURFACE_DESC lDesc1;
 
-							mBackSurface->GetDesc(&lDesc1);
+							lSurface->GetDesc(&lDesc1);
 
 							RECT lSubStreamSrcRect;
 
@@ -2457,7 +2483,7 @@ namespace CaptureManager
 
 
 
-							samples[lStreamIndex].SrcSurface = mBackSurface;
+							samples[lStreamIndex].SrcSurface = lSurface;
 
 							// DXVA2_VideoProcess_SubRects
 							samples[lStreamIndex].SrcRect = lSubStreamSrcRect;
@@ -2472,7 +2498,7 @@ namespace CaptureManager
 							++lStreamIndex;
 						}
 
-						
+						if (mOneStreamOnly == FALSE && m_InputStreams.size() > 0)
 						for (auto& lIndexID : m_dwZOrders)						
 						{
 							auto lIter = m_InputStreams.find(lIndexID);

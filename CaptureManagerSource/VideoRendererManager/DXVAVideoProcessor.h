@@ -40,6 +40,8 @@ namespace CaptureManager
 
 					std::list<DWORD> m_dwZOrders;
 
+					BOOL mOneStreamOnly;
+
 					GUID mProcessorGUID;
 
 					DXVA2_VideoDesc mMainVideoDesc;

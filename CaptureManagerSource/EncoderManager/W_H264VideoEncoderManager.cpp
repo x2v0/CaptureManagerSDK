@@ -43,7 +43,7 @@ namespace CaptureManager
 		namespace Encoder
 		{
 
-			static const UINT32 gMaxBitRate(1 << 18);
+			static const UINT32 gMaxBitRate(1 << 25);
 
 			static const UINT32 gMinBitRate(1 << 16);
 			

@@ -38,6 +38,20 @@ SOFTWARE.
 #include <DXGI1_2.h>
 #include <D3d11.h>
 
+enum {
+	VENDOR_NVIDIA = 0x000010de,
+	VENDOR_INTEL = 0x00008086,   // Haha!
+	VENDOR_AMD = 0x00001002,
+	VENDOR_ARM = 0x000013B5,  // Mali
+	VENDOR_QUALCOMM = 0x00005143,
+	VENDOR_IMGTEC = 0x00001010,  // PowerVR
+};
+
+#ifndef AMD_BUG_FIX
+#define AMD_BUG_FIX true
+#endif // !AMD_BUG_FIX
+
+
 namespace CaptureManager
 {
 	namespace Sinks
@@ -47,7 +61,7 @@ namespace CaptureManager
 			namespace Mixer
 			{
 				using namespace CaptureManager::Core;
-				
+
 				GUID const* const g_pVideoFormats[] =
 				{
 					&MFVideoFormat_NV12,
@@ -75,7 +89,7 @@ namespace CaptureManager
 				const Direct3D11VideoProcessor::FormatEntry Direct3D11VideoProcessor::mDXGIFormatMapping[] =
 				{
 					{ MFVideoFormat_RGB32, DXGI_FORMAT_B8G8R8X8_UNORM },
-					{ MFVideoFormat_ARGB32, DXGI_FORMAT_B8G8R8A8_UNORM },					
+					{ MFVideoFormat_ARGB32, DXGI_FORMAT_B8G8R8A8_UNORM },
 					{ MFVideoFormat_ABGR32, DXGI_FORMAT_R8G8B8A8_UNORM },
 					{ MFVideoFormat_AYUV, DXGI_FORMAT_AYUV },
 					{ MFVideoFormat_YUY2, DXGI_FORMAT_YUY2 },
@@ -91,8 +105,8 @@ namespace CaptureManager
 					{ MFVideoFormat_420O, DXGI_FORMAT_420_OPAQUE }
 				};
 
-				
-				
+
+
 				HRESULT Direct3D11VideoProcessor::createProcessor(
 					IMFTransform** aPtrPtrTrsnaform,
 					DWORD aMaxInputStreamCount,
@@ -126,7 +140,7 @@ namespace CaptureManager
 
 							lProcessor->mInputStreams.push_back(lStream);
 						}
-						
+
 						DWORD lInputMin = 0;
 
 						DWORD lInputMax = 0;
@@ -220,7 +234,7 @@ namespace CaptureManager
 					return lresult;
 				}
 
-				Direct3D11VideoProcessor::Direct3D11VideoProcessor():
+				Direct3D11VideoProcessor::Direct3D11VideoProcessor() :
 					mIsFlipEnabled(false)
 				{
 					mBackgroundColor.RGBA.A = 1.0F;
@@ -573,7 +587,7 @@ namespace CaptureManager
 						lcommentNode.set_value(L"XML Document of render stream filters");
 
 						auto lRootXMLElement = lxmlDoc.append_child(L"Filters");
-																
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_BRIGHTNESS)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -590,7 +604,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_CONTRAST)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -607,7 +621,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_HUE)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -624,7 +638,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_SATURATION)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -641,7 +655,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_NOISE_REDUCTION)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -658,7 +672,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						if (lCAPS.FilterCaps & D3D11_VIDEO_PROCESSOR_FILTER_CAPS_EDGE_ENHANCEMENT)
 						{
 							auto lFilterXMLElement = lRootXMLElement.append_child(L"Filter");
@@ -675,15 +689,15 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFilterXMLElement);
 							}
 						}
-						
+
 						std::wstringstream lwstringstream;
 
 						lxmlDoc.print(lwstringstream);
 
 						std::wstring lXMLDocumentString = lwstringstream.str();
-						
+
 						*aPtrPtrXMLstring = SysAllocString(lXMLDocumentString.c_str());
-												
+
 						lresult = S_OK;
 
 					} while (false);
@@ -704,7 +718,7 @@ namespace CaptureManager
 						auto lIter = m_InputStreams.find(aInputStreamID);
 
 						LOG_CHECK_STATE_DESCR(lIter == m_InputStreams.end(), MF_E_INVALIDSTREAMNUMBER);
-						
+
 						LOG_CHECK_PTR_MEMORY(mVideoProcessorEnum);
 
 						LOG_CHECK_PTR_MEMORY(mVideoProcessor);
@@ -728,9 +742,9 @@ namespace CaptureManager
 						LOG_INVOKE_QUERY_INTERFACE_METHOD(lDeviceContext, &lVideoContext);
 
 						LOG_CHECK_PTR_MEMORY(lVideoContext);
-						
+
 						D3D11_VIDEO_PROCESSOR_FILTER lFilter = (D3D11_VIDEO_PROCESSOR_FILTER)aParametrIndex;
-						
+
 						lVideoContext->VideoProcessorSetStreamFilter(
 							mVideoProcessor,
 							aInputStreamID,
@@ -776,9 +790,9 @@ namespace CaptureManager
 
 						{
 							auto lFeatureXMLElement = lRootXMLElement.append_child(L"Feature");
-							
+
 							lFeatureXMLElement.append_attribute(L"Title").set_value(L"Background Color");
-							
+
 							auto lhr = fillColorFeatureNode(
 								lFeatureXMLElement,
 								0,
@@ -789,7 +803,7 @@ namespace CaptureManager
 								lRootXMLElement.remove_child(lFeatureXMLElement);
 							}
 						}
-						
+
 						std::wstringstream lwstringstream;
 
 						lxmlDoc.print(lwstringstream);
@@ -893,7 +907,7 @@ namespace CaptureManager
 						{
 							aPtrInputIDs[i] = m_dwInputIDs[i];
 						}
-						
+
 						auto lMaxOutputIDArraySize = m_dwOutputIDs.size();
 
 						if (lMaxOutputIDArraySize > aOutputIDArraySize)
@@ -903,7 +917,7 @@ namespace CaptureManager
 						{
 							aPtrOutputIDs[i] = m_dwOutputIDs[i];
 						}
-						
+
 						lresult = S_OK;
 
 					} while (false);
@@ -1104,7 +1118,7 @@ namespace CaptureManager
 
 						LOG_CHECK_PTR_MEMORY(mDeviceManager);
 
-						
+
 
 						GUID lGUID;
 
@@ -1147,12 +1161,41 @@ namespace CaptureManager
 
 						LOG_CHECK_STATE_DESCR(lDxgiFormat == DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, MF_E_INVALIDMEDIATYPE);
 
+						if (lDxgiFormat == DXGI_FORMAT_YUY2 || lDxgiFormat == DXGI_FORMAT_AYUV && AMD_BUG_FIX)
+						{
+							CComPtrCustom<ID3D11Device> lDevice;
 
+							LOG_INVOKE_FUNCTION(getVideoProcessorService,
+								mDeviceManager,
+								&lDevice);
+
+							LOG_CHECK_PTR_MEMORY(lDevice);
+
+							CComPtrCustom<IDXGIDevice> lIDXGIDevice;
+
+							LOG_INVOKE_QUERY_INTERFACE_METHOD(lDevice, &lIDXGIDevice);
+
+							LOG_CHECK_PTR_MEMORY(lIDXGIDevice);
+
+							CComPtrCustom<IDXGIAdapter> lIDXGIAdapter;
+
+							LOG_INVOKE_POINTER_METHOD(lIDXGIDevice, GetAdapter, &lIDXGIAdapter);
+
+							LOG_CHECK_PTR_MEMORY(lIDXGIAdapter);
+
+							DXGI_ADAPTER_DESC desc;
+
+							LOG_INVOKE_POINTER_METHOD(lIDXGIAdapter, GetDesc, &desc);
+
+							LOG_CHECK_STATE_DESCR(desc.VendorId == VENDOR_AMD, MF_E_INVALIDMEDIATYPE);
+						}
+						
 						CComPtrCustom<ID3D11VideoDevice> lVideoDevice;
 
 						LOG_INVOKE_FUNCTION(getVideoProcessorService,
 							mDeviceManager,
 							&lVideoDevice);
+
 
 
 
@@ -1173,7 +1216,7 @@ namespace CaptureManager
 							MF_MT_FRAME_RATE,
 							(UINT32*)&lInputframeRate.Numerator,
 							(UINT32*)&lInputframeRate.Denominator);
-						
+
 
 						UINT32 lOutputWidth = 0;
 
@@ -1192,8 +1235,8 @@ namespace CaptureManager
 							MF_MT_FRAME_RATE,
 							(UINT32*)&lOutputframeRate.Numerator,
 							(UINT32*)&lOutputframeRate.Denominator);
-						
-						
+
+
 						//Check if the format is supported
 
 						D3D11_VIDEO_PROCESSOR_CONTENT_DESC ContentDesc;
@@ -1235,13 +1278,13 @@ namespace CaptureManager
 						{
 							lresult = MF_E_UNSUPPORTED_D3D_TYPE;
 							break;
-						}										
-						
+						}
+
 						if (aFlags != MFT_SET_TYPE_TEST_ONLY)
 						{
 							auto lIter = m_InputStreams.find(aInputStreamID);
 
-							(*lIter).second.mInputMediaType = aPtrType;														
+							(*lIter).second.mInputMediaType = aPtrType;
 						}
 
 					} while (false);
@@ -1286,7 +1329,7 @@ namespace CaptureManager
 								break;
 							}
 						}
-												
+
 						CComPtrCustom<ID3D11VideoDevice> lVideoDevice;
 
 						LOG_INVOKE_FUNCTION(getVideoProcessorService,
@@ -1294,7 +1337,7 @@ namespace CaptureManager
 							&lVideoDevice);
 
 						LOG_CHECK_PTR_MEMORY(lVideoDevice);
-						
+
 						UINT32 lWidth = 0;
 
 						UINT32 lHeight = 0;
@@ -1316,14 +1359,14 @@ namespace CaptureManager
 							MF_MT_FRAME_RATE,
 							(UINT32*)&lframeRate.Numerator,
 							(UINT32*)&lframeRate.Denominator);
-						
+
 
 						LOG_INVOKE_MF_FUNCTION(MFFrameRateToAverageTimePerFrame,
 							lframeRate.Numerator,
 							lframeRate.Denominator,
 							&mAverageTimePerFrame);
 
-												
+
 						D3D11_VIDEO_PROCESSOR_CONTENT_DESC ContentDesc;
 						ZeroMemory(&ContentDesc, sizeof(ContentDesc));
 						ContentDesc.InputFrameFormat = D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE;// D3D11_VIDEO_FRAME_FORMAT_INTERLACED_TOP_FIELD_FIRST;
@@ -1340,7 +1383,7 @@ namespace CaptureManager
 							&lVideoProcessorEnum);
 
 						LOG_CHECK_PTR_MEMORY(lVideoProcessorEnum);
-						
+
 						UINT uiFlags;
 
 						LOG_INVOKE_POINTER_METHOD(lVideoProcessorEnum, CheckVideoProcessorFormat,
@@ -1353,7 +1396,7 @@ namespace CaptureManager
 
 							break;
 						}
-												
+
 						if (aFlags != MFT_SET_TYPE_TEST_ONLY)
 						{
 							mVideoRenderTargetFormat = lTargetFormat;
@@ -1493,7 +1536,7 @@ namespace CaptureManager
 
 							if (FAILED(lresult))
 								break;
-																					
+
 							lresult = S_OK;
 						}
 						else if (aMessage == MFT_MESSAGE_NOTIFY_END_STREAMING)
@@ -1552,7 +1595,7 @@ namespace CaptureManager
 
 						LOG_CHECK_PTR_MEMORY(aPtrOutputSamples);
 
-						LOG_CHECK_PTR_MEMORY(aPtrOutputSamples->pSample);           
+						LOG_CHECK_PTR_MEMORY(aPtrOutputSamples->pSample);
 
 						LOG_CHECK_PTR_MEMORY(aPtrStatus);
 
@@ -1561,14 +1604,14 @@ namespace CaptureManager
 						LOG_CHECK_STATE_DESCR(m_InputStreams.empty(), MF_E_TRANSFORM_NEED_MORE_INPUT);
 
 						lresult = blit(aPtrOutputSamples->pSample, mAverageTimePerFrame, mAverageTimePerFrame + mAverageTimePerFrame);
-											
+
 						*aPtrStatus = 0;
 
 					} while (false);
 
 					return lresult;
 				}
-				
+
 				HRESULT Direct3D11VideoProcessor::blit(
 					IMFSample* aPtrSample,
 					REFERENCE_TIME aTargetFrame,
@@ -1583,7 +1626,7 @@ namespace CaptureManager
 						LOG_CHECK_PTR_MEMORY(mVideoProcessor);
 
 						DWORD lBufferCount(0);
-												
+
 						LOG_INVOKE_MF_METHOD(GetBufferCount, aPtrSample, &lBufferCount);
 
 						CComPtrCustom<ID3D11Texture2D> lDestSurface;
@@ -1625,9 +1668,9 @@ namespace CaptureManager
 								LOG_INVOKE_MF_METHOD(GetUnknown, aPtrSample, CM_RenderTexture, IID_PPV_ARGS(&lUnkRenderTexture));
 
 								LOG_INVOKE_QUERY_INTERFACE_METHOD(lUnkRenderTexture, &lDestSurface);
-							}							
+							}
 						}
-												
+
 						LOG_CHECK_PTR_MEMORY(lDestSurface);
 
 						CComPtrCustom<ID3D11Device> lDevice;
@@ -1635,7 +1678,7 @@ namespace CaptureManager
 						LOG_INVOKE_FUNCTION(getVideoProcessorService,
 							mDeviceManager,
 							&lDevice);
-						
+
 						LOG_CHECK_PTR_MEMORY(lDevice);
 
 						CComPtrCustom<ID3D11VideoDevice> lVideoDevice;
@@ -1643,7 +1686,7 @@ namespace CaptureManager
 						LOG_INVOKE_FUNCTION(getVideoProcessorService,
 							mDeviceManager,
 							&lVideoDevice);
-						
+
 						LOG_CHECK_PTR_MEMORY(lVideoDevice);
 
 						CComPtrCustom<ID3D11DeviceContext> lDeviceContext;
@@ -1674,9 +1717,9 @@ namespace CaptureManager
 						OutputViewDesc.Texture2D.MipSlice = 0;
 						OutputViewDesc.Texture2DArray.MipSlice = 0;
 						OutputViewDesc.Texture2DArray.FirstArraySlice = 0;
-						
+
 						LOG_INVOKE_POINTER_METHOD(lVideoDevice, CreateVideoProcessorOutputView,
-							lDestSurface, 
+							lDestSurface,
 							mVideoProcessorEnum, &OutputViewDesc, &lOutputView);
 
 
@@ -1738,9 +1781,9 @@ namespace CaptureManager
 						{
 
 							if (lPropDest > lNativeClientProp)
-							{								
-								UINT lidealHeight = (UINT)((float)((float)lNativeClientWidth * (float)lDestDesc.Height * (float)lDestDesc.Height) / (float)((float)lNativeClientHeight * (float)lDestDesc.Width));
-								
+							{
+								UINT lidealHeight = (UINT)(((float)lNativeClientWidth * (float)lDestDesc.Height * (float)lDestDesc.Height) / (float)((float)lNativeClientHeight * (float)lDestDesc.Width));
+
 								UINT lborder = (lDestDesc.Height - lidealHeight) >> 1;
 
 								lOutputRect.left = 0;
@@ -1753,8 +1796,8 @@ namespace CaptureManager
 							}
 							else
 							{
-								UINT lidealWidth = (UINT)((float)((float)lDestDesc.Width * (float)lDestDesc.Width * (float)lNativeClientHeight) / (float)((float)lDestDesc.Height * (float)lNativeClientWidth));
-								
+								UINT lidealWidth = (UINT)(((float)lDestDesc.Width * (float)lDestDesc.Width * (float)lNativeClientHeight) / (float)((float)lDestDesc.Height * (float)lNativeClientWidth));
+
 								UINT lborder = (lDestDesc.Width - lidealWidth) >> 1;
 
 								lOutputRect.left = lborder;
@@ -1766,7 +1809,7 @@ namespace CaptureManager
 								lOutputRect.bottom = lDestDesc.Height;
 							}
 						}
-						
+
 
 						// Stream color space
 						D3D11_VIDEO_PROCESSOR_COLOR_SPACE colorSpace = {};
@@ -1775,9 +1818,9 @@ namespace CaptureManager
 
 						// Output color space
 						lVideoContext->VideoProcessorSetOutputColorSpace(mVideoProcessor, &colorSpace);
-						
+
 						lVideoContext->VideoProcessorSetOutputBackgroundColor(mVideoProcessor, FALSE, &mBackgroundColor);
-						
+
 						UINT lStreamIndex = 0;
 
 						float lPropStretchDest = (float)(lOutputRect.right - lOutputRect.left) / (float)(lOutputRect.bottom - lOutputRect.top);
@@ -1814,20 +1857,20 @@ namespace CaptureManager
 							CComPtrCustom<IMFMediaBuffer> lBuffer;
 
 							LOG_INVOKE_MF_METHOD(GetBufferByIndex, lItem.mSample, 0, &lBuffer);
-							
+
 							CComPtrCustom<ID3D11Texture2D> lSurface;
 
 							// Get the surface from the buffer.
-							
+
 							CComPtrCustom<IMFDXGIBuffer> lIMFDXGIBuffer;
 
 							LOG_INVOKE_QUERY_INTERFACE_METHOD(lBuffer, &lIMFDXGIBuffer);
-							
+
 							LOG_CHECK_PTR_MEMORY(lIMFDXGIBuffer);
-							
+
 							LOG_INVOKE_DXGI_METHOD(GetResource, lIMFDXGIBuffer,
 								IID_PPV_ARGS(&lSurface));
-							
+
 							LOG_CHECK_PTR_MEMORY(lSurface);
 
 
@@ -1840,7 +1883,7 @@ namespace CaptureManager
 
 								lSurface = mTempFlippedImage;
 							}
-							
+
 
 							D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC InputLeftViewDesc;
 							ZeroMemory(&InputLeftViewDesc, sizeof(InputLeftViewDesc));
@@ -1878,7 +1921,7 @@ namespace CaptureManager
 
 							lSurface->GetDesc(&lInputDesc);
 
-							
+
 							RECT lSubStreamSrcRect;
 
 							lSubStreamSrcRect.left = (LONG)(lItem.mSrcVideoNormalizedRect.left * (float)lInputDesc.Width);
@@ -1890,22 +1933,22 @@ namespace CaptureManager
 							lSubStreamSrcRect.bottom = (LONG)(lItem.mSrcVideoNormalizedRect.bottom * (float)lInputDesc.Height);
 
 
-							
+
 							auto lScaledWidthDest = (float)(lOutputRect.right - lOutputRect.left) *(lVideoNormalizedRect.right - lVideoNormalizedRect.left);
 
 							auto lScaledHeightDest = (float)(lOutputRect.bottom - lOutputRect.top) *(lVideoNormalizedRect.bottom - lVideoNormalizedRect.top);
 
 
-							auto lLeftOffset = (float)lOutputRect.left +(float)(lOutputRect.right - lOutputRect.left) * lVideoNormalizedRect.left;
+							auto lLeftOffset = (float)lOutputRect.left + (float)(lOutputRect.right - lOutputRect.left) * lVideoNormalizedRect.left;
 
-							auto lTopOffset = (float)lOutputRect.top +(float)(lOutputRect.bottom - lOutputRect.top) * lVideoNormalizedRect.top;
+							auto lTopOffset = (float)lOutputRect.top + (float)(lOutputRect.bottom - lOutputRect.top) * lVideoNormalizedRect.top;
 
 
 
 							RECT lSubStreamDestRect;
 
 							float lPropScaled = lPropDest;
-							
+
 							if (lScaledHeightDest > 0.0f)
 								lPropScaled = lScaledWidthDest / lScaledHeightDest;
 
@@ -2003,7 +2046,7 @@ namespace CaptureManager
 								lCurrentStreamIndex,
 								TRUE,
 								&lSubStreamDestRect
-								);
+							);
 
 						}
 
@@ -2016,13 +2059,13 @@ namespace CaptureManager
 								mInputStreams.size(),
 								mInputStreams.data());
 						}
-						
+
 						for (auto& lInputStream : mInputStreams)
 						{
 							if (lInputStream.pInputSurface != nullptr)
 								lInputStream.pInputSurface->Release();
 						}
-						
+
 					} while (false);
 
 					return lresult;
@@ -2034,8 +2077,16 @@ namespace CaptureManager
 
 					do
 					{
+
+						if (mVideoProcessor)
+						{
+							lresult = S_OK;
+
+							break;
+						}
+
 						LOG_CHECK_PTR_MEMORY(mOutputMediaType);
-						
+
 						GUID lGUID;
 
 						LOG_INVOKE_MF_METHOD(GetGUID, mOutputMediaType,
@@ -2043,7 +2094,7 @@ namespace CaptureManager
 							&lGUID);
 
 						LOG_CHECK_STATE_DESCR(lGUID != MFMediaType_Video, MF_E_INVALIDMEDIATYPE);
-						
+
 						LOG_INVOKE_MF_METHOD(GetGUID, mOutputMediaType,
 							MF_MT_SUBTYPE,
 							&lGUID);
@@ -2132,11 +2183,11 @@ namespace CaptureManager
 
 						mVideoProcessor.Release();
 
-						LOG_INVOKE_POINTER_METHOD(lVideoDevice,CreateVideoProcessor,
+						LOG_INVOKE_POINTER_METHOD(lVideoDevice, CreateVideoProcessor,
 							mVideoProcessorEnum,
 							0,
 							&mVideoProcessor);
-			
+
 						// Main video stream
 
 						//auto lIter = m_InputStreams.find(0);
@@ -2375,7 +2426,7 @@ namespace CaptureManager
 						HRESULT hr2 = pDeviceManager->GetVideoService(
 							hDevice,
 							IID_PPV_ARGS(aPtrPtrID3D11VideoDevice)
-							);
+						);
 
 						// Close the device handle.
 						hr = pDeviceManager->CloseDeviceHandle(hDevice);
@@ -2410,7 +2461,7 @@ namespace CaptureManager
 						HRESULT hr2 = pDeviceManager->GetVideoService(
 							hDevice,
 							IID_PPV_ARGS(aPtrPtrID3D11VideoDevice)
-							);
+						);
 
 						// Close the device handle.
 						hr = pDeviceManager->CloseDeviceHandle(hDevice);
@@ -2481,7 +2532,7 @@ namespace CaptureManager
 							aFilter,
 							&lEnabled,
 							&lLevel);
-						
+
 						aFilterNode.append_attribute(L"Index").set_value(aFilter);
 
 						aFilterNode.append_attribute(L"Min").set_value(lFilterRange.Minimum);
@@ -2515,7 +2566,7 @@ namespace CaptureManager
 					do
 					{
 						auto lColorXMLElement = aFeatureNode.append_child(L"Color");
-												
+
 						{
 							auto lChannelXMLElement = lColorXMLElement.append_child(L"Channel");
 
@@ -2536,7 +2587,7 @@ namespace CaptureManager
 							auto lChannelXMLElement = lColorXMLElement.append_child(L"Channel");
 
 							lChannelXMLElement.append_attribute(L"Index").set_value(aStartIndex++);
-							
+
 							lChannelXMLElement.append_attribute(L"Title").set_value(L"Red");
 
 							lChannelXMLElement.append_attribute(L"Min").set_value(0);
@@ -2552,7 +2603,7 @@ namespace CaptureManager
 							auto lChannelXMLElement = lColorXMLElement.append_child(L"Channel");
 
 							lChannelXMLElement.append_attribute(L"Index").set_value(aStartIndex++);
-							
+
 							lChannelXMLElement.append_attribute(L"Title").set_value(L"Green");
 
 							lChannelXMLElement.append_attribute(L"Min").set_value(0);
@@ -2568,7 +2619,7 @@ namespace CaptureManager
 							auto lChannelXMLElement = lColorXMLElement.append_child(L"Channel");
 
 							lChannelXMLElement.append_attribute(L"Index").set_value(aStartIndex++);
-							
+
 							lChannelXMLElement.append_attribute(L"Title").set_value(L"Blue");
 
 							lChannelXMLElement.append_attribute(L"Min").set_value(0);
@@ -2581,12 +2632,12 @@ namespace CaptureManager
 						}
 
 						lresult = S_OK;
-						
+
 					} while (false);
 
 					return lresult;
 				}
-								
+
 				HRESULT Direct3D11VideoProcessor::initFlipSupport(ID3D11Texture2D* aPtrSourceTexture)
 				{
 					HRESULT lresult(E_FAIL);
@@ -2594,11 +2645,11 @@ namespace CaptureManager
 					do
 					{
 						LOG_CHECK_PTR_MEMORY(aPtrSourceTexture);
-						
+
 						D3D11_TEXTURE2D_DESC FullDesc;
 
 						aPtrSourceTexture->GetDesc(&FullDesc);
-												
+
 						CComPtrCustom<ID3D11Device> lDevice;
 
 						LOG_INVOKE_FUNCTION(getVideoProcessorService,
@@ -2606,10 +2657,10 @@ namespace CaptureManager
 							&lDevice);
 
 						LOG_CHECK_PTR_MEMORY(lDevice);
-												
+
 						LOG_INVOKE_POINTER_METHOD(lDevice, CreateTexture2D,
 							&FullDesc, NULL, &mTempFlippedImage);
-						
+
 						// VERTEX shader
 						UINT Size = ARRAYSIZE(g_VS);
 						lresult = lDevice->CreateVertexShader(g_VS, Size, nullptr, &mVertexShader);
@@ -2686,7 +2737,7 @@ namespace CaptureManager
 						mVertexes[5].Pos.x = 1;
 						mVertexes[5].Pos.y = 1;
 						mVertexes[5].Pos.z = 0;
-						
+
 
 						mVertexes[0].TexCoord.x = 0;
 						mVertexes[0].TexCoord.y = 0;
@@ -2710,8 +2761,8 @@ namespace CaptureManager
 					} while (false);
 
 					return lresult;
-				}				
-				
+				}
+
 				HRESULT Direct3D11VideoProcessor::flipTexture(ID3D11Texture2D* aPtrSourceTexture, ID3D11Texture2D* aPtrDestinationTexture)
 				{
 					HRESULT lresult(E_FAIL);
@@ -2814,7 +2865,7 @@ namespace CaptureManager
 						lDeviceContext->RSSetViewports(1, &VP);
 
 						lDeviceContext->Draw(NUMVERTICES * DirtyCount, 0);
-						
+
 					} while (false);
 
 					return lresult;
