@@ -261,6 +261,9 @@ copy "$(TargetPath)" "$(SolutionDir)$(ProjectName)SDK-$(Version_Major).$(Version
     <ProjectReference Include="..\AudioEndpointCapture\AudioEndpointCapture.vcxproj">
       <Project>{e7d71893-982a-4ddf-ac69-61b4378050da}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\AudioRendererManager\AudioRendererManager.vcxproj">
+      <Project>{f1684ee7-82ca-4a26-ad86-cc0d02431940}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\AvrtManager\AvrtManager.vcxproj">
       <Project>{3fecf0a1-a98c-473b-a553-94c8b0a91524}</Project>
     </ProjectReference>

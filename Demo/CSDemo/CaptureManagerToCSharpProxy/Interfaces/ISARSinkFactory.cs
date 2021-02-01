@@ -29,41 +29,9 @@ using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISinkControl
+    public interface ISARSinkFactory
     {
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IFileSinkFactory aSinkFactory);
-        
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IByteStreamSinkFactory aSinkFactory);       
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISampleGrabberCallSinkFactory aSinkFactory);
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out ISampleGrabberCallbackSinkFactory aSinkFactory);
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRSinkFactory aSinkFactory);      
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISARSinkFactory aSinkFactory);
-
-        bool createCompatibleEVRMultiSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
-
-        
-
+        bool createOutputNode(
+            out object aTopologyOutputNode);
     }
 }

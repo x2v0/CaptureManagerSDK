@@ -316,9 +316,9 @@ namespace CaptureManager
 					
 					LOG_CHECK_PTR_MEMORY(lMediaTypeHandler);
 
-					LOG_INVOKE_MF_METHOD(GetCurrentMediaType,
-						lMediaTypeHandler,
-						aPtrPtrDownStreamMediaType);
+					//LOG_INVOKE_MF_METHOD(GetCurrentMediaType,
+					//	lMediaTypeHandler,
+					//	aPtrPtrDownStreamMediaType);
 					
 					LOG_INVOKE_MF_METHOD(SetCurrentMediaType,
 						lMediaTypeHandler,

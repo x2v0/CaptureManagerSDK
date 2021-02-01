@@ -22,48 +22,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CaptureManagerToCSharpProxy.Interfaces
+namespace CaptureManagerToCSharpProxy
 {
-    public interface ISinkControl
+    class SARSinkFactory : ISARSinkFactory
     {
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IFileSinkFactory aSinkFactory);
-        
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IByteStreamSinkFactory aSinkFactory);       
+        private CaptureManagerLibrary.ISARSinkFactory mISARSinkFactory;
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISampleGrabberCallSinkFactory aSinkFactory);
+        public SARSinkFactory(object aIUnknown)
+        {
+            mISARSinkFactory = aIUnknown as CaptureManagerLibrary.ISARSinkFactory;
+        }
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out ISampleGrabberCallbackSinkFactory aSinkFactory);
+        public bool createOutputNode(out object aTopologyOutputNode)
+        {
+            bool lresult = false;
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRSinkFactory aSinkFactory);      
+            aTopologyOutputNode = null;
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
+            do
+            {
+                if (mISARSinkFactory == null)
+                    break;
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISARSinkFactory aSinkFactory);
 
-        bool createCompatibleEVRMultiSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
+                try
+                {
+                    object lArrayMediaNodes = new Object();
 
-        
+                    mISARSinkFactory.createOutputNode(
+                        out aTopologyOutputNode);
 
+                    if (aTopologyOutputNode == null)
+                        break;
+                    
+                    lresult = true;
+                }
+                catch (Exception exc)
+                {
+                    LogManager.getInstance().write(exc.Message);
+                }
+
+            } while (false);
+
+            return lresult;
+        }
     }
 }

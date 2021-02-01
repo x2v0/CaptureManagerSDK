@@ -310,6 +310,24 @@ namespace CaptureManager
 		HRESULT setAudioMixerRelativeVolume(
 			/* [in] */ IUnknown *aPtrAudioMixerNode,
 			/* [in] */ FLOAT aRelativeVolume);
+
+		HRESULT createSARSinkOutputNode(
+			CComPtrCustom<IUnknown>& aRefOutputNode);
+
+		HRESULT getSARChannelCount(
+			/* [in] */ IUnknown *aPtrSARNode,
+			/* [out] */ UINT32 *aPtrCount);
+
+		HRESULT getSARChannelVolume(
+			/* [in] */ IUnknown *aPtrSARNode,
+			/* [in] */ UINT32 aIndex,
+			/* [out] */ float *aPtrLevel);
+
+		HRESULT setSARChannelVolume(
+			/* [in] */ IUnknown *aPtrSARNode,
+			/* [in] */ UINT32 aIndex,
+			/* [out] */ float aLevel);
+
 		
 		
 	protected:

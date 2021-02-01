@@ -29,6 +29,7 @@ SOFTWARE.
 #include "../Common/ComPtrCustom.h"
 #include "../Common/ComMassivPtr.h"
 #include "../Common/Common.h"
+#include "../Common/GUIDs.h"
 #include "../CustomisedAudioResampler/CustomisedAudioResampler.h"
 
 
@@ -41,6 +42,171 @@ namespace CaptureManager
 			using namespace Core;
 
 			// BaseTopologyResolver implementation
+			
+			HRESULT AudioTopologyResolver::getInputMediaTypeOfMediaSink(
+				IMFTopology* aPtrTopology,
+				IMFTopologyNode* aPtrUpStreamNode,
+				IMFTopologyNode* aPtrDownStreamNode,
+				IMFMediaType* aPtrUpStreamMediaType,
+				IMFMediaType** aPtrPtrDownStreamMediaType,
+				UINT32 aOutputStreamIndex)
+			{
+				HRESULT lresult;
+
+				do
+				{
+					LOG_CHECK_PTR_MEMORY(aPtrUpStreamNode);
+
+					LOG_CHECK_PTR_MEMORY(aPtrDownStreamNode);
+
+					LOG_CHECK_PTR_MEMORY(aPtrUpStreamMediaType);
+
+					LOG_CHECK_PTR_MEMORY(aPtrPtrDownStreamMediaType);
+
+					UINT32 lSinkStreamId = 0;
+
+					LOG_INVOKE_MF_METHOD(GetUINT32,
+						aPtrDownStreamNode,
+						MF_TOPONODE_STREAMID,
+						&lSinkStreamId);
+
+					CComPtrCustom<IUnknown> lIUnknown;
+
+					LOG_INVOKE_MF_METHOD(GetObject,
+						aPtrDownStreamNode,
+						&lIUnknown);
+
+					CComQIPtrCustom<IMFActivate> lSinkActivate(lIUnknown);
+
+					LOG_CHECK_PTR_MEMORY(lSinkActivate);
+
+					CComPtrCustom<IMFMediaSink> lMediaSink;
+
+					LOG_INVOKE_MF_METHOD(ActivateObject,
+						lSinkActivate,
+						__uuidof(IMFMediaSink),
+						(void**)&lMediaSink);
+
+					LOG_CHECK_PTR_MEMORY(lMediaSink);
+
+					LOG_INVOKE_MF_METHOD(SetUnknown,
+						aPtrDownStreamNode,
+						CM_Sink,
+						lMediaSink);
+					
+					CComPtrCustom<IMFStreamSink> lStreamSink;
+
+					LOG_INVOKE_MF_METHOD(GetStreamSinkById,
+						lMediaSink,
+						lSinkStreamId,
+						&lStreamSink);
+
+					LOG_CHECK_PTR_MEMORY(lStreamSink);
+
+					CComPtrCustom<IMFMediaTypeHandler> lMediaTypeHandler;
+
+					LOG_INVOKE_MF_METHOD(GetMediaTypeHandler,
+						lStreamSink,
+						&lMediaTypeHandler);
+
+					LOG_CHECK_PTR_MEMORY(lMediaTypeHandler);
+
+					do
+					{
+						CComPtrCustom<IMFMediaType> lMediaType;
+
+						LOG_INVOKE_MF_METHOD(GetCurrentMediaType,
+							lMediaTypeHandler,
+							&lMediaType);
+
+					} while (false);
+
+					CComPtrCustom<IMFMediaType> lDownStreamMediaType;
+
+					lDownStreamMediaType = aPtrUpStreamMediaType;
+
+					if (lresult != S_OK)
+					{
+						do
+						{
+							UINT32 lSAROutputNode = 0;
+
+							LOG_INVOKE_MF_METHOD(GetUINT32,
+								aPtrDownStreamNode,
+								CM_SAROutputNode,
+								&lSAROutputNode);
+
+							if (lSAROutputNode != FALSE)
+							{
+								{
+									lDownStreamMediaType.Release();
+
+									createUncompressedMediaType(16000, 2, 32, &lDownStreamMediaType);
+
+									lresult = lMediaTypeHandler->IsMediaTypeSupported(lDownStreamMediaType, NULL);
+
+									if (lresult == S_OK)
+										break;
+								}
+								{
+									lDownStreamMediaType.Release();
+
+									createUncompressedMediaType(32000, 2, 32, &lDownStreamMediaType);
+
+									lresult = lMediaTypeHandler->IsMediaTypeSupported(lDownStreamMediaType, NULL);
+
+									if (lresult == S_OK)
+										break;
+								}
+								{
+									lDownStreamMediaType.Release();
+
+									createUncompressedMediaType(44100, 2, 32, &lDownStreamMediaType);
+
+									lresult = lMediaTypeHandler->IsMediaTypeSupported(lDownStreamMediaType, NULL);
+
+									if (lresult == S_OK)
+										break;
+								}
+								{
+									lDownStreamMediaType.Release();
+
+									createUncompressedMediaType(48000, 2, 32, &lDownStreamMediaType);
+
+									lresult = lMediaTypeHandler->IsMediaTypeSupported(lDownStreamMediaType, NULL);
+
+									if (lresult == S_OK)
+										break;
+								}
+								{
+									lDownStreamMediaType.Release();
+
+									createUncompressedMediaType(96000, 2, 32, &lDownStreamMediaType);
+
+									lresult = lMediaTypeHandler->IsMediaTypeSupported(lDownStreamMediaType, NULL);
+
+									if (lresult == S_OK)
+										break;
+								}
+							}
+
+						} while (false);
+					}
+
+					LOG_CHECK_PTR_MEMORY(lDownStreamMediaType);
+				
+					LOG_INVOKE_MF_METHOD(SetCurrentMediaType,
+						lMediaTypeHandler,
+						lDownStreamMediaType);
+					
+					LOG_INVOKE_QUERY_INTERFACE_METHOD(lDownStreamMediaType, aPtrPtrDownStreamMediaType);
+
+					LOG_CHECK_PTR_MEMORY((*aPtrPtrDownStreamMediaType));
+
+				} while (false);
+
+				return lresult;
+			}
 
 			HRESULT AudioTopologyResolver::resolveConnection(
 				IMFTopology* aPtrTopology,
@@ -806,6 +972,71 @@ namespace CaptureManager
 
 						*aPtrPtrTailTopologyNode = lDecoderTopologyNode.detach();
 					}
+
+				} while (false);
+
+				return lresult;
+			}
+
+			HRESULT AudioTopologyResolver::createUncompressedMediaType(
+				UINT32 aSamplePerSecond,
+				UINT32 aNumChannels,
+				UINT32 aBitsPerSample,
+				IMFMediaType** aPtrPtrStubUncompressedMediaType)
+			{
+				HRESULT lresult;
+
+				do
+				{
+					LOG_CHECK_PTR_MEMORY(aPtrPtrStubUncompressedMediaType);
+
+					UINT32 lbytePerSample = aBitsPerSample / 8;
+
+					CComPtrCustom<IMFMediaType> lMediaType;
+
+					LOG_INVOKE_MF_FUNCTION(MFCreateMediaType, &lMediaType);
+
+					LOG_INVOKE_MF_METHOD(SetGUID,
+						lMediaType,
+						MF_MT_MAJOR_TYPE,
+						MFMediaType_Audio);
+
+					LOG_INVOKE_MF_METHOD(SetGUID,
+						lMediaType,
+						MF_MT_SUBTYPE,
+						MFAudioFormat_Float);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_ALL_SAMPLES_INDEPENDENT,
+						1);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_AUDIO_AVG_BYTES_PER_SECOND,
+						aSamplePerSecond * aNumChannels * lbytePerSample);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_AUDIO_BITS_PER_SAMPLE,
+						aBitsPerSample);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_AUDIO_BLOCK_ALIGNMENT,
+						aNumChannels * lbytePerSample);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_AUDIO_SAMPLES_PER_SECOND,
+						aSamplePerSecond);
+
+					LOG_INVOKE_MF_METHOD(SetUINT32,
+						lMediaType,
+						MF_MT_AUDIO_NUM_CHANNELS,
+						aNumChannels);
+
+					*aPtrPtrStubUncompressedMediaType = lMediaType.detach();
 
 				} while (false);
 

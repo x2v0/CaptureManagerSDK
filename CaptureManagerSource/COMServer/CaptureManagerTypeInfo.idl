@@ -1161,6 +1161,61 @@ interface IAudioMixerControl : IDispatch
 };
 
 [
+	object,
+	uuid(62F99475-1754-4B2B-BFA5-277BDCE03C4F),
+	oleautomation,
+	local,
+	helpstring("Interface of factory for creating of SAR output node."),
+	dual
+]
+interface ISARSinkFactory : IDispatch
+{
+	[
+		helpstring("Create output node."),
+		id(1)
+	]
+	HRESULT createOutputNode(
+		[out] IUnknown **aPtrPtrTopologyNode);
+};
+
+[
+	object,
+	uuid(9A0E43CA-D5D0-4774-8548-E31A9DDE36FB),
+	oleautomation,
+	local,
+	helpstring("Interface of factory for creating of SAR output node."),
+	dual
+]
+interface ISARVolumeControl : IDispatch
+{
+	[
+		helpstring("Retrieves the number of channels in the audio stream."),
+		id(1)
+	]
+	HRESULT getChannelCount(
+		[in] IUnknown* aPtrSARNode,
+		[out] UINT32*  aPtrCount);
+
+	[
+		helpstring("Sets the volume level for a specified channel in the audio stream."),
+		id(2)
+	]
+	HRESULT setChannelVolume(
+		[in] IUnknown*	 aPtrSARNode,
+		[in] UINT32      aIndex,
+		[in] const float aLevel);
+
+	[
+		helpstring("Retrieves the volume level for a specified channel in the audio stream."),
+		id(3)
+	]
+	HRESULT getChannelVolume(
+		[in] IUnknown*	aPtrSARNode,
+		[in] UINT32     aIndex,
+		[out] float*	aPtrLevel);
+};
+
+[
 	uuid(9BE7E321-6A95-4025-A2DD-4567687BFD53),
 	version(1.0),
 	helpstring("CaptureManager 1.0 Type Library")
@@ -1243,6 +1298,10 @@ library CaptureManagerLibrary
 	interface IVideoMixerControl;
 
 	interface IAudioMixerControl;
+
+	interface ISARSinkFactory;
+
+	interface ISARVolumeControl;
 
 	enum LogLevel;
 

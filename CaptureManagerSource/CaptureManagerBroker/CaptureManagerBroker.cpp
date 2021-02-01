@@ -69,6 +69,7 @@ SOFTWARE.
 #include "../CustomisedMixerNode/MixerWrapper.h"
 #include "../CustomisedMixerNode/IVideoMixerControl.h"
 #include "../CustomisedMixerNode/IAudioMixerControl.h"
+#include "../AudioRendererManager/AudioRendererFactory.h"
 
 
 
@@ -2074,6 +2075,33 @@ namespace CaptureManager
 		return lresult;
 	}
 
+	HRESULT CaptureManagerBroker::createSARSinkOutputNode(
+		CComPtrCustom<IUnknown>& aRefOutputNode)
+	{
+		HRESULT lresult(E_FAIL);
+
+		do
+		{
+			if (mDestroyedFlag)
+				break;
+			
+			LOG_INVOKE_FUNCTION(Singleton<Sinks::AudioRendererFactory>::getInstance().createRendererOutputNode,
+				aRefOutputNode);
+
+		} while (false);
+
+		if (FAILED(lresult))
+		{
+			LogPrintOut::getInstance().printOutln(
+				LogPrintOut::ERROR_LEVEL,
+				L"CaptureManager: createSARSinkOutputNode is not executable!!! ",
+				L" Error code: ",
+				(HRESULT)lresult);
+		}
+
+		return lresult;
+	}
+
 	void CaptureManagerBroker::getEVRMultiSinkModes(
 		std::vector<GUIDToNamePair>& aRefReadModes)
 	{
@@ -3664,6 +3692,216 @@ namespace CaptureManager
 			LogPrintOut::getInstance().printOutln(
 				LogPrintOut::ERROR_LEVEL,
 				L"CaptureManager: setAudioMixerRelativeVolume is not executable!!! ",
+				L" Error code: ",
+				(HRESULT)lresult);
+		}
+
+		return lresult;
+	}
+
+	HRESULT CaptureManagerBroker::getSARChannelCount(
+		/* [in] */ IUnknown *aPtrSARNode,
+		/* [out] */ UINT32 *aPtrCount)
+	{
+		HRESULT lresult(E_FAIL);
+
+		do
+		{
+			if (mDestroyedFlag)
+				break;
+
+			LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+
+			LOG_CHECK_PTR_MEMORY(aPtrCount);
+
+			CComPtrCustom<IMFTopologyNode> lSARTopologyNode;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrSARNode, &lSARTopologyNode);
+
+			LOG_CHECK_PTR_MEMORY(lSARTopologyNode);
+
+			MF_TOPOLOGY_TYPE lNodeType(MF_TOPOLOGY_TYPE::MF_TOPOLOGY_MAX);
+
+			LOG_INVOKE_MF_METHOD(GetNodeType, lSARTopologyNode,
+				&lNodeType);
+
+			LOG_CHECK_STATE_DESCR(lNodeType != MF_TOPOLOGY_TYPE::MF_TOPOLOGY_OUTPUT_NODE,
+				E_INVALIDARG);
+			
+			CComPtrCustom<IMFMediaSink> lMediaSink;
+
+			LOG_INVOKE_MF_METHOD(GetUnknown,
+				lSARTopologyNode,
+				CM_Sink, 
+				__uuidof(IMFMediaSink),
+				(void**)&lMediaSink);
+
+			LOG_CHECK_PTR_MEMORY(lMediaSink);
+
+			CComPtrCustom<IMFGetService> lGetService;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(lMediaSink, &lGetService);
+
+			LOG_CHECK_PTR_MEMORY(lGetService);
+
+			CComPtrCustom<IMFAudioStreamVolume> lAudioStreamVolume;
+						
+			LOG_INVOKE_POINTER_METHOD(lGetService, GetService,
+				MR_STREAM_VOLUME_SERVICE,
+				__uuidof(IMFAudioStreamVolume),
+				(void**)&lAudioStreamVolume);
+
+			LOG_CHECK_PTR_MEMORY(lAudioStreamVolume);
+
+			LOG_INVOKE_POINTER_METHOD(lAudioStreamVolume, GetChannelCount, aPtrCount);
+			
+		} while (false);
+
+		if (FAILED(lresult))
+		{
+			LogPrintOut::getInstance().printOutln(
+				LogPrintOut::ERROR_LEVEL,
+				L"CaptureManager: getSARChannelCount is not executable!!! ",
+				L" Error code: ",
+				(HRESULT)lresult);
+		}
+
+		return lresult;
+	}
+	
+	HRESULT CaptureManagerBroker::getSARChannelVolume(
+		/* [in] */ IUnknown *aPtrSARNode,
+		/* [in] */ UINT32 aIndex,
+		/* [out] */ float *aPtrLevel)
+	{
+		HRESULT lresult(E_FAIL);
+
+		do
+		{
+			if (mDestroyedFlag)
+				break;
+
+			LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+
+			LOG_CHECK_PTR_MEMORY(aPtrLevel);
+
+			CComPtrCustom<IMFTopologyNode> lSARTopologyNode;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrSARNode, &lSARTopologyNode);
+
+			LOG_CHECK_PTR_MEMORY(lSARTopologyNode);
+
+			MF_TOPOLOGY_TYPE lNodeType(MF_TOPOLOGY_TYPE::MF_TOPOLOGY_MAX);
+
+			LOG_INVOKE_MF_METHOD(GetNodeType, lSARTopologyNode,
+				&lNodeType);
+
+			LOG_CHECK_STATE_DESCR(lNodeType != MF_TOPOLOGY_TYPE::MF_TOPOLOGY_OUTPUT_NODE,
+				E_INVALIDARG);
+
+			CComPtrCustom<IMFMediaSink> lMediaSink;
+
+			LOG_INVOKE_MF_METHOD(GetUnknown,
+				lSARTopologyNode,
+				CM_Sink,
+				__uuidof(IMFMediaSink),
+				(void**)&lMediaSink);
+
+			LOG_CHECK_PTR_MEMORY(lMediaSink);
+
+			CComPtrCustom<IMFGetService> lGetService;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(lMediaSink, &lGetService);
+
+			LOG_CHECK_PTR_MEMORY(lGetService);
+
+			CComPtrCustom<IMFAudioStreamVolume> lAudioStreamVolume;
+
+			LOG_INVOKE_POINTER_METHOD(lGetService, GetService,
+				MR_STREAM_VOLUME_SERVICE,
+				__uuidof(IMFAudioStreamVolume),
+				(void**)&lAudioStreamVolume);
+
+			LOG_CHECK_PTR_MEMORY(lAudioStreamVolume);
+
+			LOG_INVOKE_POINTER_METHOD(lAudioStreamVolume, GetChannelVolume, aIndex, aPtrLevel);
+
+		} while (false);
+
+		if (FAILED(lresult))
+		{
+			LogPrintOut::getInstance().printOutln(
+				LogPrintOut::ERROR_LEVEL,
+				L"CaptureManager: getSARChannelVolume is not executable!!! ",
+				L" Error code: ",
+				(HRESULT)lresult);
+		}
+
+		return lresult;
+	}
+	
+	HRESULT CaptureManagerBroker::setSARChannelVolume(
+		/* [in] */ IUnknown *aPtrSARNode,
+		/* [in] */ UINT32 aIndex,
+		/* [out] */ float aLevel)
+	{
+		HRESULT lresult(E_FAIL);
+
+		do
+		{
+			if (mDestroyedFlag)
+				break;
+
+			LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+			
+			CComPtrCustom<IMFTopologyNode> lSARTopologyNode;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrSARNode, &lSARTopologyNode);
+
+			LOG_CHECK_PTR_MEMORY(lSARTopologyNode);
+
+			MF_TOPOLOGY_TYPE lNodeType(MF_TOPOLOGY_TYPE::MF_TOPOLOGY_MAX);
+
+			LOG_INVOKE_MF_METHOD(GetNodeType, lSARTopologyNode,
+				&lNodeType);
+
+			LOG_CHECK_STATE_DESCR(lNodeType != MF_TOPOLOGY_TYPE::MF_TOPOLOGY_OUTPUT_NODE,
+				E_INVALIDARG);
+
+			CComPtrCustom<IMFMediaSink> lMediaSink;
+
+			LOG_INVOKE_MF_METHOD(GetUnknown,
+				lSARTopologyNode,
+				CM_Sink,
+				__uuidof(IMFMediaSink),
+				(void**)&lMediaSink);
+
+			LOG_CHECK_PTR_MEMORY(lMediaSink);
+
+			CComPtrCustom<IMFGetService> lGetService;
+
+			LOG_INVOKE_QUERY_INTERFACE_METHOD(lMediaSink, &lGetService);
+
+			LOG_CHECK_PTR_MEMORY(lGetService);
+
+			CComPtrCustom<IMFAudioStreamVolume> lAudioStreamVolume;
+
+			LOG_INVOKE_POINTER_METHOD(lGetService, GetService,
+				MR_STREAM_VOLUME_SERVICE,
+				__uuidof(IMFAudioStreamVolume),
+				(void**)&lAudioStreamVolume);
+
+			LOG_CHECK_PTR_MEMORY(lAudioStreamVolume);
+
+			LOG_INVOKE_POINTER_METHOD(lAudioStreamVolume, SetChannelVolume, aIndex, aLevel);
+
+		} while (false);
+
+		if (FAILED(lresult))
+		{
+			LogPrintOut::getInstance().printOutln(
+				LogPrintOut::ERROR_LEVEL,
+				L"CaptureManager: setSARChannelVolume is not executable!!! ",
 				L" Error code: ",
 				(HRESULT)lresult);
 		}

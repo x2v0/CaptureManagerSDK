@@ -867,6 +867,46 @@ namespace CaptureManagerToCSharpProxy
             return lresult;
         }
 
+        public ISARVolumeControl createSARVolumeControl()
+        {
+            ISARVolumeControl lresult = null;
+
+            do
+            {
+                try
+                {
+
+
+                    if (checkICaptureManagerControl())
+                        break;
+
+                    object lUnknown;
+
+                    mICaptureManagerControl.createMisc(
+                        typeof(CaptureManagerLibrary.ISARVolumeControl).GUID,
+                        out lUnknown);
+
+                    if (lUnknown == null)
+                        break;
+
+                    var lSARVolumeControl = lUnknown as CaptureManagerLibrary.ISARVolumeControl;
+
+                    if (lSARVolumeControl == null)
+                        break;
+
+                    lresult = new SARVolumeControl(lSARVolumeControl);
+
+                }
+                catch (Exception exc)
+                {
+                    LogManager.getInstance().write(exc.Message);
+                }
+
+            } while (false);
+
+            return lresult;
+        }
+
 
     }
 }

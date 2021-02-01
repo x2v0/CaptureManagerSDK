@@ -29,41 +29,21 @@ using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISinkControl
+    public interface ISARVolumeControl
     {
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IFileSinkFactory aSinkFactory);
-        
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IByteStreamSinkFactory aSinkFactory);       
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISampleGrabberCallSinkFactory aSinkFactory);
+        bool getChannelCount(
+            /* [in] */ object aPtrSARNode,
+            /* [out] */ out uint aPtrCount);
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out ISampleGrabberCallbackSinkFactory aSinkFactory);
+		bool setChannelVolume(
+            /* [in] */ object aPtrSARNode,
+                /* [in] */ uint aIndex,
+                /* [in] */ float aLevel);
 
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRSinkFactory aSinkFactory);      
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
-
-        bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISARSinkFactory aSinkFactory);
-
-        bool createCompatibleEVRMultiSinkFactory(
-            Guid aContainerTypeGUID,
-            out IEVRMultiSinkFactory aSinkFactory);
-
-        
-
+		bool getChannelVolume(
+            /* [in] */ object aPtrSARNode,
+                /* [in] */ uint aIndex,
+                /* [out] */ out float aPtrLevel);
     }
 }

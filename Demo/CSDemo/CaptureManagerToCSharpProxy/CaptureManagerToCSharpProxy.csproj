@@ -119,6 +119,8 @@
     <Compile Include="Interfaces\ISampleGrabberCallback.cs" />
     <Compile Include="Interfaces\ISampleGrabberCallbackSinkFactory.cs" />
     <Compile Include="Interfaces\ISampleGrabberCallSinkFactory.cs" />
+    <Compile Include="Interfaces\ISARSinkFactory.cs" />
+    <Compile Include="Interfaces\ISARVolumeControl.cs" />
     <Compile Include="Interfaces\ISession.cs" />
     <Compile Include="Interfaces\ISessionControl.cs" />
     <Compile Include="Interfaces\ISinkControl.cs" />
@@ -139,6 +141,8 @@
     <Compile Include="SampleGrabberCallback.cs" />
     <Compile Include="SampleGrabberCallbackSinkFactory.cs" />
     <Compile Include="SampleGrabberCallSinkFactory.cs" />
+    <Compile Include="SARSinkFactory.cs" />
+    <Compile Include="SARVolumeControl.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="SessionCallback.cs" />
     <Compile Include="SessionControl.cs" />
@@ -155,8 +159,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>"$(TargetFrameworkSDKToolsDirectory)TlbImp.exe" "$(SolutionDir)Bin\CaptureManager.dll" /out: ../../CaptureManagerLibrary.dll
-</PreBuildEvent>
+    <PreBuildEvent>"$(TargetFrameworkSDKToolsDirectory)TlbImp.exe" "$(SolutionDir)Bin\CaptureManager.dll" /out: ../../CaptureManagerLibrary.dll</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

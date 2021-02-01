@@ -108,6 +108,8 @@ if (lFunc != nullptr)Function = lFunc;\
 
 		BINDFUNCTION(MFCreateVideoRendererActivate);
 
+		BINDFUNCTION(MFCreateAudioRendererActivate);
+
 		BINDFUNCTION(MFCreateASFContentInfo);
 
 		BINDFUNCTION(MFCreateASFProfile);
@@ -364,6 +366,8 @@ if (lFunc != nullptr)Function = lFunc;\
 				CASTFUNCTION(MFCreateSampleGrabberSinkActivate);
 
 				CASTFUNCTION(MFCreateVideoRendererActivate);
+
+				CASTFUNCTION(MFCreateAudioRendererActivate);				
 
 				CASTFUNCTION(MFCreateASFContentInfo);
 

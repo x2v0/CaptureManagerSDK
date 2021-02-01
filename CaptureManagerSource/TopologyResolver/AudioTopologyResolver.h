@@ -15,6 +15,14 @@ namespace CaptureManager
 
 				// BaseTopologyResolver interface
 
+				virtual HRESULT getInputMediaTypeOfMediaSink(
+					IMFTopology* aPtrTopology,
+					IMFTopologyNode* aPtrUpStreamNode,
+					IMFTopologyNode* aPtrDownStreamNode,
+					IMFMediaType* aPtrUpStreamMediaType,
+					IMFMediaType** aPtrPtrDownStreamMediaType,
+					UINT32 aOutputStreamIndex) override;
+
 				virtual HRESULT resolveConnection(
 					IMFTopology* aPtrTopology,
 					IMFMediaType* aPtrUpStreamMediaType,
@@ -67,6 +75,12 @@ namespace CaptureManager
 					IMFMediaType* aPtrDownStreamMediaType,
 					IMFTopologyNode** aPtrPtrHeadTopologyNode,
 					IMFTopologyNode** aPtrPtrTailTopologyNode);
+
+				HRESULT createUncompressedMediaType(
+					UINT32 aSamplePerSecond,
+					UINT32 aNumChannels,
+					UINT32 aBitsPerSample,
+					IMFMediaType** aPtrPtrStubUncompressedMediaType);
 			};
 		}
 	}

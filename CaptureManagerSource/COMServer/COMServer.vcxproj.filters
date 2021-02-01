@@ -135,6 +135,12 @@
     <ClInclude Include="AudioMixerControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SARSinkFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SARVolumeControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RegisterManager.cpp">
@@ -246,6 +252,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudioMixerControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SARSinkFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SARVolumeControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

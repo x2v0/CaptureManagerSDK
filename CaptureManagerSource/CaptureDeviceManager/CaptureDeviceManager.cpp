@@ -133,16 +133,106 @@ namespace CaptureManager
 					MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
 					MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
 
-				LOG_INVOKE_MF_METHOD(SetString,
-					lSymbolicLinkAttributes,
-					MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK,
-					aRefSymbolicLink.c_str());
+				//LOG_INVOKE_MF_METHOD(SetString,
+				//	lSymbolicLinkAttributes,
+				//	MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK,
+				//	aRefSymbolicLink.c_str());
 
 				CComPtrCustom<IMFActivate> lAudioSourceActivate;
 
-				LOG_INVOKE_MF_FUNCTION(MFCreateDeviceSourceActivate,
-					lSymbolicLinkAttributes,
-					&lAudioSourceActivate);
+
+
+				{
+
+					CComMassivPtr<IMFActivate> lCaptureDeviceActivates;
+
+					LOG_INVOKE_MF_FUNCTION(MFEnumDeviceSources,
+						lSymbolicLinkAttributes,
+						lCaptureDeviceActivates.getPtrMassivPtr(),
+						lCaptureDeviceActivates.getPtrSizeMassiv());
+
+
+					for (UINT32 lsourceIndex = 0; lsourceIndex < lCaptureDeviceActivates.getSizeMassiv(); lsourceIndex++)
+					{
+						CComPtrCustom<IMFMediaSource> lMediaSource;
+
+						GUID lVIDCAP_CATEGORY = GUID_NULL;
+
+						CComPtrCustom<IMFActivate> lMediaType;
+
+						lMediaType = lCaptureDeviceActivates[lsourceIndex];
+
+						if (!lMediaType)
+						{
+							lresult = E_INVALIDARG;
+
+							break;
+						}
+
+						UINT32 lLength = 0;
+
+						lMediaType->GetStringLength(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, &lLength);
+
+						std::wstring lSymbolicLink;
+
+						if (lLength != 0)
+						{
+							std::unique_ptr<WCHAR[]> lLink;
+							
+							lLink.reset(new WCHAR[lLength + 10]);
+
+							UINT32 lwriteLength = 0;
+
+							lMediaType->GetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, lLink.get(), lLength + 10, &lwriteLength);
+
+							lSymbolicLink = lLink.get();
+						}
+
+						if(aRefSymbolicLink == lSymbolicLink)
+						{
+							lAudioSourceActivate = lMediaType;
+
+							break;
+						}
+
+						//lresult = lMediaType->GetString(
+						//	MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY,
+						//	&lVIDCAP_CATEGORY);
+
+						//if (SUCCEEDED(lresult))
+						//{
+						//	using namespace Core;
+
+						//	//if(!Singleton<ConfigManager>::getInstance().isWindows10())
+						//	{
+						//		if (lVIDCAP_CATEGORY == CLSID_VideoInputDeviceCategory)
+						//		{
+						//			aRefRoolXML_Node.remove_child(lSource);
+
+						//			continue;
+						//		}
+						//	}
+						//}
+
+
+						//addDeviceInstanceLink(lSource);
+
+						//LOG_INVOKE_FUNCTION(MediaFoundation::MediaFoundationManager::GetSource,
+						//	lCaptureDeviceActivates[lsourceIndex],
+						//	&lMediaSource);
+
+						//LOG_INVOKE_FUNCTION(parse, lMediaSource,
+						//	lSource);
+
+						//if (lMediaSource)
+						//	LOG_INVOKE_MF_METHOD(Shutdown,
+						//		lMediaSource);
+					}
+				}
+
+				//LOG_INVOKE_MF_FUNCTION(MFCreateDeviceSourceActivate,
+				//	lSymbolicLinkAttributes,
+				//	&lAudioSourceActivate);
 
 				LOG_INVOKE_FUNCTION(MediaFoundation::MediaFoundationManager::GetSource,
 					lAudioSourceActivate,

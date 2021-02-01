@@ -82,6 +82,15 @@ static const GUID CM_FLIPPED =
 static const GUID CM_MixerNode =
 { 0x90baf683, 0x28d0, 0x4999, { 0x9f, 0x75, 0x2e, 0x25, 0x1b, 0x5c, 0x9c, 0x6e } };
 
+// {E02DF977-D4DF-40B2-AEDA-6718B267E3E5}
+static const GUID CM_SAROutputNode =
+{ 0xe02df977, 0xd4df, 0x40b2, { 0xae, 0xda, 0x67, 0x18, 0xb2, 0x67, 0xe3, 0xe5 } };
+
+// {44FE158D-E104-49BB-8905-BDB4DD3948D7}
+static const GUID CM_Sink =
+{ 0x44fe158d, 0xe104, 0x49bb, { 0x89, 0x5, 0xbd, 0xb4, 0xdd, 0x39, 0x48, 0xd7 } };
+
+
 // The CLSID of the video processor media foundation transform which we use for
 // texture color conversion in DX11.
 //static const GUID CLSID_VideoProcessorMFT =

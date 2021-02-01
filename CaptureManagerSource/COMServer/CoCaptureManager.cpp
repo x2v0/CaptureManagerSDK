@@ -39,6 +39,7 @@ SOFTWARE.
 #include "SwitcherControl.h"
 #include "VideoMixerControl.h"
 #include "AudioMixerControl.h"
+#include "SARVolumeControl.h"
 
 
 
@@ -160,6 +161,10 @@ namespace CaptureManager
 				else if (aREFIID == __uuidof(IAudioMixerControl))
 				{
 					ltempInstance = CComPtrCustom<AudioMixerControl>(new (std::nothrow)AudioMixerControl);
+				}
+				else if (aREFIID == __uuidof(ISARVolumeControl))
+				{
+					ltempInstance = CComPtrCustom<SARVolumeControl>(new (std::nothrow)SARVolumeControl);
 				}
 				else
 				{					

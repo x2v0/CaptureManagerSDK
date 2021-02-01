@@ -338,5 +338,46 @@ namespace CaptureManagerToCSharpProxy
 
             return lresult;
         }
+
+        public bool createSinkFactory(Guid aContainerTypeGUID, out ISARSinkFactory aSinkFactory)
+        {
+            bool lresult = false;
+
+            aSinkFactory = null;
+
+            do
+            {
+                if (mSinkControl == null)
+                    break;
+
+
+                try
+                {
+                    object lIUnknown;
+
+                    mSinkControl.createSinkFactory(
+                        aContainerTypeGUID,
+                        typeof(CaptureManagerLibrary.ISARSinkFactory).GUID,
+                        out lIUnknown);
+
+                    if (lIUnknown == null)
+                        break;
+
+                    var lSinkFactory = lIUnknown as CaptureManagerLibrary.ISARSinkFactory;
+
+                    if (lSinkFactory == null)
+                        break;
+
+                    aSinkFactory = new SARSinkFactory(lIUnknown);
+                }
+                catch (Exception exc)
+                {
+                    LogManager.getInstance().write(exc.Message);
+                }
+
+            } while (false);
+
+            return lresult;
+        }
     }
 }

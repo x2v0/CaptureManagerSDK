@@ -402,6 +402,9 @@ namespace CaptureManager
 				HWND hwndVideo,
 				IMFActivate**);
 
+			typedef HRESULT(STDAPICALLTYPE *MFCreateAudioRendererActivate)(
+				IMFActivate**);
+			
 			typedef HRESULT(STDAPICALLTYPE *MFCreateASFContentInfo)(
 				IMFASFContentInfo**);
 
@@ -627,6 +630,8 @@ namespace CaptureManager
 				static MFCreateSampleGrabberSinkActivate MFCreateSampleGrabberSinkActivate;
 
 				static MFCreateVideoRendererActivate MFCreateVideoRendererActivate;
+
+				static MFCreateAudioRendererActivate MFCreateAudioRendererActivate;
 
 				static MFCreateASFContentInfo MFCreateASFContentInfo;
 
@@ -1620,6 +1625,11 @@ namespace CaptureManager
 					IMFActivate**){
 					return E_NOTIMPL;
 				}
+
+				static HRESULT STDAPICALLTYPE stubMFCreateAudioRendererActivate(
+					IMFActivate**) {
+					return E_NOTIMPL;
+				}				
 
 				static HRESULT STDAPICALLTYPE stubMFCreateASFContentInfo(
 					IMFASFContentInfo**){

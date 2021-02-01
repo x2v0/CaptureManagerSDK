@@ -237,6 +237,8 @@ copy "$(OutDir)CaptureManagerTypeInfo_i.c" "$(SolutionDir)CaptureManagerSDK-$(Ve
     <ClCompile Include="SampleAccumulatorNodeFactory.cpp" />
     <ClCompile Include="SampleGrabberCallbackSinkFactory.cpp" />
     <ClCompile Include="SampleGrabberCallSinkFactory.cpp" />
+    <ClCompile Include="SARSinkFactory.cpp" />
+    <ClCompile Include="SARVolumeControl.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionControl.cpp" />
     <ClCompile Include="SinkCollection.cpp" />
@@ -278,6 +280,8 @@ copy "$(OutDir)CaptureManagerTypeInfo_i.c" "$(SolutionDir)CaptureManagerSDK-$(Ve
     <ClInclude Include="SampleAccumulatorNodeFactory.h" />
     <ClInclude Include="SampleGrabberCallbackSinkFactory.h" />
     <ClInclude Include="SampleGrabberCallSinkFactory.h" />
+    <ClInclude Include="SARSinkFactory.h" />
+    <ClInclude Include="SARVolumeControl.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionControl.h" />
     <ClInclude Include="SinkCollection.h" />
