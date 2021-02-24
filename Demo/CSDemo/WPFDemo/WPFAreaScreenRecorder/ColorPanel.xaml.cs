@@ -23,187 +23,188 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace WPFAreaScreenRecorder
 {
-    class ColorPartitionConvertor: IValueConverter
-    {
+   internal class ColorPartitionConvertor : IValueConverter
+   {
+      #region  Fields
 
-        public string Channel
-        {
-            get;
-            set;
-        }
+      private Color lastColor;
 
-        private Color lastColor;
-        
+      #endregion
 
-        object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            lastColor = (Color)value;
+      #region Public properties
 
-            if (Channel == "A")
-            {
-                return lastColor.A;
-            }
-            if (Channel == "R")
-            {
-                return lastColor.R;
-            }
-            else if (Channel == "G")
-            {
-                return lastColor.G;
-            }
-            else if (Channel == "B")
-            {
-                return lastColor.B;
-            }
+      public string Channel
+      {
+         get;
+         set;
+      }
 
-            return null;
-        }
+      #endregion
 
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            byte valueByte = 0;
+      #region Interface methods
 
-            if (byte.TryParse(value.ToString(), out valueByte))
-            {
-                if (Channel == "A")
-                {
-                    lastColor.A = valueByte;
+      object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+         lastColor = (Color) value;
 
-                    return lastColor;
-                }
+         if (Channel == "A") {
+            return lastColor.A;
+         }
 
-                if (Channel == "R")
-                {
-                    lastColor.R = valueByte;
+         if (Channel == "R") {
+            return lastColor.R;
+         }
 
-                    return lastColor;
-                }
-                else if (Channel == "G")
-                {
-                    lastColor.G = valueByte;
+         if (Channel == "G") {
+            return lastColor.G;
+         }
 
-                    return lastColor;
-                }
-                else if (Channel == "B")
-                {
-                    lastColor.B = valueByte;
+         if (Channel == "B") {
+            return lastColor.B;
+         }
 
-                    return lastColor;
-                }
+         return null;
+      }
+
+      object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+         byte valueByte = 0;
+
+         if (byte.TryParse(value.ToString(), out valueByte)) {
+            if (Channel == "A") {
+               lastColor.A = valueByte;
+
+               return lastColor;
             }
 
-            return null;
-        }
-    }
+            if (Channel == "R") {
+               lastColor.R = valueByte;
 
-    /// <summary>
-    /// Interaction logic for ColorPanel.xaml
-    /// </summary>
-    public partial class ColorPanel : UserControl
-    {
-        public ColorPanel()
-        {
-            InitializeComponent();
-        }
-
-        public System.Drawing.Color Color
-        {
-            get { return (System.Drawing.Color)GetValue(ColorProperty); }
-
-            set
-            {
-                SetValue(ColorProperty, value);
+               return lastColor;
             }
-        }
 
-        // Using a DependencyProperty as the backing store for MyProperty.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty ColorProperty =
-            DependencyProperty.Register("Color", typeof(System.Drawing.Color),
-            typeof(ColorPanel), new PropertyMetadata(OnValueChanged),
-            new ValidateValueCallback(validateValueCallback));
+            if (Channel == "G") {
+               lastColor.G = valueByte;
 
-        private static void OnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
-        {
-            do
-            {
-                ColorPanel lcolorPanel = obj as ColorPanel;
+               return lastColor;
+            }
 
-                if (lcolorPanel == null)
-                    break;
+            if (Channel == "B") {
+               lastColor.B = valueByte;
 
-                System.Drawing.Color newColor = (System.Drawing.Color)e.NewValue;
+               return lastColor;
+            }
+         }
 
-                if (newColor == null)
-                    break;
-                
-                lcolorPanel.HSVpickPanel.Color = System.Windows.Media.Color.FromArgb(newColor.A, newColor.R, newColor.G, newColor.B);
-                                      
+         return null;
+      }
 
-            } while (false);
+      #endregion
+   }
 
-        }
+   /// <summary>
+   ///    Interaction logic for ColorPanel.xaml
+   /// </summary>
+   public partial class ColorPanel : UserControl
+   {
+      #region Static fields
 
+      // Using a DependencyProperty as the backing store for MyProperty.  This enables animation, styling, binding, etc...
+      public static readonly DependencyProperty ColorProperty =
+         DependencyProperty.Register("Color", typeof(System.Drawing.Color), typeof(ColorPanel), new PropertyMetadata(OnValueChanged), validateValueCallback);
 
+      // Using a DependencyProperty as the backing store for ProxyColor.  This enables animation, styling, binding, etc...
+      public static readonly DependencyProperty ProxyColorProperty =
+         DependencyProperty.Register("ProxyColor", typeof(Color), typeof(ColorPanel), new PropertyMetadata(ProxyOnValueChanged), validateValueCallback);
 
-        public Color ProxyColor
-        {
-            get { return (Color)GetValue(ProxyColorProperty); }
-            set { SetValue(ProxyColorProperty, value); }
-        }
+      #endregion
 
-        // Using a DependencyProperty as the backing store for ProxyColor.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty ProxyColorProperty =
-            DependencyProperty.Register("ProxyColor", typeof(Color), typeof(ColorPanel), new PropertyMetadata(ProxyOnValueChanged),
-            new ValidateValueCallback(validateValueCallback));
+      #region Constructors and destructors
 
+      public ColorPanel()
+      {
+         InitializeComponent();
+      }
 
-        private static void ProxyOnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
-        {
-            do
-            {
-                ColorPanel lcolorPanel = obj as ColorPanel;
+      #endregion
 
-                if (lcolorPanel == null)
-                    break;
+      #region Public properties
 
-                System.Windows.Media.Color newColor = (System.Windows.Media.Color)e.NewValue;
+      public System.Drawing.Color Color
+      {
+         get => (System.Drawing.Color) GetValue(ColorProperty);
 
-                if (newColor == null)
-                    break;
-
-                lcolorPanel.Color = System.Drawing.Color.FromArgb(newColor.A, newColor.R, newColor.G, newColor.B);
+         set => SetValue(ColorProperty, value);
+      }
 
 
-            } while (false);
+      public Color ProxyColor
+      {
+         get => (Color) GetValue(ProxyColorProperty);
+         set => SetValue(ProxyColorProperty, value);
+      }
 
-        }
+      #endregion
 
-                
-        static private bool validateValueCallback(object value)
-        {
-            return true;
-        }
+      #region Private methods
 
-        private void colorPanel_Loaded(object sender, RoutedEventArgs e)
-        {
-        }
-    }
+      private static void OnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+      {
+         do {
+            var lcolorPanel = obj as ColorPanel;
+
+            if (lcolorPanel == null) {
+               break;
+            }
+
+            var newColor = (System.Drawing.Color) e.NewValue;
+
+            if (newColor == null) {
+               break;
+            }
+
+            lcolorPanel.HSVpickPanel.Color = System.Windows.Media.Color.FromArgb(newColor.A, newColor.R, newColor.G, newColor.B);
+         } while (false);
+      }
+
+
+      private static void ProxyOnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+      {
+         do {
+            var lcolorPanel = obj as ColorPanel;
+
+            if (lcolorPanel == null) {
+               break;
+            }
+
+            var newColor = (Color) e.NewValue;
+
+            if (newColor == null) {
+               break;
+            }
+
+            lcolorPanel.Color = System.Drawing.Color.FromArgb(newColor.A, newColor.R, newColor.G, newColor.B);
+         } while (false);
+      }
+
+
+      private static bool validateValueCallback(object value)
+      {
+         return true;
+      }
+
+      private void colorPanel_Loaded(object sender, RoutedEventArgs e)
+      {
+      }
+
+      #endregion
+   }
 }

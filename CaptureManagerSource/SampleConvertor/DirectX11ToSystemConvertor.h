@@ -1,37 +1,29 @@
 #pragma once
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
-#include "ISampleConvertor.h" 
+#include "ISampleConvertor.h"
 #include "../Common/MFHeaders.h"
 #include "../MemoryManager/IMemoryBufferManager.h"
 
-
 namespace CaptureManager
 {
-	namespace SampleConvertorInner
-	{
-		class DirectX11ToSystemConvertor :
-			public BaseUnknown<ISampleConvertor>
-		{
+   namespace SampleConvertorInner
+   {
+      class DirectX11ToSystemConvertor : public BaseUnknown<ISampleConvertor>
+      {
+      public:
+         DirectX11ToSystemConvertor();
 
-		public:
-			DirectX11ToSystemConvertor();
+         HRESULT Convert(IMFSample* aPtrInputSample, IMFSample** aPtrPtrOutputSample) override;
 
-			virtual HRESULT Convert(IMFSample* aPtrInputSample, IMFSample** aPtrPtrOutputSample) override;
+         HRESULT init(IUnknown* aPtrInputDeviceManager, IMFMediaType* aPtrInputMediaType);
 
+      private:
+         CComPtrCustom<Core::IMemoryBufferManager> mMemoryBufferManager;
 
-			HRESULT init(
-				IUnknown* aPtrInputDeviceManager,
-				IMFMediaType* aPtrInputMediaType);
+         virtual ~DirectX11ToSystemConvertor();
 
-		private:
-			
-			CComPtrCustom<Core::IMemoryBufferManager> mMemoryBufferManager;
-						
-			virtual ~DirectX11ToSystemConvertor();
-
-			HRESULT videoMemoryCopy(IMFSample* aPtrInputSample, IMFMediaBuffer* aPtrDstBuffer);
-		};
-	}
+         HRESULT videoMemoryCopy(IMFSample* aPtrInputSample, IMFMediaBuffer* aPtrDstBuffer);
+      };
+   }
 }

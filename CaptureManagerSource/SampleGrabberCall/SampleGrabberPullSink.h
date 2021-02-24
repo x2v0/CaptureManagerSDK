@@ -1,8 +1,6 @@
 #pragma once
-
 #include <atomic>
 #include <mutex>
-
 #include "SampleGrabberPullStream.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/ComPtrCustom.h"
@@ -10,113 +8,69 @@
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberPull
-		{
-			class SampleGrabberPullSink :
-				public BaseUnknown<
-				IMFFinalizableMediaSink,
-				IMFClockStateSink,
-				IMFAsyncCallback>
-			{
-			public:
-				SampleGrabberPullSink();
-				
+   namespace Sinks
+   {
+      namespace SampleGrabberPull
+      {
+         class SampleGrabberPullSink : public BaseUnknown<IMFFinalizableMediaSink, IMFClockStateSink, IMFAsyncCallback>
+         {
+         public:
+            SampleGrabberPullSink(); // IMFMediaSink interface
+            STDMETHODIMP GetCharacteristics(DWORD* aPtrCharacteristics) override;
 
-				// IMFMediaSink interface
-				STDMETHODIMP GetCharacteristics(
-					DWORD* aPtrCharacteristics);
-				STDMETHODIMP AddStreamSink(
-					DWORD aStreamSinkIdentifier, 
-					IMFMediaType* aPtrMediaType, 
-					IMFStreamSink** aPtrPtrStreamSink);
-				STDMETHODIMP RemoveStreamSink(
-					DWORD aStreamSinkIdentifier);
-				STDMETHODIMP GetStreamSinkCount(
-					DWORD* aPtrStreamSinkCount);
-				STDMETHODIMP GetStreamSinkByIndex(
-					DWORD aIndex, 
-					IMFStreamSink** aPtrPtrStreamSink);
-				STDMETHODIMP GetStreamSinkById(
-					DWORD aStreamSinkIdentifier, 
-					IMFStreamSink** aPtrPtrStreamSink);
-				STDMETHODIMP SetPresentationClock(
-					IMFPresentationClock* aPtrPresentationClock);
-				STDMETHODIMP GetPresentationClock(
-					IMFPresentationClock** aPtrPtrPresentationClock);
-				STDMETHODIMP Shutdown();
+            STDMETHODIMP AddStreamSink(DWORD aStreamSinkIdentifier, IMFMediaType* aPtrMediaType,
+                                       IMFStreamSink** aPtrPtrStreamSink) override;
 
+            STDMETHODIMP RemoveStreamSink(DWORD aStreamSinkIdentifier) override;
 
-				// IMFClockStateSink interface
-				STDMETHODIMP OnClockStart(
-					MFTIME aSystemTime, 
-					LONGLONG aClockStartOffset);
-				STDMETHODIMP OnClockStop(
-					MFTIME aSystemTime);
-				STDMETHODIMP OnClockPause(
-					MFTIME aSystemTime);
-				STDMETHODIMP OnClockRestart(
-					MFTIME aSystemTime);
-				STDMETHODIMP OnClockSetRate(
-					MFTIME aSystemTime, 
-					float aRate);
+            STDMETHODIMP GetStreamSinkCount(DWORD* aPtrStreamSinkCount) override;
 
+            STDMETHODIMP GetStreamSinkByIndex(DWORD aIndex, IMFStreamSink** aPtrPtrStreamSink) override;
 
-				// IMFFinalizableMediaSink interface
-				STDMETHODIMP BeginFinalize(
-					IMFAsyncCallback* aPtrAsyncCallback, 
-					IUnknown* aPtrUnkState);
-				STDMETHODIMP EndFinalize(
-					IMFAsyncResult* aPtrAsyncResult);
+            STDMETHODIMP GetStreamSinkById(DWORD aStreamSinkIdentifier, IMFStreamSink** aPtrPtrStreamSink) override;
 
+            STDMETHODIMP SetPresentationClock(IMFPresentationClock* aPtrPresentationClock) override;
 
-				// IMFAsyncCallback interface implementation
-				STDMETHODIMP GetParameters(
-					DWORD* aPtrFlags, 
-					DWORD* aPtrQueue);
+            STDMETHODIMP GetPresentationClock(IMFPresentationClock** aPtrPtrPresentationClock) override;
 
-				STDMETHODIMP Invoke(
-					IMFAsyncResult* aPtrAsyncResult);
+            STDMETHODIMP Shutdown() override; // IMFClockStateSink interface
+            STDMETHODIMP OnClockStart(MFTIME aSystemTime, LONGLONG aClockStartOffset) override;
 
+            STDMETHODIMP OnClockStop(MFTIME aSystemTime) override;
 
-				// SampleGrabberPullSink interface implementation
+            STDMETHODIMP OnClockPause(MFTIME aSystemTime) override;
 
-				STDMETHODIMP setStream(
-					IUnknown* aPtrUnkSampleGrabberPullStream);
+            STDMETHODIMP OnClockRestart(MFTIME aSystemTime) override;
 
-				virtual ~SampleGrabberPullSink();
-				
-			protected:				
+            STDMETHODIMP OnClockSetRate(MFTIME aSystemTime, float aRate) override; // IMFFinalizableMediaSink interface
+            STDMETHODIMP BeginFinalize(IMFAsyncCallback* aPtrAsyncCallback, IUnknown* aPtrUnkState) override;
 
-				virtual bool findInterface(
-					REFIID aRefIID,
-					void** aPtrPtrVoidObject)
-				{
-					if (aRefIID == __uuidof(IMFMediaSink))
-					{
-						return castInterfaces(
-							aRefIID,
-							aPtrPtrVoidObject,
-							static_cast<IMFMediaSink*>(this));
-					}
-					else
-					{
-						return BaseUnknown::findInterface(
-							aRefIID,
-							aPtrPtrVoidObject);
-					}
-				}
+            STDMETHODIMP EndFinalize(IMFAsyncResult* aPtrAsyncResult) override;
 
-			private:
+            // IMFAsyncCallback interface implementation
+            STDMETHODIMP GetParameters(DWORD* aPtrFlags, DWORD* aPtrQueue) override;
 
-				std::mutex mMutex;
+            STDMETHODIMP Invoke(IMFAsyncResult* aPtrAsyncResult) override;
 
-				CComPtrCustom<IMFStreamSink> mStreamSink;
+            // SampleGrabberPullSink interface implementation
+            STDMETHODIMP setStream(IUnknown* aPtrUnkSampleGrabberPullStream);
 
-				CComPtrCustom<IMFPresentationClock> mClock;
+            virtual ~SampleGrabberPullSink();
 
-			};
-		}
-	}
+         protected:
+            bool findInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+            {
+               if (aRefIID == __uuidof(IMFMediaSink)) {
+                  return castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IMFMediaSink*>(this));
+               }
+               return BaseUnknown::findInterface(aRefIID, aPtrPtrVoidObject);
+            }
+
+         private:
+            std::mutex mMutex;
+            CComPtrCustom<IMFStreamSink> mStreamSink;
+            CComPtrCustom<IMFPresentationClock> mClock;
+         };
+      }
+   }
 }

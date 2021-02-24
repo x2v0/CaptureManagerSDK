@@ -24,478 +24,535 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
+using System.Reflection;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using CaptureManagerToCSharpProxy;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System.Windows.Threading;
 using System.Xml;
+using CaptureManagerToCSharpProxy;
+using CaptureManagerToCSharpProxy.Interfaces;
 using Microsoft.Win32;
-using System.Reflection;
-using System.Diagnostics;
-using System.Threading;
 
 namespace WPFVideoAndAudioRecorder
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+   /// <summary>
+   ///    Interaction logic for MainWindow.xaml
+   /// </summary>
+   public partial class MainWindow : Window
+   {
+      #region Constructors and destructors
 
-    public partial class MainWindow : Window
-    {
+      public MainWindow()
+      {
+         InitializeComponent();
+      }
 
-        CaptureManager mCaptureManager = null;
+      #endregion
 
-        ISessionControl mISessionControl = null;
+      #region  Fields
 
-        ISession mISession = null;
+      private CaptureManager mCaptureManager;
 
-        ISinkControl mSinkControl = null;
+      private IEncoderControl mEncoderControl;
 
-        ISourceControl mSourceControl = null;
+      private IEVRMultiSinkFactory mEVRMultiSinkFactory;
 
-        IEncoderControl mEncoderControl = null;
+      private IEVRSinkFactory mEVRSinkFactory;
 
-        IFileSinkFactory mFileSinkFactory = null;
+      private string mFilename;
 
-        IStreamControl mStreamControl = null;
+      private IFileSinkFactory mFileSinkFactory;
 
-        ISpreaderNodeFactory mSpreaderNodeFactory = null;
+      private ISession mISession;
 
-        IEVRMultiSinkFactory mEVRMultiSinkFactory = null;
+      private ISessionControl mISessionControl;
 
-        IEVRSinkFactory mEVRSinkFactory = null;
+      private bool mIsStarted;
 
-        bool mIsStarted = false;
+      private ISinkControl mSinkControl;
 
-        string mFilename = null;
-        
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
-        
-        private void MainWindow_WriteDelegateEvent(string aMessage)
-        {
-            MessageBox.Show(aMessage);
-        }
+      private ISourceControl mSourceControl;
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            var t = new Thread(
+      private ISpreaderNodeFactory mSpreaderNodeFactory;
 
-               delegate ()
-               {
+      private IStreamControl mStreamControl;
 
-                   try
-                   {
-                       mCaptureManager = Program.mCaptureManager;
+      #endregion
 
-                       LogManager.getInstance().WriteDelegateEvent += MainWindow_WriteDelegateEvent;
+      #region Private methods
 
-                       if (mCaptureManager == null)
-                           return;
+      private object getCompressedMediaType(XmlNode aSourceNode, XmlNode aStreamNode, XmlNode aMediaTypeNode, XmlNode aEncoderNode, XmlNode aEncoderModeNode, int aCompressedMediaTypeIndex)
+      {
+         object lresult = null;
 
-                       mSourceControl = mCaptureManager.createSourceControl();
-
-                       if (mSourceControl == null)
-                           return;
-
-                       mEncoderControl = mCaptureManager.createEncoderControl();
-
-                       if (mEncoderControl == null)
-                           return;
-
-                       mSinkControl = mCaptureManager.createSinkControl();
-
-                       if (mSinkControl == null)
-                           return;
-
-                       mISessionControl = mCaptureManager.createSessionControl();
-
-                       if (mISessionControl == null)
-                           return;
-
-                       mStreamControl = mCaptureManager.createStreamControl();
-
-                       if (mStreamControl == null)
-                           return;
-
-                       mStreamControl.createStreamControlNodeFactory(ref mSpreaderNodeFactory);
-
-                       if (mSpreaderNodeFactory == null)
-                           return;
-
-                       mSinkControl.createSinkFactory(Guid.Empty, out mEVRMultiSinkFactory);
-
-                       if (mEVRMultiSinkFactory == null)
-                           return;
-
-                       mSinkControl.createSinkFactory(Guid.Empty, out mEVRSinkFactory);
-
-                       if (mEVRSinkFactory == null)
-                           return;
+         do {
+            if (aCompressedMediaTypeIndex < 0) {
+               break;
+            }
 
 
-                       
+            if (aSourceNode == null) {
+               break;
+            }
 
 
-                       XmlDataProvider lXmlDataProvider = (XmlDataProvider)this.Resources["XmlSources"];
-
-                       if (lXmlDataProvider == null)
-                           return;
-
-                       XmlDocument doc = new XmlDocument();
-
-                       string lxmldoc = "";
-
-                       mCaptureManager.getCollectionOfSources(ref lxmldoc);
-
-                       doc.LoadXml(lxmldoc);
-
-                       lXmlDataProvider.Document = doc;
-
-                       lXmlDataProvider = (XmlDataProvider)this.Resources["XmlEncoders"];
-
-                       if (lXmlDataProvider == null)
-                           return;
-
-                       doc = new XmlDocument();
-
-                       mCaptureManager.getCollectionOfEncoders(ref lxmldoc);
-
-                       doc.LoadXml(lxmldoc);
-
-                       lXmlDataProvider.Document = doc;
+            if (aStreamNode == null) {
+               break;
+            }
 
 
+            if (aMediaTypeNode == null) {
+               break;
+            }
 
 
-                       mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+            if (aEncoderNode == null) {
+               break;
+            }
 
 
-                       lXmlDataProvider = (XmlDataProvider)this.Resources["XmlContainerTypeProvider"];
+            if (aEncoderModeNode == null) {
+               break;
+            }
 
-                       if (lXmlDataProvider == null)
-                           return;
+            var lEncoderGuidAttr = aEncoderNode.Attributes["CLSID"];
 
-                       doc = new XmlDocument();
+            if (lEncoderGuidAttr == null) {
+               break;
+            }
 
-                       doc.LoadXml(lxmldoc);
+            Guid lCLSIDEncoder;
 
-                       lXmlDataProvider.Document = doc;
+            if (!Guid.TryParse(lEncoderGuidAttr.Value, out lCLSIDEncoder)) {
+               break;
+            }
 
-                   }
-                   catch (Exception ex)
-                   {
-                   }
-                   finally
-                   {
-                   }
-               });
+            var lEncoderModeGuidAttr = aEncoderModeNode.Attributes["GUID"];
+
+            if (lEncoderModeGuidAttr == null) {
+               break;
+            }
+
+            Guid lCLSIDEncoderMode;
+
+            if (!Guid.TryParse(lEncoderModeGuidAttr.Value, out lCLSIDEncoderMode)) {
+               break;
+            }
+
+
+            if (aSourceNode == null) {
+               break;
+            }
+
+            var lNode = aSourceNode.SelectSingleNode("Source.Attributes/Attribute" +
+                                                     "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
+                                                     "/SingleValue/@Value");
+
+            if (lNode == null) {
+               break;
+            }
+
+            var lSymbolicLink = lNode.Value;
+
+            if (aStreamNode == null) {
+               break;
+            }
+
+            lNode = aStreamNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               break;
+            }
+
+            uint lStreamIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lStreamIndex)) {
+               break;
+            }
+
+            if (aMediaTypeNode == null) {
+               break;
+            }
+
+            lNode = aMediaTypeNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               break;
+            }
+
+            uint lMediaTypeIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+               break;
+            }
+
+            object lSourceMediaType = null;
+
+            if (!mSourceControl.getSourceOutputMediaType(lSymbolicLink, lStreamIndex, lMediaTypeIndex, out lSourceMediaType)) {
+               break;
+            }
+
+            if (lSourceMediaType == null) {
+               break;
+            }
+
+            IEncoderNodeFactory lEncoderNodeFactory;
+
+            if (!mEncoderControl.createEncoderNodeFactory(lCLSIDEncoder, out lEncoderNodeFactory)) {
+               break;
+            }
+
+            if (lEncoderNodeFactory == null) {
+               break;
+            }
+
+            object lCompressedMediaType;
+
+            if (!lEncoderNodeFactory.createCompressedMediaType(lSourceMediaType, lCLSIDEncoderMode, 50, (uint) aCompressedMediaTypeIndex, out lCompressedMediaType)) {
+               break;
+            }
+
+            lresult = lCompressedMediaType;
+         } while (false);
+
+         return lresult;
+      }
+
+      private List<object> getOutputNodes(List<object> aCompressedMediaTypeList)
+      {
+         var lresult = new List<object>();
+
+         do {
+            if (aCompressedMediaTypeList == null) {
+               break;
+            }
+
+            if (aCompressedMediaTypeList.Count == 0) {
+               break;
+            }
+
+            if (mFileSinkFactory == null) {
+               break;
+            }
+
+            if (string.IsNullOrEmpty(mFilename)) {
+               break;
+            }
+
+            mFileSinkFactory.createOutputNodes(aCompressedMediaTypeList, mFilename, out lresult);
+         } while (false);
+
+         return lresult;
+      }
+
+      private object getSourceNode(XmlNode aSourceNode,
+                                   XmlNode aStreamNode,
+                                   XmlNode aMediaTypeNode,
+                                   XmlNode aEncoderNode,
+                                   XmlNode aEncoderModeNode,
+                                   int aCompressedMediaTypeIndex,
+                                   object PreviewRenderNode,
+                                   object aOutputNode)
+      {
+         object lresult = null;
+
+         do {
+            if (aCompressedMediaTypeIndex < 0) {
+               break;
+            }
+
+
+            if (aSourceNode == null) {
+               break;
+            }
+
+
+            if (aStreamNode == null) {
+               break;
+            }
+
+
+            if (aMediaTypeNode == null) {
+               break;
+            }
+
+
+            if (aEncoderNode == null) {
+               break;
+            }
+
+
+            if (aEncoderModeNode == null) {
+               break;
+            }
+
+            var lEncoderGuidAttr = aEncoderNode.Attributes["CLSID"];
+
+            if (lEncoderGuidAttr == null) {
+               break;
+            }
+
+            Guid lCLSIDEncoder;
+
+            if (!Guid.TryParse(lEncoderGuidAttr.Value, out lCLSIDEncoder)) {
+               break;
+            }
+
+            var lEncoderModeGuidAttr = aEncoderModeNode.Attributes["GUID"];
+
+            if (lEncoderModeGuidAttr == null) {
+               break;
+            }
+
+            Guid lCLSIDEncoderMode;
+
+            if (!Guid.TryParse(lEncoderModeGuidAttr.Value, out lCLSIDEncoderMode)) {
+               break;
+            }
+
+
+            if (aSourceNode == null) {
+               break;
+            }
+
+            var lNode = aSourceNode.SelectSingleNode("Source.Attributes/Attribute" +
+                                                     "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
+                                                     "/SingleValue/@Value");
+
+            if (lNode == null) {
+               break;
+            }
+
+            var lSymbolicLink = lNode.Value;
+
+            if (aStreamNode == null) {
+               break;
+            }
+
+            lNode = aStreamNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               break;
+            }
+
+            uint lStreamIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lStreamIndex)) {
+               break;
+            }
+
+            if (aMediaTypeNode == null) {
+               break;
+            }
+
+            lNode = aMediaTypeNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               break;
+            }
+
+            uint lMediaTypeIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+               break;
+            }
+
+            object lSourceMediaType = null;
+
+            if (!mSourceControl.getSourceOutputMediaType(lSymbolicLink, lStreamIndex, lMediaTypeIndex, out lSourceMediaType)) {
+               break;
+            }
+
+            if (lSourceMediaType == null) {
+               break;
+            }
+
+            IEncoderNodeFactory lEncoderNodeFactory;
+
+            if (!mEncoderControl.createEncoderNodeFactory(lCLSIDEncoder, out lEncoderNodeFactory)) {
+               break;
+            }
+
+            if (lEncoderNodeFactory == null) {
+               break;
+            }
+
+            object lEncoderNode;
+
+            if (!lEncoderNodeFactory.createEncoderNode(lSourceMediaType, lCLSIDEncoderMode, 50, (uint) aCompressedMediaTypeIndex, aOutputNode, out lEncoderNode)) {
+               break;
+            }
+
+
+            var SpreaderNode = lEncoderNode;
+
+            if (PreviewRenderNode != null) {
+               var lOutputNodeList = new List<object>();
+
+               //lOutputNodeList.Add(lEncoderNode);
+
+               //lOutputNodeList.Add(PreviewRenderNode);
+
+               lOutputNodeList.Add(PreviewRenderNode);
+
+               lOutputNodeList.Add(lEncoderNode);
+
+               mSpreaderNodeFactory.createSpreaderNode(lOutputNodeList, out SpreaderNode);
+            }
+
+            object lSourceNode;
+
+            var lextendSymbolicLink = lSymbolicLink + " --options=" + "<?xml version='1.0' encoding='UTF-8'?>" + "<Options>" + "<Option Type='Cursor' Visiblity='True'>" + "<Option.Extensions>" +
+                                      "<Extension Type='BackImage' Height='100' Width='100' Fill='0x7055ff55' />" + "</Option.Extensions>" + "</Option>" + "</Options>";
+
+            if (!mSourceControl.createSourceNode(lextendSymbolicLink, lStreamIndex, lMediaTypeIndex, SpreaderNode, out lSourceNode)) {
+               break;
+            }
+
+            lresult = lSourceNode;
+         } while (false);
+
+         return lresult;
+      }
+
+      private void m_AudioEncodersComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+      {
+         do {
+            if (mEncoderControl == null) {
+               break;
+            }
+
+            var lselectedNode = m_AudioEncodersComboBox.SelectedItem as XmlNode;
+
+            if (lselectedNode == null) {
+               break;
+            }
+
+            var lCLSIDEncoderAttr = lselectedNode.Attributes["CLSID"];
+
+            if (lCLSIDEncoderAttr == null) {
+               break;
+            }
+
+            Guid lCLSIDEncoder;
+
+            if (!Guid.TryParse(lCLSIDEncoderAttr.Value, out lCLSIDEncoder)) {
+               break;
+            }
+
+
+            var lSourceNode = m_AudioSourceComboBox.SelectedItem as XmlNode;
+
+            if (lSourceNode == null) {
+               return;
+            }
+
+            var lNode = lSourceNode.SelectSingleNode("Source.Attributes/Attribute" +
+                                                     "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
+                                                     "/SingleValue/@Value");
+
+            if (lNode == null) {
+               return;
+            }
+
+            var lSymbolicLink = lNode.Value;
+
+            lSourceNode = m_AudioStreamComboBox.SelectedItem as XmlNode;
+
+            if (lSourceNode == null) {
+               return;
+            }
+
+            lNode = lSourceNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               return;
+            }
+
+            uint lStreamIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lStreamIndex)) {
+               return;
+            }
+
+            lSourceNode = m_AudioSourceMediaTypeComboBox.SelectedItem as XmlNode;
+
+            if (lSourceNode == null) {
+               return;
+            }
+
+            lNode = lSourceNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               return;
+            }
+
+            uint lMediaTypeIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+               return;
+            }
+
+
+            object lOutputMediaType;
+
+            if (mSourceControl == null) {
+               return;
+            }
+
+            var t = new Thread(delegate()
+            {
+               try {
+                  mSourceControl.getSourceOutputMediaType(lSymbolicLink, lStreamIndex, lMediaTypeIndex, out lOutputMediaType);
+
+                  string lMediaTypeCollection;
+
+                  if (!mEncoderControl.getMediaTypeCollectionOfEncoder(lOutputMediaType, lCLSIDEncoder, out lMediaTypeCollection)) {
+                     return;
+                  }
+
+
+                  var lXmlEncoderModeDataProvider = (XmlDataProvider) Resources["XmlAudioEncoderModeProvider"];
+
+                  if (lXmlEncoderModeDataProvider == null) {
+                     return;
+                  }
+
+                  var lEncoderModedoc = new XmlDocument();
+
+                  lEncoderModedoc.LoadXml(lMediaTypeCollection);
+
+                  lXmlEncoderModeDataProvider.Document = lEncoderModedoc;
+               } catch (Exception ex) {
+               }
+            });
             t.SetApartmentState(ApartmentState.MTA);
 
             t.Start();
-        }
-
-        private void m_VideoEncodersComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            do
-            {
-                if (mEncoderControl == null)
-                    break;
-
-                var lselectedNode = m_VideoEncodersComboBox.SelectedItem as XmlNode;
-
-                if (lselectedNode == null)
-                    break;
-                    
-                var lCLSIDEncoderAttr = lselectedNode.Attributes["CLSID"];
-
-                if (lCLSIDEncoderAttr == null)
-                    break;
-
-                Guid lCLSIDEncoder;
-
-                if (!Guid.TryParse(lCLSIDEncoderAttr.Value, out lCLSIDEncoder))
-                    break;
-
-
-
-                var lSourceNode = m_VideoSourceComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                var lNode = lSourceNode.SelectSingleNode(
-            "Source.Attributes/Attribute" +
-            "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
-            "/SingleValue/@Value");
-
-                if (lNode == null)
-                    return;
-
-                string lSymbolicLink = lNode.Value;
-
-                lSourceNode = m_VideoStreamComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                lNode = lSourceNode.SelectSingleNode("@Index");
-
-                if (lNode == null)
-                    return;
-
-                uint lStreamIndex = 0;
-
-                if (!uint.TryParse(lNode.Value, out lStreamIndex))
-                {
-                    return;
-                }
-
-                lSourceNode = m_VideoSourceMediaTypeComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                lNode = lSourceNode.SelectSingleNode("@Index");
-
-                if (lNode == null)
-                    return;
-
-                uint lMediaTypeIndex = 0;
-
-                if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-                {
-                    return;
-                }
-
-
-
-                object lOutputMediaType;
-
-                if (mSourceControl == null)
-                    return;
-                
-                var t = new Thread(
-
-                   delegate ()
-                   {
-
-                       try
-                       {
-                           Dispatcher.Invoke(
-                           DispatcherPriority.Normal,
-                           new Action(() => {
-                               m_VideoEncodingModeComboBox.IsEnabled = false;
-                           }));
-
-                           mSourceControl.getSourceOutputMediaType(
-                            lSymbolicLink,
-                            lStreamIndex,
-                            lMediaTypeIndex,
-                            out lOutputMediaType);
-
-                        string lMediaTypeCollection;
-
-                        if (!mEncoderControl.getMediaTypeCollectionOfEncoder(
-                            lOutputMediaType,
-                            lCLSIDEncoder,
-                            out lMediaTypeCollection))
-                            return;
-
-
-
-                           XmlDataProvider lXmlEncoderModeDataProvider = (XmlDataProvider)this.Resources["XmlEncoderModeProvider"];
-
-                           if (lXmlEncoderModeDataProvider == null)
-                               return;
-
-                           XmlDocument lEncoderModedoc = new XmlDocument();
-
-                           lEncoderModedoc.LoadXml(lMediaTypeCollection);
-
-                           lXmlEncoderModeDataProvider.Document = lEncoderModedoc;
-
-
-                           Dispatcher.Invoke(
-                           DispatcherPriority.Normal,
-                           new Action(() => {
-                               m_VideoEncodingModeComboBox.IsEnabled = true;
-                           }));
-                       }
-                       catch (Exception ex)
-                       {
-                       }
-                       finally
-                       {
-                       }
-                   });
-                t.SetApartmentState(ApartmentState.MTA);
-
-                t.Start();
-
-            } while (false);
-        }
-
-        private void m_AudioEncodersComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            do
-            {
-                if (mEncoderControl == null)
-                    break;
-
-                var lselectedNode = m_AudioEncodersComboBox.SelectedItem as XmlNode;
-
-                if (lselectedNode == null)
-                    break;
-
-                var lCLSIDEncoderAttr = lselectedNode.Attributes["CLSID"];
-
-                if (lCLSIDEncoderAttr == null)
-                    break;
-
-                Guid lCLSIDEncoder;
-
-                if (!Guid.TryParse(lCLSIDEncoderAttr.Value, out lCLSIDEncoder))
-                    break;
-
-
-
-                var lSourceNode = m_AudioSourceComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                var lNode = lSourceNode.SelectSingleNode(
-            "Source.Attributes/Attribute" +
-            "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
-            "/SingleValue/@Value");
-
-                if (lNode == null)
-                    return;
-
-                string lSymbolicLink = lNode.Value;
-
-                lSourceNode = m_AudioStreamComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                lNode = lSourceNode.SelectSingleNode("@Index");
-
-                if (lNode == null)
-                    return;
-
-                uint lStreamIndex = 0;
-
-                if (!uint.TryParse(lNode.Value, out lStreamIndex))
-                {
-                    return;
-                }
-
-                lSourceNode = m_AudioSourceMediaTypeComboBox.SelectedItem as XmlNode;
-
-                if (lSourceNode == null)
-                    return;
-
-                lNode = lSourceNode.SelectSingleNode("@Index");
-
-                if (lNode == null)
-                    return;
-
-                uint lMediaTypeIndex = 0;
-
-                if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-                {
-                    return;
-                }
-
-
-
-                object lOutputMediaType;
-
-                if (mSourceControl == null)
-                    return;
-
-                var t = new Thread(
-
-                   delegate ()
-                   {
-
-                       try
-                       {
-
-                           mSourceControl.getSourceOutputMediaType(
-                               lSymbolicLink,
-                               lStreamIndex,
-                               lMediaTypeIndex,
-                               out lOutputMediaType);
-
-                           string lMediaTypeCollection;
-
-                           if (!mEncoderControl.getMediaTypeCollectionOfEncoder(
-                               lOutputMediaType,
-                               lCLSIDEncoder,
-                               out lMediaTypeCollection))
-                               return;
-
-
-
-                           XmlDataProvider lXmlEncoderModeDataProvider = (XmlDataProvider)this.Resources["XmlAudioEncoderModeProvider"];
-
-                           if (lXmlEncoderModeDataProvider == null)
-                               return;
-
-                           XmlDocument lEncoderModedoc = new XmlDocument();
-
-                           lEncoderModedoc.LoadXml(lMediaTypeCollection);
-
-                           lXmlEncoderModeDataProvider.Document = lEncoderModedoc;
-
-                       }
-                       catch (Exception ex)
-                       {
-                       }
-                       finally
-                       {
-                       }
-                   });
-                t.SetApartmentState(ApartmentState.MTA);
-
-                t.Start();
-
-
-            } while (false);
-        }
-
-        private void m_SelectFileBtn_Click(object sender, RoutedEventArgs e)
-        {
-            do
-            {
+         } while (false);
+      }
+
+      private void m_SelectFileBtn_Click(object sender, RoutedEventArgs e)
+      {
+         do {
             var lselectedNode = m_FileFormatComboBox.SelectedItem as XmlNode;
 
-            if (lselectedNode == null)
-                break;
+            if (lselectedNode == null) {
+               break;
+            }
 
             var lSelectedAttr = lselectedNode.Attributes["Value"];
 
-            if (lSelectedAttr == null)
-                break;
+            if (lSelectedAttr == null) {
+               break;
+            }
 
-            String limageSourceDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var limageSourceDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
-            SaveFileDialog lsaveFileDialog = new SaveFileDialog();
+            var lsaveFileDialog = new SaveFileDialog();
 
             lsaveFileDialog.InitialDirectory = limageSourceDir;
 
@@ -509,741 +566,569 @@ namespace WPFVideoAndAudioRecorder
 
             var lresult = lsaveFileDialog.ShowDialog();
 
-            if (lresult != true)
-                break;
+            if (lresult != true) {
+               break;
+            }
 
             mFilename = lsaveFileDialog.FileName;
-                
+
             lSelectedAttr = lselectedNode.Attributes["GUID"];
 
-            if (lSelectedAttr == null)
-                break;
-
-                var t = new Thread(
-
-                   delegate ()
-                   {
-
-                       try
-                       {
-
-                           mSinkControl.createSinkFactory(
-                           Guid.Parse(lSelectedAttr.Value),
-                           out mFileSinkFactory);
-                       }
-                       catch (Exception ex)
-                       {
-                       }
-                       finally
-                       {
-                       }
-                   });
-                t.SetApartmentState(ApartmentState.MTA);
-
-                t.Start();
-
-            m_StartStopBtn.IsEnabled = true;
-                                
-            } while (false);
-
-        }
-
-        private void m_StartStopBtn_Click(object sender, RoutedEventArgs e)
-        {
-            m_StartStopBtn.IsEnabled = false;
-
-            if (mIsStarted)
-            {
-                mIsStarted = false;
-
-                var tl = new Thread(
-
-                   delegate ()
-                   {
-
-                       try
-                       {
-
-                           if (mISession == null)
-                               return;
-
-                           mISession.stopSession();
-
-                           mISession.closeSession();
-
-                           mISession = null;
-
-                           Dispatcher.Invoke(
-                           DispatcherPriority.Normal,
-                           new Action(() => {
-                               m_BtnTxtBlk.Text = "Start";
-
-                               m_StartStopBtn.IsEnabled = true;
-                           }));
-                       }
-                       catch (Exception ex)
-                       {
-                       }
-                       finally
-                       {
-                       }
-                   });
-                tl.SetApartmentState(ApartmentState.MTA);
-
-                tl.Start();
-
-                return;
+            if (lSelectedAttr == null) {
+               break;
             }
 
-            var l_videoStreamEnabled = (bool)m_VideoStreamChkBtn.IsChecked && m_VideoCompressedMediaTypesComboBox.SelectedIndex > -1;
-
-            var l_previewEnabled = (bool)m_VideoStreamPreviewChkBtn.IsChecked;
-
-
-
-            var l_VideoSourceXmlNode = m_VideoSourceComboBox.SelectedItem as XmlNode;
-            var l_VideoStreamXmlNode = m_VideoStreamComboBox.SelectedItem as XmlNode;
-            var l_VideoSourceMediaTypeXmlNode = m_VideoSourceMediaTypeComboBox.SelectedItem as XmlNode;
-            var l_VideoEncodersXmlNode = m_VideoEncodersComboBox.SelectedItem as XmlNode;
-            var l_VideoEncodingModeXmlNode = m_VideoEncodingModeComboBox.SelectedItem as XmlNode;
-            var l_VideoCompressedMediaTypeSelectedIndex = m_VideoCompressedMediaTypesComboBox.SelectedIndex;
-
-
-            var l_audioStreamEnabled = (bool)m_AudioStreamChkBtn.IsChecked && m_AudioCompressedMediaTypesComboBox.SelectedIndex > -1;
-
-
-            var l_AudioSourceXmlNode = m_AudioSourceComboBox.SelectedItem as XmlNode;
-            var l_AudioStreamXmlNode = m_AudioStreamComboBox.SelectedItem as XmlNode;
-            var l_AudioSourceMediaTypeXmlNode = m_AudioSourceMediaTypeComboBox.SelectedItem as XmlNode;
-            var l_AudioEncodersXmlNode = m_AudioEncodersComboBox.SelectedItem as XmlNode;
-            var l_AudioEncodingModeXmlNode = m_AudioEncodingModeComboBox.SelectedItem as XmlNode;
-            var l_AudioCompressedMediaTypeSelectedIndexXmlNode = m_AudioCompressedMediaTypesComboBox.SelectedIndex;
-
-            var lHandle = m_EVRDisplay.Handle;
-
-
-            object RenderNode = null;
-
-            if (l_previewEnabled)
+            var t = new Thread(delegate()
             {
-                //List<object> lRenderOutputNodesList = new List<object>();
-
-                //if (mEVRMultiSinkFactory != null)
-                //    mEVRMultiSinkFactory.createOutputNodes(
-                //        lHandle,
-                //        1,
-                //        out lRenderOutputNodesList);
-
-                //if (lRenderOutputNodesList.Count == 1)
-                //{
-                //    RenderNode = lRenderOutputNodesList[0];
-                //}
-
-
-                if (mEVRSinkFactory != null)
-                    mEVRSinkFactory.createOutputNode(
-                        lHandle,
-                        out RenderNode);
-                
-            }
-
-            var t = new Thread(
-
-               delegate ()
-               {
-
-                   try
-                   {
-
-                       List<object> lCompressedMediaTypeList = new List<object>();
-
-                       if (l_videoStreamEnabled)
-                       {
-                           object lCompressedMediaType = getCompressedMediaType(
-                                   l_VideoSourceXmlNode,
-                                   l_VideoStreamXmlNode,
-                                   l_VideoSourceMediaTypeXmlNode,
-                                   l_VideoEncodersXmlNode,
-                                   l_VideoEncodingModeXmlNode,
-                                   l_VideoCompressedMediaTypeSelectedIndex);
-
-                           if (lCompressedMediaType != null)
-                               lCompressedMediaTypeList.Add(lCompressedMediaType);
-                       }
-
-                       if (l_audioStreamEnabled)
-                       {
-                           object lCompressedMediaType = getCompressedMediaType(
-                                    l_AudioSourceXmlNode,
-                                    l_AudioStreamXmlNode,
-                                    l_AudioSourceMediaTypeXmlNode,
-                                    l_AudioEncodersXmlNode,
-                                    l_AudioEncodingModeXmlNode,
-                                    l_AudioCompressedMediaTypeSelectedIndexXmlNode);
-
-                           if (lCompressedMediaType != null)
-                               lCompressedMediaTypeList.Add(lCompressedMediaType);
-                       }
-
-                       List<object> lOutputNodes = getOutputNodes(lCompressedMediaTypeList);
-
-                       if (lOutputNodes == null || lOutputNodes.Count == 0)
-                           return;
-
-
-                       int lOutputIndex = 0;
-
-                       List<object> lSourceNodes = new List<object>();
-
-                       if (l_videoStreamEnabled)
-                       {
-
-
-
-                           object lSourceNode = getSourceNode(
-                                   l_VideoSourceXmlNode,
-                                   l_VideoStreamXmlNode,
-                                   l_VideoSourceMediaTypeXmlNode,
-                                   l_VideoEncodersXmlNode,
-                                   l_VideoEncodingModeXmlNode,
-                                   l_VideoCompressedMediaTypeSelectedIndex,
-                                   RenderNode,
-                               lOutputNodes[lOutputIndex++]);
-
-                           if (lSourceNodes != null)
-                               lSourceNodes.Add(lSourceNode);
-                       }
-
-                       if (l_audioStreamEnabled)
-                       {
-                           object lSourceNode = getSourceNode(
-                            l_AudioSourceXmlNode,
-                            l_AudioStreamXmlNode,
-                            l_AudioSourceMediaTypeXmlNode,
-                            l_AudioEncodersXmlNode,
-                            l_AudioEncodingModeXmlNode,
-                            l_AudioCompressedMediaTypeSelectedIndexXmlNode,
-                           null,
-                               lOutputNodes[lOutputIndex++]);
-
-                           if (lSourceNodes != null)
-                               lSourceNodes.Add(lSourceNode);
-                       }
-
-                       mISession = mISessionControl.createSession(lSourceNodes.ToArray());
-
-                       if (mISession == null)
-                           return;
-
-                       if (mISession.startSession(0, Guid.Empty))
-                       {
-                           Dispatcher.Invoke(
-                           DispatcherPriority.Normal,
-                           new Action(() => {
-                               m_BtnTxtBlk.Text = "Stop";
-
-                               m_StartStopBtn.IsEnabled = true;
-                           }));
-                       }
-
-                       mIsStarted = true;
-
-
-                   }
-                   catch (Exception ex)
-                   {
-                   }
-                   finally
-                   {
-                   }
-               });
+               try {
+                  mSinkControl.createSinkFactory(Guid.Parse(lSelectedAttr.Value), out mFileSinkFactory);
+               } catch (Exception ex) {
+               }
+            });
             t.SetApartmentState(ApartmentState.MTA);
 
             t.Start();
-        }
 
-        private object getCompressedMediaType(
-            XmlNode aSourceNode,
-            XmlNode aStreamNode,
-            XmlNode aMediaTypeNode,
-            XmlNode aEncoderNode,
-            XmlNode aEncoderModeNode,
-            int aCompressedMediaTypeIndex)
-        {
-            object lresult = null;
+            m_StartStopBtn.IsEnabled = true;
+         } while (false);
+      }
 
-            do
+      private void m_StartStopBtn_Click(object sender, RoutedEventArgs e)
+      {
+         m_StartStopBtn.IsEnabled = false;
+
+         if (mIsStarted) {
+            mIsStarted = false;
+
+            var tl = new Thread(delegate()
             {
-                if (aCompressedMediaTypeIndex < 0)
-                    break;
+               try {
+                  if (mISession == null) {
+                     return;
+                  }
+
+                  mISession.stopSession();
+
+                  mISession.closeSession();
+
+                  mISession = null;
+
+                  Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
+                  {
+                     m_BtnTxtBlk.Text = "Start";
+
+                     m_StartStopBtn.IsEnabled = true;
+                  }));
+               } catch (Exception ex) {
+               }
+            });
+            tl.SetApartmentState(ApartmentState.MTA);
+
+            tl.Start();
+
+            return;
+         }
+
+         var l_videoStreamEnabled = (bool) m_VideoStreamChkBtn.IsChecked && (m_VideoCompressedMediaTypesComboBox.SelectedIndex > -1);
+
+         var l_previewEnabled = (bool) m_VideoStreamPreviewChkBtn.IsChecked;
 
 
-                if (aSourceNode == null)
-                    break;
+         var l_VideoSourceXmlNode = m_VideoSourceComboBox.SelectedItem as XmlNode;
+         var l_VideoStreamXmlNode = m_VideoStreamComboBox.SelectedItem as XmlNode;
+         var l_VideoSourceMediaTypeXmlNode = m_VideoSourceMediaTypeComboBox.SelectedItem as XmlNode;
+         var l_VideoEncodersXmlNode = m_VideoEncodersComboBox.SelectedItem as XmlNode;
+         var l_VideoEncodingModeXmlNode = m_VideoEncodingModeComboBox.SelectedItem as XmlNode;
+         var l_VideoCompressedMediaTypeSelectedIndex = m_VideoCompressedMediaTypesComboBox.SelectedIndex;
 
 
-                if (aStreamNode == null)
-                    break;
+         var l_audioStreamEnabled = (bool) m_AudioStreamChkBtn.IsChecked && (m_AudioCompressedMediaTypesComboBox.SelectedIndex > -1);
 
 
-                if (aMediaTypeNode == null)
-                    break;
+         var l_AudioSourceXmlNode = m_AudioSourceComboBox.SelectedItem as XmlNode;
+         var l_AudioStreamXmlNode = m_AudioStreamComboBox.SelectedItem as XmlNode;
+         var l_AudioSourceMediaTypeXmlNode = m_AudioSourceMediaTypeComboBox.SelectedItem as XmlNode;
+         var l_AudioEncodersXmlNode = m_AudioEncodersComboBox.SelectedItem as XmlNode;
+         var l_AudioEncodingModeXmlNode = m_AudioEncodingModeComboBox.SelectedItem as XmlNode;
+         var l_AudioCompressedMediaTypeSelectedIndexXmlNode = m_AudioCompressedMediaTypesComboBox.SelectedIndex;
+
+         var lHandle = m_EVRDisplay.Handle;
 
 
-                if (aEncoderNode == null)
-                    break;
+         object RenderNode = null;
+
+         if (l_previewEnabled) {
+            //List<object> lRenderOutputNodesList = new List<object>();
+
+            //if (mEVRMultiSinkFactory != null)
+            //    mEVRMultiSinkFactory.createOutputNodes(
+            //        lHandle,
+            //        1,
+            //        out lRenderOutputNodesList);
+
+            //if (lRenderOutputNodesList.Count == 1)
+            //{
+            //    RenderNode = lRenderOutputNodesList[0];
+            //}
 
 
-                if (aEncoderModeNode == null)
-                    break;
-                
-                var lEncoderGuidAttr = aEncoderNode.Attributes["CLSID"];
+            if (mEVRSinkFactory != null) {
+               mEVRSinkFactory.createOutputNode(lHandle, out RenderNode);
+            }
+         }
 
-                if (lEncoderGuidAttr == null)
-                    break;
+         var t = new Thread(delegate()
+         {
+            try {
+               var lCompressedMediaTypeList = new List<object>();
 
-                Guid lCLSIDEncoder;
+               if (l_videoStreamEnabled) {
+                  var lCompressedMediaType = getCompressedMediaType(l_VideoSourceXmlNode, l_VideoStreamXmlNode, l_VideoSourceMediaTypeXmlNode, l_VideoEncodersXmlNode, l_VideoEncodingModeXmlNode,
+                                                                    l_VideoCompressedMediaTypeSelectedIndex);
 
-                if (!Guid.TryParse(lEncoderGuidAttr.Value, out lCLSIDEncoder))
-                    break;
+                  if (lCompressedMediaType != null) {
+                     lCompressedMediaTypeList.Add(lCompressedMediaType);
+                  }
+               }
 
-                var lEncoderModeGuidAttr = aEncoderModeNode.Attributes["GUID"];
+               if (l_audioStreamEnabled) {
+                  var lCompressedMediaType = getCompressedMediaType(l_AudioSourceXmlNode, l_AudioStreamXmlNode, l_AudioSourceMediaTypeXmlNode, l_AudioEncodersXmlNode, l_AudioEncodingModeXmlNode,
+                                                                    l_AudioCompressedMediaTypeSelectedIndexXmlNode);
 
-                if (lEncoderModeGuidAttr == null)
-                    break;
+                  if (lCompressedMediaType != null) {
+                     lCompressedMediaTypeList.Add(lCompressedMediaType);
+                  }
+               }
 
-                Guid lCLSIDEncoderMode;
+               var lOutputNodes = getOutputNodes(lCompressedMediaTypeList);
 
-                if (!Guid.TryParse(lEncoderModeGuidAttr.Value, out lCLSIDEncoderMode))
-                    break;
+               if ((lOutputNodes == null) ||
+                   (lOutputNodes.Count == 0)) {
+                  return;
+               }
 
 
-                
-                if (aSourceNode == null)
-                    break;
+               var lOutputIndex = 0;
 
-                var lNode = aSourceNode.SelectSingleNode(
-            "Source.Attributes/Attribute" +
-            "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
-            "/SingleValue/@Value");
+               var lSourceNodes = new List<object>();
 
-                if (lNode == null)
-                    break;
+               if (l_videoStreamEnabled) {
+                  var lSourceNode = getSourceNode(l_VideoSourceXmlNode, l_VideoStreamXmlNode, l_VideoSourceMediaTypeXmlNode, l_VideoEncodersXmlNode, l_VideoEncodingModeXmlNode,
+                                                  l_VideoCompressedMediaTypeSelectedIndex, RenderNode, lOutputNodes[lOutputIndex++]);
 
-                string lSymbolicLink = lNode.Value;
+                  if (lSourceNodes != null) {
+                     lSourceNodes.Add(lSourceNode);
+                  }
+               }
 
-                if (aStreamNode == null)
-                    break;
+               if (l_audioStreamEnabled) {
+                  var lSourceNode = getSourceNode(l_AudioSourceXmlNode, l_AudioStreamXmlNode, l_AudioSourceMediaTypeXmlNode, l_AudioEncodersXmlNode, l_AudioEncodingModeXmlNode,
+                                                  l_AudioCompressedMediaTypeSelectedIndexXmlNode, null, lOutputNodes[lOutputIndex++]);
 
-                lNode = aStreamNode.SelectSingleNode("@Index");
+                  if (lSourceNodes != null) {
+                     lSourceNodes.Add(lSourceNode);
+                  }
+               }
 
-                if (lNode == null)
-                    break;
+               mISession = mISessionControl.createSession(lSourceNodes.ToArray());
 
-                uint lStreamIndex = 0;
+               if (mISession == null) {
+                  return;
+               }
 
-                if (!uint.TryParse(lNode.Value, out lStreamIndex))
-                {
-                    break;
-                }
-                
-                if (aMediaTypeNode == null)
-                    break;
+               if (mISession.startSession(0, Guid.Empty)) {
+                  Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
+                  {
+                     m_BtnTxtBlk.Text = "Stop";
 
-                lNode = aMediaTypeNode.SelectSingleNode("@Index");
+                     m_StartStopBtn.IsEnabled = true;
+                  }));
+               }
 
-                if (lNode == null)
-                    break;
+               mIsStarted = true;
+            } catch (Exception ex) {
+            }
+         });
+         t.SetApartmentState(ApartmentState.MTA);
 
-                uint lMediaTypeIndex = 0;
+         t.Start();
+      }
 
-                if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-                {
-                    break;
-                }
-                
-                object lSourceMediaType = null;
+      private void m_VideoEncodersComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+      {
+         do {
+            if (mEncoderControl == null) {
+               break;
+            }
 
-                if (!mSourceControl.getSourceOutputMediaType(
-                    lSymbolicLink,
-                    lStreamIndex,
-                    lMediaTypeIndex,
-                    out lSourceMediaType))
-                    break;
+            var lselectedNode = m_VideoEncodersComboBox.SelectedItem as XmlNode;
 
-                if (lSourceMediaType == null)
-                    break;
+            if (lselectedNode == null) {
+               break;
+            }
 
-                IEncoderNodeFactory lEncoderNodeFactory;
+            var lCLSIDEncoderAttr = lselectedNode.Attributes["CLSID"];
 
-                if (!mEncoderControl.createEncoderNodeFactory(
-                    lCLSIDEncoder,
-                    out lEncoderNodeFactory))
-                    break;
+            if (lCLSIDEncoderAttr == null) {
+               break;
+            }
 
-                if (lEncoderNodeFactory == null)
-                    break;
+            Guid lCLSIDEncoder;
 
-                object lCompressedMediaType;
+            if (!Guid.TryParse(lCLSIDEncoderAttr.Value, out lCLSIDEncoder)) {
+               break;
+            }
 
-                if (!lEncoderNodeFactory.createCompressedMediaType(
-                    lSourceMediaType,
-                    lCLSIDEncoderMode,
-                    50,
-                    (uint)aCompressedMediaTypeIndex,
-                    out lCompressedMediaType))
-                    break;
 
-                lresult = lCompressedMediaType;
-                
-            } while (false);                    
+            var lSourceNode = m_VideoSourceComboBox.SelectedItem as XmlNode;
 
-            return lresult;
-        }
+            if (lSourceNode == null) {
+               return;
+            }
 
-        private List<object> getOutputNodes(List<object> aCompressedMediaTypeList)
-        {
-            List<object> lresult = new List<object>();
+            var lNode = lSourceNode.SelectSingleNode("Source.Attributes/Attribute" +
+                                                     "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
+                                                     "/SingleValue/@Value");
 
-            do
+            if (lNode == null) {
+               return;
+            }
+
+            var lSymbolicLink = lNode.Value;
+
+            lSourceNode = m_VideoStreamComboBox.SelectedItem as XmlNode;
+
+            if (lSourceNode == null) {
+               return;
+            }
+
+            lNode = lSourceNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               return;
+            }
+
+            uint lStreamIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lStreamIndex)) {
+               return;
+            }
+
+            lSourceNode = m_VideoSourceMediaTypeComboBox.SelectedItem as XmlNode;
+
+            if (lSourceNode == null) {
+               return;
+            }
+
+            lNode = lSourceNode.SelectSingleNode("@Index");
+
+            if (lNode == null) {
+               return;
+            }
+
+            uint lMediaTypeIndex = 0;
+
+            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+               return;
+            }
+
+
+            object lOutputMediaType;
+
+            if (mSourceControl == null) {
+               return;
+            }
+
+            var t = new Thread(delegate()
             {
-                if (aCompressedMediaTypeList == null)
-                    break;
+               try {
+                  Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => { m_VideoEncodingModeComboBox.IsEnabled = false; }));
 
-                if (aCompressedMediaTypeList.Count == 0)
-                    break;
+                  mSourceControl.getSourceOutputMediaType(lSymbolicLink, lStreamIndex, lMediaTypeIndex, out lOutputMediaType);
 
-                if (mFileSinkFactory == null)
-                    break;
+                  string lMediaTypeCollection;
 
-                if(string.IsNullOrEmpty(mFilename))
-                    break;
+                  if (!mEncoderControl.getMediaTypeCollectionOfEncoder(lOutputMediaType, lCLSIDEncoder, out lMediaTypeCollection)) {
+                     return;
+                  }
 
-                mFileSinkFactory.createOutputNodes(
-                    aCompressedMediaTypeList,
-                    mFilename,
-                    out lresult);
-                
-            } while (false);
 
-            return lresult;
-        }
-        
-        private object getSourceNode(
-            XmlNode aSourceNode,
-            XmlNode aStreamNode,
-            XmlNode aMediaTypeNode,
-            XmlNode aEncoderNode,
-            XmlNode aEncoderModeNode,
-            int aCompressedMediaTypeIndex,
-            object PreviewRenderNode,
-            object aOutputNode)
-        {
-            object lresult = null;
+                  var lXmlEncoderModeDataProvider = (XmlDataProvider) Resources["XmlEncoderModeProvider"];
 
-            do
-            {
-                if (aCompressedMediaTypeIndex < 0)
-                    break;
+                  if (lXmlEncoderModeDataProvider == null) {
+                     return;
+                  }
 
+                  var lEncoderModedoc = new XmlDocument();
 
-                if (aSourceNode == null)
-                    break;
+                  lEncoderModedoc.LoadXml(lMediaTypeCollection);
 
+                  lXmlEncoderModeDataProvider.Document = lEncoderModedoc;
 
-                if (aStreamNode == null)
-                    break;
 
+                  Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => { m_VideoEncodingModeComboBox.IsEnabled = true; }));
+               } catch (Exception ex) {
+               }
+            });
+            t.SetApartmentState(ApartmentState.MTA);
 
-                if (aMediaTypeNode == null)
-                    break;
+            t.Start();
+         } while (false);
+      }
 
+      private void MainWindow_WriteDelegateEvent(string aMessage)
+      {
+         MessageBox.Show(aMessage);
+      }
 
-                if (aEncoderNode == null)
-                    break;
+      private void Window_Loaded(object sender, RoutedEventArgs e)
+      {
+         var t = new Thread(delegate()
+         {
+            try {
+               mCaptureManager = Program.mCaptureManager;
 
+               LogManager.getInstance().WriteDelegateEvent += MainWindow_WriteDelegateEvent;
 
-                if (aEncoderModeNode == null)
-                    break;
+               if (mCaptureManager == null) {
+                  return;
+               }
 
-                var lEncoderGuidAttr = aEncoderNode.Attributes["CLSID"];
+               mSourceControl = mCaptureManager.createSourceControl();
 
-                if (lEncoderGuidAttr == null)
-                    break;
+               if (mSourceControl == null) {
+                  return;
+               }
 
-                Guid lCLSIDEncoder;
+               mEncoderControl = mCaptureManager.createEncoderControl();
 
-                if (!Guid.TryParse(lEncoderGuidAttr.Value, out lCLSIDEncoder))
-                    break;
+               if (mEncoderControl == null) {
+                  return;
+               }
 
-                var lEncoderModeGuidAttr = aEncoderModeNode.Attributes["GUID"];
+               mSinkControl = mCaptureManager.createSinkControl();
 
-                if (lEncoderModeGuidAttr == null)
-                    break;
+               if (mSinkControl == null) {
+                  return;
+               }
 
-                Guid lCLSIDEncoderMode;
+               mISessionControl = mCaptureManager.createSessionControl();
 
-                if (!Guid.TryParse(lEncoderModeGuidAttr.Value, out lCLSIDEncoderMode))
-                    break;
+               if (mISessionControl == null) {
+                  return;
+               }
 
+               mStreamControl = mCaptureManager.createStreamControl();
 
+               if (mStreamControl == null) {
+                  return;
+               }
 
-                if (aSourceNode == null)
-                    break;
+               mStreamControl.createStreamControlNodeFactory(ref mSpreaderNodeFactory);
 
-                var lNode = aSourceNode.SelectSingleNode(
-            "Source.Attributes/Attribute" +
-            "[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK' or @Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK']" +
-            "/SingleValue/@Value");
+               if (mSpreaderNodeFactory == null) {
+                  return;
+               }
 
-                if (lNode == null)
-                    break;
+               mSinkControl.createSinkFactory(Guid.Empty, out mEVRMultiSinkFactory);
 
-                string lSymbolicLink = lNode.Value;
+               if (mEVRMultiSinkFactory == null) {
+                  return;
+               }
 
-                if (aStreamNode == null)
-                    break;
+               mSinkControl.createSinkFactory(Guid.Empty, out mEVRSinkFactory);
 
-                lNode = aStreamNode.SelectSingleNode("@Index");
+               if (mEVRSinkFactory == null) {
+                  return;
+               }
 
-                if (lNode == null)
-                    break;
 
-                uint lStreamIndex = 0;
+               var lXmlDataProvider = (XmlDataProvider) Resources["XmlSources"];
 
-                if (!uint.TryParse(lNode.Value, out lStreamIndex))
-                {
-                    break;
-                }
+               if (lXmlDataProvider == null) {
+                  return;
+               }
 
-                if (aMediaTypeNode == null)
-                    break;
+               var doc = new XmlDocument();
 
-                lNode = aMediaTypeNode.SelectSingleNode("@Index");
+               var lxmldoc = "";
 
-                if (lNode == null)
-                    break;
+               mCaptureManager.getCollectionOfSources(ref lxmldoc);
 
-                uint lMediaTypeIndex = 0;
+               doc.LoadXml(lxmldoc);
 
-                if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-                {
-                    break;
-                }
+               lXmlDataProvider.Document = doc;
 
-                object lSourceMediaType = null;
+               lXmlDataProvider = (XmlDataProvider) Resources["XmlEncoders"];
 
-                if (!mSourceControl.getSourceOutputMediaType(
-                    lSymbolicLink,
-                    lStreamIndex,
-                    lMediaTypeIndex,
-                    out lSourceMediaType))
-                    break;
+               if (lXmlDataProvider == null) {
+                  return;
+               }
 
-                if (lSourceMediaType == null)
-                    break;
+               doc = new XmlDocument();
 
-                IEncoderNodeFactory lEncoderNodeFactory;
+               mCaptureManager.getCollectionOfEncoders(ref lxmldoc);
 
-                if (!mEncoderControl.createEncoderNodeFactory(
-                    lCLSIDEncoder,
-                    out lEncoderNodeFactory))
-                    break;
+               doc.LoadXml(lxmldoc);
 
-                if (lEncoderNodeFactory == null)
-                    break;
+               lXmlDataProvider.Document = doc;
 
-                object lEncoderNode;
 
-                if (!lEncoderNodeFactory.createEncoderNode(
-                    lSourceMediaType,
-                    lCLSIDEncoderMode,
-                    50,
-                    (uint)aCompressedMediaTypeIndex,
-                    aOutputNode,
-                    out lEncoderNode))
-                    break;
+               mCaptureManager.getCollectionOfSinks(ref lxmldoc);
 
 
-                object SpreaderNode = lEncoderNode;
+               lXmlDataProvider = (XmlDataProvider) Resources["XmlContainerTypeProvider"];
 
-                if(PreviewRenderNode != null)
-                {
+               if (lXmlDataProvider == null) {
+                  return;
+               }
 
-                    List<object> lOutputNodeList = new List<object>();
+               doc = new XmlDocument();
 
-                    //lOutputNodeList.Add(lEncoderNode);
+               doc.LoadXml(lxmldoc);
 
-                    //lOutputNodeList.Add(PreviewRenderNode);
+               lXmlDataProvider.Document = doc;
+            } catch (Exception ex) {
+            }
+         });
+         t.SetApartmentState(ApartmentState.MTA);
 
-                    lOutputNodeList.Add(PreviewRenderNode);
+         t.Start();
+      }
 
-                    lOutputNodeList.Add(lEncoderNode);
+      #endregion
 
-                    mSpreaderNodeFactory.createSpreaderNode(
-                        lOutputNodeList,
-                        out SpreaderNode);
+      //      private void m_StartBtn_Click(object sender, RoutedEventArgs e)
+      //      {
+      //          if(m_StartBtn.Content == "Stop")
+      //          {
+      //              m_StartBtn.Content = "Start";
 
-                }
+      //              if(mISession != null)
+      //              {
+      //                  mISession.stopSession();
 
-                object lSourceNode;
+      //                  mISession.closeSession();
+      //              }
 
-                string lextendSymbolicLink = lSymbolicLink + " --options=" +
-    "<?xml version='1.0' encoding='UTF-8'?>" +
-    "<Options>" +
-        "<Option Type='Cursor' Visiblity='True'>" +
-            "<Option.Extensions>" +
-                "<Extension Type='BackImage' Height='100' Width='100' Fill='0x7055ff55' />" +
-            "</Option.Extensions>" +
-        "</Option>" +
-    "</Options>";
+      //              return;
+      //          }
 
-                if (!mSourceControl.createSourceNode(
-                    lextendSymbolicLink,
-                    lStreamIndex,
-                    lMediaTypeIndex,
-                    SpreaderNode,
-                    out lSourceNode))
-                    break;
+      //          string lAudioSourceSymbolicLink = "CaptureManager///Software///Sources///AudioEndpointCapture///AudioLoopBack";
 
-                lresult = lSourceNode;
+      //          uint lAudioSourceIndexStream = 0;
 
-            } while (false);
+      //          uint lAudioSourceIndexMediaType = 0;
 
-            return lresult;
-        }
+      //          object lAudioStreamMediaType = null;
 
-  //      private void m_StartBtn_Click(object sender, RoutedEventArgs e)
-  //      {
-  //          if(m_StartBtn.Content == "Stop")
-  //          {
-  //              m_StartBtn.Content = "Start";
+      //          if (!mSourceControl.getSourceOutputMediaType(
+      //              lAudioSourceSymbolicLink,
+      //              lAudioSourceIndexStream,
+      //              lAudioSourceIndexMediaType,
+      //              out lAudioStreamMediaType))
+      //              return;
 
-  //              if(mISession != null)
-  //              {
-  //                  mISession.stopSession();
+      //          if (lAudioStreamMediaType == null)
+      //              return;
 
-  //                  mISession.closeSession();
-  //              }
 
-  //              return;
-  //          }
+      //          Guid lAACEncoder = new Guid("93AF0C51-2275-45D2-A35B-F2BA21CAED00");
 
-  //          string lAudioSourceSymbolicLink = "CaptureManager///Software///Sources///AudioEndpointCapture///AudioLoopBack";
+      //          string gh;
 
-  //          uint lAudioSourceIndexStream = 0;
-            
-  //          uint lAudioSourceIndexMediaType = 0;
+      //          //mEncoderControl.getMediaTypeCollectionOfEncoder(lAudioStreamMediaType, lAACEncoder, out gh);
 
-  //          object lAudioStreamMediaType = null;
+      //          IEncoderNodeFactory lAACEncoderNodeFactory;
 
-  //          if (!mSourceControl.getSourceOutputMediaType(
-  //              lAudioSourceSymbolicLink,
-  //              lAudioSourceIndexStream,
-  //              lAudioSourceIndexMediaType,
-  //              out lAudioStreamMediaType))
-  //              return;
+      //          if (!mEncoderControl.createEncoderNodeFactory(
+      //              lAACEncoder,
+      //              out lAACEncoderNodeFactory))
+      //              return;
 
-  //          if (lAudioStreamMediaType == null)
-  //              return;
+      //          if (lAACEncoderNodeFactory == null)
+      //              return;
 
+      //          Guid lConstantEncoderMode = new Guid("CA37E2BE-BEC0-4B17-946D-44FBC1B3DF55");
 
-  //          Guid lAACEncoder = new Guid("93AF0C51-2275-45D2-A35B-F2BA21CAED00");
+      //          object lAudioCompressedMediaType;
 
-  //          string gh;
+      //          if(!lAACEncoderNodeFactory.createCompressedMediaType(
+      //              lAudioStreamMediaType,
+      //              lConstantEncoderMode,
+      //              75,
+      //              0,
+      //              out lAudioCompressedMediaType))
+      //              return;
 
-  //          //mEncoderControl.getMediaTypeCollectionOfEncoder(lAudioStreamMediaType, lAACEncoder, out gh);
+      //          if (lAudioCompressedMediaType == null)
+      //              return;
 
-  //          IEncoderNodeFactory lAACEncoderNodeFactory;
 
-  //          if (!mEncoderControl.createEncoderNodeFactory(
-  //              lAACEncoder,
-  //              out lAACEncoderNodeFactory))
-  //              return;
+      //          string hh = "";
 
-  //          if (lAACEncoderNodeFactory == null)
-  //              return;
+      //          //mCaptureManager.getCollectionOfSinks(ref hh);
 
-  //          Guid lConstantEncoderMode = new Guid("CA37E2BE-BEC0-4B17-946D-44FBC1B3DF55");
+      //          Guid lSink = new Guid("E80A6BFD-D9C2-4A1F-95DC-14685CACEF3E"); //  MP4
 
-  //          object lAudioCompressedMediaType;
+      ////          <ValuePart Title="Container format" Value="MP4" MIME="video/mp4" Description="MPEG4 Media Container" MaxPortCount="2" GUID="{E80A6BFD-D9C2-4A1F-95DC-14685CACEF3E}" /> 
+      ////<ValuePart Title="Container format" Value="AVI" MIME="" Description="AVI Media Container" MaxPortCount="12" GUID="{27F54603-A081-491C-91EE-0B1F2525813C}" /> 
+      ////<ValuePart Title="Container format" Value="MKV" MIME="" Description="MKV Media Container" MaxPortCount="2" GUID="{1A4D4135-0712-47DF-B83C-2481A7A9CFA2}" /> 
 
-  //          if(!lAACEncoderNodeFactory.createCompressedMediaType(
-  //              lAudioStreamMediaType,
-  //              lConstantEncoderMode,
-  //              75,
-  //              0,
-  //              out lAudioCompressedMediaType))
-  //              return;
+      //          IFileSinkFactory lFileSinkFactory;
 
-  //          if (lAudioCompressedMediaType == null)
-  //              return;
+      //          mSinkControl.createSinkFactory(lSink, out lFileSinkFactory);
 
+      //          if (lFileSinkFactory == null)
+      //              return;
 
-  //          string hh = "";
+      //          List<object> lcompressedmediaTypes = new List<object>();
 
-  //          //mCaptureManager.getCollectionOfSinks(ref hh);
+      //          lcompressedmediaTypes.Add(lAudioCompressedMediaType);
 
-  //          Guid lSink = new Guid("E80A6BFD-D9C2-4A1F-95DC-14685CACEF3E"); //  MP4
+      //          List<object> loutputNodes = new List<object>();
 
-  ////          <ValuePart Title="Container format" Value="MP4" MIME="video/mp4" Description="MPEG4 Media Container" MaxPortCount="2" GUID="{E80A6BFD-D9C2-4A1F-95DC-14685CACEF3E}" /> 
-  ////<ValuePart Title="Container format" Value="AVI" MIME="" Description="AVI Media Container" MaxPortCount="12" GUID="{27F54603-A081-491C-91EE-0B1F2525813C}" /> 
-  ////<ValuePart Title="Container format" Value="MKV" MIME="" Description="MKV Media Container" MaxPortCount="2" GUID="{1A4D4135-0712-47DF-B83C-2481A7A9CFA2}" /> 
+      //          lFileSinkFactory.createOutputNodes(lcompressedmediaTypes, "video.mp4", out loutputNodes);
 
-  //          IFileSinkFactory lFileSinkFactory;
+      //          object lAudioEncoderNode;
 
-  //          mSinkControl.createSinkFactory(lSink, out lFileSinkFactory);
+      //          if (!lAACEncoderNodeFactory.createEncoderNode(
+      //              lAudioStreamMediaType,
+      //              lConstantEncoderMode,
+      //              75,
+      //              0,
+      //              loutputNodes[0],
+      //              out lAudioEncoderNode))
+      //              return;
 
-  //          if (lFileSinkFactory == null)
-  //              return;
+      //          if (lAudioEncoderNode == null)
+      //              return;
 
-  //          List<object> lcompressedmediaTypes = new List<object>();
+      //          object lAudioSourceNode = null;
 
-  //          lcompressedmediaTypes.Add(lAudioCompressedMediaType);
+      //          if (!mSourceControl.createSourceNode(
+      //              lAudioSourceSymbolicLink,
+      //              lAudioSourceIndexStream,
+      //              lAudioSourceIndexMediaType,
+      //              lAudioEncoderNode,
+      //              out lAudioSourceNode))
+      //              return;
 
-  //          List<object> loutputNodes = new List<object>();
+      //          if (lAudioSourceNode == null)
+      //              return;
 
-  //          lFileSinkFactory.createOutputNodes(lcompressedmediaTypes, "video.mp4", out loutputNodes);
 
-  //          object lAudioEncoderNode;
+      //          object[] lsourceNode = { lAudioSourceNode };
 
-  //          if (!lAACEncoderNodeFactory.createEncoderNode(
-  //              lAudioStreamMediaType,
-  //              lConstantEncoderMode,
-  //              75,
-  //              0,
-  //              loutputNodes[0],
-  //              out lAudioEncoderNode))
-  //              return;
+      //          mISession = mISessionControl.createSession(lsourceNode);
 
-  //          if (lAudioEncoderNode == null)
-  //              return;
+      //          if (mISession == null)
+      //              return;
 
-  //          object lAudioSourceNode = null;
+      //          mISession.startSession(0, Guid.Empty);
 
-  //          if (!mSourceControl.createSourceNode(
-  //              lAudioSourceSymbolicLink,
-  //              lAudioSourceIndexStream,
-  //              lAudioSourceIndexMediaType,
-  //              lAudioEncoderNode,
-  //              out lAudioSourceNode))
-  //              return;
+      //          m_StartBtn.Content = "Stop";
 
-  //          if (lAudioSourceNode == null)
-  //              return;
-
-
-  //          object[] lsourceNode = { lAudioSourceNode };
-
-  //          mISession = mISessionControl.createSession(lsourceNode);
-
-  //          if (mISession == null)
-  //              return;
-
-  //          mISession.startSession(0, Guid.Empty);
-
-  //          m_StartBtn.Content = "Stop";
-
-  //      }        
-    }
+      //      }        
+   }
 }

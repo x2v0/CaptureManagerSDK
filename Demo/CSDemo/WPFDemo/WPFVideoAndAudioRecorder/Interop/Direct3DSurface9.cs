@@ -3,49 +3,72 @@ using System.Runtime.InteropServices;
 
 namespace WPFVideoAndAudioRecorder.Interop
 {
-    internal sealed class Direct3DSurface9 : IDisposable
-    {
-        private ComInterface.IDirect3DSurface9 comObject;
-        private IntPtr native;
-        private IntPtr m_sharedhandle;
+   internal sealed class Direct3DSurface9 : IDisposable
+   {
+      #region Constructors and destructors
 
-        public IntPtr SharedHandle { get { return m_sharedhandle; } }
-        
-        public ComInterface.IDirect3DSurface9 texture { get { return comObject; } }
+      internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj, IntPtr sharedhandle)
+      {
+         texture = obj;
+         SharedHandle = sharedhandle;
+         NativeInterface = Marshal.GetIUnknownForObject(texture);
+      }
 
-        internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj, IntPtr sharedhandle)
-        {
-            this.comObject = obj;
-            this.m_sharedhandle = sharedhandle;
-            this.native = Marshal.GetIUnknownForObject(this.comObject);
-        }
+      ~Direct3DSurface9()
+      {
+         Release();
+      }
 
-        ~Direct3DSurface9()
-        {
-            this.Release();
-        }
+      #endregion
 
-        public IntPtr NativeInterface
-        {
-            get { return this.native; }
-        }
+      #region  Fields
 
-        public void Dispose()
-        {
-            this.Release();
-            GC.SuppressFinalize(this);
-        }
+      #endregion
 
-        private void Release()
-        {
-            if (this.comObject != null)
-            {
-                Marshal.Release(this.native);
-                this.native = IntPtr.Zero;
+      #region Public properties
 
-                Marshal.ReleaseComObject(this.comObject);
-                this.comObject = null;
-            }
-        }
-    }
+      public IntPtr NativeInterface
+      {
+         get;
+         private set;
+      }
+
+      public IntPtr SharedHandle
+      {
+         get;
+      }
+
+      public ComInterface.IDirect3DSurface9 texture
+      {
+         get;
+         private set;
+      }
+
+      #endregion
+
+      #region Interface methods
+
+      public void Dispose()
+      {
+         Release();
+         GC.SuppressFinalize(this);
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void Release()
+      {
+         if (texture != null) {
+            Marshal.Release(NativeInterface);
+            NativeInterface = IntPtr.Zero;
+
+            Marshal.ReleaseComObject(texture);
+            texture = null;
+         }
+      }
+
+      #endregion
+   }
 }

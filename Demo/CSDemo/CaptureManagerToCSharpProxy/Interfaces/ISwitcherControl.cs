@@ -22,20 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISwitcherControl
-    {
-        bool atttachSwitcher(object aSwitcherNode, object aAttachedNode);
-        bool detachSwitchers(ISession aSession);
-        bool pauseSwitchers(ISession aSession);
-        bool resumeSwitchers(ISession aSession);
-        bool pauseSwitcher(object aSwitcherNode);
-        bool resumeSwitcher(object aSwitcherNode);
-    }
+   public interface ISwitcherControl
+   {
+      #region Public methods
+
+      bool atttachSwitcher(object aSwitcherNode, object aAttachedNode);
+      bool detachSwitchers(ISession aSession);
+      bool pauseSwitcher(object aSwitcherNode);
+      bool pauseSwitchers(ISession aSession);
+      bool resumeSwitcher(object aSwitcherNode);
+      bool resumeSwitchers(ISession aSession);
+
+      #endregion
+   }
 }

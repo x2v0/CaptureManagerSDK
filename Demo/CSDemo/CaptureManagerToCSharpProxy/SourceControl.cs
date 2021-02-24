@@ -23,395 +23,292 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System.Runtime.InteropServices;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SourceControl : ISourceControl
-    {
-        CaptureManagerLibrary.ISourceControl mSourceControl;
-        
-        public SourceControl(
-            CaptureManagerLibrary.ISourceControl aSourceControl)
-        {
-            mSourceControl = aSourceControl;
-        }
-
-        public bool getSourceOutputMediaType(
-            string aSymbolicLink, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrOutputMediaType)
-        {
-            bool lresult = false;
-
-            aPtrPtrOutputMediaType = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.getSourceOutputMediaType(
-                        aSymbolicLink,
-                        aIndexStream,
-                        aIndexMediaType,
-                        out aPtrPtrOutputMediaType);
-                    
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-                
-            } while (false);
-
-            return lresult;
-        }
-               
-        public bool createSourceNode(
-           string aSymbolicLink, 
-           uint aIndexStream,
-           uint aIndexMediaType,
-           object aPtrDownStreamTopologyNode,
-           out object aPtrPtrTopologyNode)
-        {
-            bool lresult = false;
-
-            aPtrPtrTopologyNode = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.createSourceNodeWithDownStreamConnection(
-                        aSymbolicLink,
-                        aIndexStream,
-                        aIndexMediaType,
-                        aPtrDownStreamTopologyNode,
-                        out aPtrPtrTopologyNode);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public IWebCamControl createWebCamControl(string aSymbolicLink)
-        {
-            IWebCamControl lresult = null;
-
-            do
-            {
-
-                try
-                {
-                    if (mSourceControl == null)
-                        break;
-
-                    object lUnknown;
-
-                    mSourceControl.createSourceControl(
-                        aSymbolicLink,
-                        typeof(CaptureManagerLibrary.IWebCamControl).GUID,
-                        out lUnknown);
-
-                    var lWebCamControl = lUnknown as CaptureManagerLibrary.IWebCamControl;
-
-                    if (lWebCamControl == null)
-                        break;
-
-                    lresult = new WebCamControl(lWebCamControl);
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool createSource(
-            string aSymbolicLink, 
-            out object aPtrPtrMediaSource)
-        {
-            bool lresult = false;
-
-            aPtrPtrMediaSource = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.createSource(
-                        aSymbolicLink,
-                        out aPtrPtrMediaSource);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool createSourceFromCaptureProcessor(
-            object aPtrCaptureProcessor, 
-            out object aPtrPtrMediaSource)
-        {
-            bool lresult = false;
-
-            aPtrPtrMediaSource = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-                    ICaptureProcessor lICaptureProcessor = aPtrCaptureProcessor as ICaptureProcessor;
-                    
-                    if (lICaptureProcessor != null)
-                    {
-                        CaptureProcessor lCaptureProcessor = new CaptureProcessor(lICaptureProcessor);
-
-                        mSourceControl.createSourceFromCaptureProcessor(
-                            lCaptureProcessor,
-                            out aPtrPtrMediaSource);
-                    }
-                    else 
-                    {
-                        var lNativeCaptureProcessor = aPtrCaptureProcessor as CaptureManagerLibrary.ICaptureProcessor;
-
-                        if (lNativeCaptureProcessor == null)
-                            break;
-
-                        mSourceControl.createSourceFromCaptureProcessor(
-                            lNativeCaptureProcessor,
-                            out aPtrPtrMediaSource);
-                    }
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool createSourceNode(
-            string aSymbolicLink, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrTopologyNode)
-        {
-            bool lresult = false;
-
-            aPtrPtrTopologyNode = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.createSourceNode(
-                        aSymbolicLink, 
-                        aIndexStream, 
-                        aIndexMediaType, 
-                        out aPtrPtrTopologyNode);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool createSourceNodeFromExternalSource(
-            object aPtrMediaSource, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrTopologyNode)
-        {
-            bool lresult = false;
-
-            aPtrPtrTopologyNode = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.createSourceNodeFromExternalSource(
-                        aPtrMediaSource,
-                        aIndexStream,
-                        aIndexMediaType,
-                        out aPtrPtrTopologyNode);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool createSourceNodeFromExternalSourceWithDownStreamConnection(
-            object aPtrMediaSource, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            object aPtrDownStreamTopologyNode, 
-            out object aPtrPtrTopologyNode)
-        {
-            bool lresult = false;
-
-            aPtrPtrTopologyNode = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(
-                        aPtrMediaSource,
-                        aIndexStream,
-                        aIndexMediaType,
-                        aPtrDownStreamTopologyNode,
-                        out aPtrPtrTopologyNode);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool getCollectionOfSources(
-            ref string aPtrPtrXMLstring)
-        {
-            bool lresult = false;
-
-            IntPtr lPtrXMLstring = IntPtr.Zero;
-            
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    (mSourceControl as ISourceControlInner).getCollectionOfSources(out lPtrXMLstring);
-                    
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
-
-            return lresult;
-        }
-
-        public bool getSourceOutputMediaTypeFromMediaSource(
-            object aPtrMediaSource, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrOutputMediaType)
-        {
-            bool lresult = false;
-
-            aPtrPtrOutputMediaType = null;
-
-            do
-            {
-                if (mSourceControl == null)
-                    break;
-
-                try
-                {
-
-                    mSourceControl.getSourceOutputMediaTypeFromMediaSource(
-                        aPtrMediaSource,
-                        aIndexStream,
-                        aIndexMediaType,
-                        out aPtrPtrOutputMediaType);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-    }
+   internal class SourceControl : ISourceControl
+   {
+      #region Constructors and destructors
+
+      public SourceControl(CaptureManagerLibrary.ISourceControl aSourceControl)
+      {
+         mSourceControl = aSourceControl;
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.ISourceControl mSourceControl;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createSource(string aSymbolicLink, out object aPtrPtrMediaSource)
+      {
+         var lresult = false;
+
+         aPtrPtrMediaSource = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.createSource(aSymbolicLink, out aPtrPtrMediaSource);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool createSourceFromCaptureProcessor(object aPtrCaptureProcessor, out object aPtrPtrMediaSource)
+      {
+         var lresult = false;
+
+         aPtrPtrMediaSource = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               var lICaptureProcessor = aPtrCaptureProcessor as ICaptureProcessor;
+
+               if (lICaptureProcessor != null) {
+                  var lCaptureProcessor = new CaptureProcessor(lICaptureProcessor);
+
+                  mSourceControl.createSourceFromCaptureProcessor(lCaptureProcessor, out aPtrPtrMediaSource);
+               } else {
+                  var lNativeCaptureProcessor = aPtrCaptureProcessor as CaptureManagerLibrary.ICaptureProcessor;
+
+                  if (lNativeCaptureProcessor == null) {
+                     break;
+                  }
+
+                  mSourceControl.createSourceFromCaptureProcessor(lNativeCaptureProcessor, out aPtrPtrMediaSource);
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool createSourceNode(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, object aPtrDownStreamTopologyNode, out object aPtrPtrTopologyNode)
+      {
+         var lresult = false;
+
+         aPtrPtrTopologyNode = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.createSourceNodeWithDownStreamConnection(aSymbolicLink, aIndexStream, aIndexMediaType, aPtrDownStreamTopologyNode, out aPtrPtrTopologyNode);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool createSourceNode(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrTopologyNode)
+      {
+         var lresult = false;
+
+         aPtrPtrTopologyNode = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.createSourceNode(aSymbolicLink, aIndexStream, aIndexMediaType, out aPtrPtrTopologyNode);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool createSourceNodeFromExternalSource(object aPtrMediaSource, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrTopologyNode)
+      {
+         var lresult = false;
+
+         aPtrPtrTopologyNode = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.createSourceNodeFromExternalSource(aPtrMediaSource, aIndexStream, aIndexMediaType, out aPtrPtrTopologyNode);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool createSourceNodeFromExternalSourceWithDownStreamConnection(object aPtrMediaSource,
+                                                                             uint aIndexStream,
+                                                                             uint aIndexMediaType,
+                                                                             object aPtrDownStreamTopologyNode,
+                                                                             out object aPtrPtrTopologyNode)
+      {
+         var lresult = false;
+
+         aPtrPtrTopologyNode = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(aPtrMediaSource, aIndexStream, aIndexMediaType, aPtrDownStreamTopologyNode, out aPtrPtrTopologyNode);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public IWebCamControl createWebCamControl(string aSymbolicLink)
+      {
+         IWebCamControl lresult = null;
+
+         do {
+            try {
+               if (mSourceControl == null) {
+                  break;
+               }
+
+               object lUnknown;
+
+               mSourceControl.createSourceControl(aSymbolicLink, typeof(CaptureManagerLibrary.IWebCamControl).GUID, out lUnknown);
+
+               var lWebCamControl = lUnknown as CaptureManagerLibrary.IWebCamControl;
+
+               if (lWebCamControl == null) {
+                  break;
+               }
+
+               lresult = new WebCamControl(lWebCamControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool getCollectionOfSources(ref string aPtrPtrXMLstring)
+      {
+         var lresult = false;
+
+         var lPtrXMLstring = IntPtr.Zero;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               (mSourceControl as ISourceControlInner).getCollectionOfSources(out lPtrXMLstring);
+
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
+
+         return lresult;
+      }
+
+      public bool getSourceOutputMediaType(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrOutputMediaType)
+      {
+         var lresult = false;
+
+         aPtrPtrOutputMediaType = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.getSourceOutputMediaType(aSymbolicLink, aIndexStream, aIndexMediaType, out aPtrPtrOutputMediaType);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool getSourceOutputMediaTypeFromMediaSource(object aPtrMediaSource, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrOutputMediaType)
+      {
+         var lresult = false;
+
+         aPtrPtrOutputMediaType = null;
+
+         do {
+            if (mSourceControl == null) {
+               break;
+            }
+
+            try {
+               mSourceControl.getSourceOutputMediaTypeFromMediaSource(aPtrMediaSource, aIndexStream, aIndexMediaType, out aPtrPtrOutputMediaType);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

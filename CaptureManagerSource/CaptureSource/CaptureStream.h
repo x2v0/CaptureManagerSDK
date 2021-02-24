@@ -1,150 +1,99 @@
 #pragma once
-
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/SourceState.h"
 #include "../Common/ComPtrCustom.h"
 #include "IStreamControl.h"
 
-
 namespace CaptureManager
 {
-	namespace Sources
-	{
-		class CaptureSource;
-			
-		class CaptureStream : 
-			public BaseUnknown<IMFMediaStream, IStreamControl>
-		{
-			class RequestContainer :
-			public BaseUnknown<IUnknown>
-			{
-			public:
-				RequestContainer(IUnknown* aPtrToken)
-				{
-					mToken = aPtrToken;
-				}
+   namespace Sources
+   {
+      class CaptureSource;
 
-				HRESULT getToken(IUnknown** aPtrPtrToken)
-				{
-					HRESULT lresult(E_FAIL);
+      class CaptureStream : public BaseUnknown<IMFMediaStream, IStreamControl>
+      {
+         class RequestContainer : public BaseUnknown<IUnknown>
+         {
+         public:
+            RequestContainer(IUnknown* aPtrToken)
+            {
+               mToken = aPtrToken;
+            }
 
-					if (mToken)
-						lresult = mToken->QueryInterface(IID_PPV_ARGS(aPtrPtrToken));
+            HRESULT getToken(IUnknown** aPtrPtrToken)
+            {
+               HRESULT lresult(E_FAIL);
+               if (mToken)
+                  lresult = mToken->QueryInterface(IID_PPV_ARGS(aPtrPtrToken));
+               return lresult;
+            }
 
-					return lresult;
-				}
+         private:
+            CComPtrCustom<IUnknown> mToken;
+         };
 
-			private:
-				CComPtrCustom<IUnknown> mToken;
-			};
+      public:
+         CaptureStream(CaptureSource* aPtrCaptureSource, IMFStreamDescriptor* aStreamDescriptor);
 
-		public:
+         virtual ~CaptureStream();
 
-			CaptureStream(
-				CaptureSource* aPtrCaptureSource,
-				IMFStreamDescriptor* aStreamDescriptor);
-			virtual ~CaptureStream();
+         STDMETHODIMP BeginGetEvent(IMFAsyncCallback* aPtrCallback, IUnknown* aPtrUnkState) override;
 
-			STDMETHODIMP BeginGetEvent(
-				IMFAsyncCallback* aPtrCallback, 
-				IUnknown* aPtrUnkState);
+         STDMETHODIMP EndGetEvent(IMFAsyncResult* aPtrResult, IMFMediaEvent** aPtrPtrEvent) override;
 
-			STDMETHODIMP EndGetEvent(
-				IMFAsyncResult* aPtrResult, 
-				IMFMediaEvent** aPtrPtrEvent);
-			
-			STDMETHODIMP GetEvent(
-				DWORD aFlags, 
-				IMFMediaEvent** aPtrPtrEvent);
-			
-			STDMETHODIMP QueueEvent(
-				MediaEventType aMediaEventType, 
-				REFGUID aGUIDExtendedType,
-				HRESULT aHRStatus, 
-				const PROPVARIANT* aPtrvValue = nullptr);
+         STDMETHODIMP GetEvent(DWORD aFlags, IMFMediaEvent** aPtrPtrEvent) override;
 
-			STDMETHODIMP GetMediaSource(
-				IMFMediaSource** aPtrPtrMediaSource);
-			
-			STDMETHODIMP GetStreamDescriptor(
-				IMFStreamDescriptor** aPtrPtrStreamDescriptor);
-			
-			STDMETHODIMP RequestSample(
-				IUnknown* aPtrToken);
+         STDMETHODIMP QueueEvent(MediaEventType aMediaEventType, REFGUID aGUIDExtendedType, HRESULT aHRStatus,
+                                 const PROPVARIANT* aPtrvValue = nullptr) override;
 
+         STDMETHODIMP GetMediaSource(IMFMediaSource** aPtrPtrMediaSource) override;
 
+         STDMETHODIMP GetStreamDescriptor(IMFStreamDescriptor** aPtrPtrStreamDescriptor) override;
 
-			virtual HRESULT start();
+         STDMETHODIMP RequestSample(IUnknown* aPtrToken) override;
 
-			virtual HRESULT pause();
+         HRESULT start() override;
 
-			virtual HRESULT stop();
+         HRESULT pause() override;
 
-			virtual HRESULT shutdown();
+         HRESULT stop() override;
 
-			virtual HRESULT isActive(BOOL* aPtrState);
+         HRESULT shutdown() override;
 
-			virtual HRESULT activate(BOOL aActivate);
+         HRESULT isActive(BOOL* aPtrState) override;
 
-			virtual HRESULT checkShutdown();
+         HRESULT activate(BOOL aActivate) override;
 
-			virtual HRESULT QueueEvent(
-				MediaEventType aMediaEventType, 
-				REFGUID aGUIDExtendedType,
-				HRESULT aHRStatus, 
-				IUnknown* aPtrUnk);
+         virtual HRESULT checkShutdown();
 
-			virtual HRESULT queueRequestToken(
-				IUnknown* aPtrToken);
+         HRESULT QueueEvent(MediaEventType aMediaEventType, REFGUID aGUIDExtendedType, HRESULT aHRStatus,
+                            IUnknown* aPtrUnk) override;
 
+         HRESULT queueRequestToken(IUnknown* aPtrToken) override;
 
-		protected:
+      protected:
+         bool findInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+         {
+            if (aRefIID == __uuidof(IMFMediaEventGenerator)) {
+               return castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IMFMediaEventGenerator*>(this));
+            }
+            return BaseUnknown::findInterface(aRefIID, aPtrPtrVoidObject);
+         }
 
-
-			virtual bool findInterface(
-				REFIID aRefIID,
-				void** aPtrPtrVoidObject)
-			{
-				if (aRefIID == __uuidof(IMFMediaEventGenerator))
-				{
-					return castInterfaces(
-						aRefIID,
-						aPtrPtrVoidObject,
-						static_cast<IMFMediaEventGenerator*>(this));
-				}
-				else
-				{
-					return BaseUnknown::findInterface(
-						aRefIID,
-						aPtrPtrVoidObject);
-				}
-			}
-
-		private:
-
-			std::mutex mMutex;
-
-			std::mutex mOperationMutex;
-
-			CaptureSource* mPtrCaptureSource;
-
-			CComPtrCustom<IMFStreamDescriptor> mStreamDescriptor;
-
-			CComPtrCustom<IMFMediaEventQueue>  mEventQueue;
-
-			CComPtrCustom<RequestContainer> mPostponedRequestContainer;
-
-			bool mIsActive;
-
-			DWORD mStreamIdentifier;
-
-			SourceState mState;
-		};
-		
-	}
+      private:
+         std::mutex mMutex;
+         std::mutex mOperationMutex;
+         CaptureSource* mPtrCaptureSource;
+         CComPtrCustom<IMFStreamDescriptor> mStreamDescriptor;
+         CComPtrCustom<IMFMediaEventQueue> mEventQueue;
+         CComPtrCustom<RequestContainer> mPostponedRequestContainer;
+         bool mIsActive;
+         DWORD mStreamIdentifier;
+         SourceState mState;
+      };
+   }
 }

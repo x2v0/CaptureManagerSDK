@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CurrentMediaType.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../VideoRendererManager/Direct3D11VideoProcessor.h"
@@ -33,81 +32,47 @@ SOFTWARE.
 #include "../Common/GUIDs.h"
 #include "../ConfigManager/ConfigManager.h"
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		CurrentMediaType::CurrentMediaType() :
-			mStreamIndex(0),
-			mMediaTypeIndex(0)
-		{}
+   namespace COMServer
+   {
+      CurrentMediaType::CurrentMediaType() : mStreamIndex(0), mMediaTypeIndex(0) {}
+      DWORD mStreamIndex;
+      DWORD mMediaTypeIndex;
+      CComQIPtrCustom<IMFMediaType> mCurrentMediaType; //    ICurrentMediaType methods
+      HRESULT STDMETHODCALLTYPE CurrentMediaType::getMediaTypeIndex(/* [out] */ DWORD* aPtrMediaTypeIndex)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrMediaTypeIndex);
+            *aPtrMediaTypeIndex = mMediaTypeIndex;
+            lresult = S_OK;
+         } while (false);
+         return lresult;
+      }
 
-		DWORD mStreamIndex;
+      HRESULT STDMETHODCALLTYPE CurrentMediaType::getStreamIndex(/* [out] */ DWORD* aPtrStreamIndex)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrStreamIndex);
+            *aPtrStreamIndex = mStreamIndex;
+            lresult = S_OK;
+         } while (false);
+         return lresult;
+      }
 
-		DWORD mMediaTypeIndex;
+      HRESULT STDMETHODCALLTYPE CurrentMediaType::getMediaType(/* [out] */ IUnknown** aPtrMediaType)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrMediaType);
+            LOG_CHECK_PTR_MEMORY(mCurrentMediaType);
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(mCurrentMediaType, aPtrMediaType);
+         } while (false);
+         return lresult;
+      }
 
-		CComQIPtrCustom<IMFMediaType> mCurrentMediaType;
-
-		//    ICurrentMediaType methods
-
-		HRESULT STDMETHODCALLTYPE CurrentMediaType::getMediaTypeIndex(
-			/* [out] */ DWORD *aPtrMediaTypeIndex)
-		{
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrMediaTypeIndex);
-
-				*aPtrMediaTypeIndex = mMediaTypeIndex;
-
-				lresult = S_OK;
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE CurrentMediaType::getStreamIndex(
-			/* [out] */ DWORD *aPtrStreamIndex)
-		{
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrStreamIndex);
-
-				*aPtrStreamIndex = mStreamIndex;
-
-				lresult = S_OK;
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE CurrentMediaType::getMediaType(
-			/* [out] */ IUnknown **aPtrMediaType)
-		{
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrMediaType);
-
-				LOG_CHECK_PTR_MEMORY(mCurrentMediaType);
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(mCurrentMediaType, aPtrMediaType);
-
-			} while (false);
-
-			return lresult;
-		}
-
-
-		CurrentMediaType::~CurrentMediaType()
-		{
-		}
-	}
+      CurrentMediaType::~CurrentMediaType() { }
+   }
 }

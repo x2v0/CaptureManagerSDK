@@ -21,62 +21,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "EVRMediaSinkFactory.h"
 #include "EVRMediaSink.h"
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Common.h"
 
-
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace EVR
-		{
-			EVRMediaSinkFactory::EVRMediaSinkFactory()
-			{
-			}
-			
-			EVRMediaSinkFactory::~EVRMediaSinkFactory()
-			{
-			}
+   namespace Sinks
+   {
+      namespace EVR
+      {
+         EVRMediaSinkFactory::EVRMediaSinkFactory() { }
+         EVRMediaSinkFactory::~EVRMediaSinkFactory() { }
 
-			HRESULT EVRMediaSinkFactory::createMediaSink(
-				IPresenter* aPtrPresenter,
-				IMFTransform* aPtrMixer,
-				DWORD aMixerStreamID,
-				bool aIsSingleStream,
-				IMFMediaSink** aPtrPtrMediaSink)
-			{
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrPresenter);
-
-					LOG_CHECK_PTR_MEMORY(aPtrMixer);
-
-					LOG_CHECK_PTR_MEMORY(aPtrPtrMediaSink);
-
-					CComPtrCustom<IMFMediaSink> lEVRMediaSink;
-
-					LOG_INVOKE_FUNCTION(EVRMediaSink::createEVRMediaSink,
-						aPtrPresenter,
-						aPtrMixer, 
-						aMixerStreamID,
-						aIsSingleStream,
-						&lEVRMediaSink);
-
-					LOG_CHECK_PTR_MEMORY(lEVRMediaSink);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lEVRMediaSink, aPtrPtrMediaSink);
-
-				} while (false);
-
-				return lresult;
-			}
-		}
-	}
+         HRESULT EVRMediaSinkFactory::createMediaSink(IPresenter* aPtrPresenter, IMFTransform* aPtrMixer,
+                                                      DWORD aMixerStreamID, bool aIsSingleStream,
+                                                      IMFMediaSink** aPtrPtrMediaSink)
+         {
+            HRESULT lresult(E_FAIL);
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrPresenter);
+               LOG_CHECK_PTR_MEMORY(aPtrMixer);
+               LOG_CHECK_PTR_MEMORY(aPtrPtrMediaSink);
+               CComPtrCustom<IMFMediaSink> lEVRMediaSink;
+               LOG_INVOKE_FUNCTION(EVRMediaSink::createEVRMediaSink, aPtrPresenter, aPtrMixer, aMixerStreamID,
+                                   aIsSingleStream, &lEVRMediaSink);
+               LOG_CHECK_PTR_MEMORY(lEVRMediaSink);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lEVRMediaSink, aPtrPtrMediaSink);
+            } while (false);
+            return lresult;
+         }
+      }
+   }
 }

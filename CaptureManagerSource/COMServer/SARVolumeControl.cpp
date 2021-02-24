@@ -21,11 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include <string>
 #include <algorithm>
-
-
 #include "SARVolumeControl.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/MFHeaders.h"
@@ -39,85 +36,46 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		SARVolumeControl::SARVolumeControl()
-		{
-		}
+   namespace COMServer
+   {
+      SARVolumeControl::SARVolumeControl() { }
+      SARVolumeControl::~SARVolumeControl() { } //	ISARVolumeControl implements
+      HRESULT STDMETHODCALLTYPE SARVolumeControl::getChannelCount(
+         /* [in] */ IUnknown* aPtrSARNode, /* [out] */ UINT32* aPtrCount)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+            LOG_CHECK_PTR_MEMORY(aPtrCount);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().getSARChannelCount, aPtrSARNode,
+                                aPtrCount);
+         } while (false);
+         return lresult;
+      }
 
+      HRESULT STDMETHODCALLTYPE SARVolumeControl::setChannelVolume(
+         /* [in] */ IUnknown* aPtrSARNode, /* [in] */ UINT32 aIndex, /* [in] */ const float aLevel)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setSARChannelVolume, aPtrSARNode, aIndex,
+                                aLevel);
+         } while (false);
+         return lresult;
+      }
 
-		SARVolumeControl::~SARVolumeControl()
-		{
-		}
-
-		//	ISARVolumeControl implements
-			   
-		HRESULT STDMETHODCALLTYPE SARVolumeControl::getChannelCount(
-			/* [in] */ IUnknown *aPtrSARNode,
-			/* [out] */ UINT32 *aPtrCount)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrSARNode);
-
-				LOG_CHECK_PTR_MEMORY(aPtrCount);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().getSARChannelCount,
-					aPtrSARNode,
-					aPtrCount);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE SARVolumeControl::setChannelVolume(
-			/* [in] */ IUnknown *aPtrSARNode,
-			/* [in] */ UINT32 aIndex,
-			/* [in] */ const float aLevel)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrSARNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setSARChannelVolume,
-					aPtrSARNode,
-					aIndex,
-					aLevel);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE SARVolumeControl::getChannelVolume(
-			/* [in] */ IUnknown *aPtrSARNode,
-			/* [in] */ UINT32 aIndex,
-			/* [out] */ float *aPtrLevel)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrSARNode);
-
-				LOG_CHECK_PTR_MEMORY(aPtrLevel);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().getSARChannelVolume,
-					aPtrSARNode,
-					aIndex,
-					aPtrLevel);
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT STDMETHODCALLTYPE SARVolumeControl::getChannelVolume(
+         /* [in] */ IUnknown* aPtrSARNode, /* [in] */ UINT32 aIndex, /* [out] */ float* aPtrLevel)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrSARNode);
+            LOG_CHECK_PTR_MEMORY(aPtrLevel);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().getSARChannelVolume, aPtrSARNode, aIndex,
+                                aPtrLevel);
+         } while (false);
+         return lresult;
+      }
+   }
 }

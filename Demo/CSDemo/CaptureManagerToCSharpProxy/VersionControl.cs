@@ -22,133 +22,121 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
+   internal class VersionControl : IVersionControl
+   {
+      #region Constructors and destructors
 
-    class VersionControl : IVersionControl
-    {
-        CaptureManagerLibrary.IVersionControl mVersionControl = null;
+      public VersionControl(CaptureManagerLibrary.IVersionControl aVersionControl)
+      {
+         mVersionControl = aVersionControl;
+      }
 
-        public VersionControl(CaptureManagerLibrary.IVersionControl aVersionControl)
-        {
-            mVersionControl = aVersionControl;
-        }
-        
-        public bool getVersion(ref VersionStruct aVersionStruct)
-        {
-            bool lresult = false;
+      #endregion
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+      #region  Fields
 
-            do
-            {
-                try
-                {
-                    if (mVersionControl == null)
-                        break;
+      private readonly CaptureManagerLibrary.IVersionControl mVersionControl;
 
-                    (mVersionControl as IVersionControlInner).getVersion(
-                        out aVersionStruct.mMAJOR,
-                        out aVersionStruct.mMINOR,
-                        out aVersionStruct.mPATCH,
-                        out lPtrXMLstring);
+      #endregion
 
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aVersionStruct.mAdditionalLabel = Marshal.PtrToStringBSTR(lPtrXMLstring);
+      #region Interface methods
 
-                    lresult = true;
-                    
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      public bool checkVersion(VersionStruct aVersionStruct)
+      {
+         var lresult = false;
 
-            } while (false);
+         do {
+            try {
+               if (mVersionControl == null) {
+                  break;
+               }
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               sbyte lcheckResult = 0;
 
-            return lresult;
-        }
-
-        public bool checkVersion(VersionStruct aVersionStruct)
-        {
-            bool lresult = false;
-
-            do
-            {
-                try
-                {
-                    if (mVersionControl == null)
-                        break;
-
-                    sbyte lcheckResult = 0;
-
-                    (mVersionControl as IVersionControlInner).checkVersion(
-                        aVersionStruct.mMAJOR,
-                        aVersionStruct.mMINOR,
-                        aVersionStruct.mPATCH,
-                        out lcheckResult);
+               (mVersionControl as IVersionControlInner).checkVersion(aVersionStruct.mMAJOR, aVersionStruct.mMINOR, aVersionStruct.mPATCH, out lcheckResult);
 
 
-                    if (lcheckResult > 0)
-                        lresult = true;
+               if (lcheckResult > 0) {
+                  lresult = true;
+               }
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool getVersion(ref VersionStruct aVersionStruct)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         var lPtrXMLstring = IntPtr.Zero;
 
-        public bool getXMLStringVersion(out string aPtrPtrXMLstring)
-        {
-            bool lresult = false;
+         do {
+            try {
+               if (mVersionControl == null) {
+                  break;
+               }
 
-            aPtrPtrXMLstring = "";
+               (mVersionControl as IVersionControlInner).getVersion(out aVersionStruct.mMAJOR, out aVersionStruct.mMINOR, out aVersionStruct.mPATCH, out lPtrXMLstring);
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aVersionStruct.mAdditionalLabel = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-            do
-            {
-                try
-                {
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (mVersionControl == null)
-                        break;
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    (mVersionControl as IVersionControlInner).getXMLStringVersion(
-                        out lPtrXMLstring);
+         return lresult;
+      }
 
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+      public bool getXMLStringVersion(out string aPtrPtrXMLstring)
+      {
+         var lresult = false;
 
-                    lresult = true;
+         aPtrPtrXMLstring = "";
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         var lPtrXMLstring = IntPtr.Zero;
 
-            } while (false);
+         do {
+            try {
+               if (mVersionControl == null) {
+                  break;
+               }
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               (mVersionControl as IVersionControlInner).getXMLStringVersion(out lPtrXMLstring);
 
-            return lresult;
-        }
-    }
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

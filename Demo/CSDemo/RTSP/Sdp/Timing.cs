@@ -1,20 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Sdp
+﻿namespace Rtsp.Sdp
 {
-    public class Timing
-    {
-        private string timing;
-        private string repeat;
+   public class Timing
+   {
+      #region Constructors and destructors
 
-        public Timing(string timing, string repeat)
-        {
-            // TODO: Complete member initialization
-            this.timing = timing;
-            this.repeat = repeat;
-        }
-    }
+      public Timing(string timing, string repeat)
+      {
+         // TODO: Complete member initialization
+         this.timing = timing;
+         this.repeat = repeat;
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private string repeat;
+      private string timing;
+
+      #endregion
+   }
 }

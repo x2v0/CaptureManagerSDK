@@ -1,115 +1,71 @@
 #pragma once
-
 #include <map>
 #include <Unknwnbase.h>
-
 #include "../PugiXML/pugixml.hpp"
-
 
 namespace CaptureManager
 {
-	class DataParser
-	{
-	public:
+   class DataParser
+   {
+   public:
+      static LPCWSTR getHRESULTDescription(const HRESULT& aValue);
 
-		static LPCWSTR getHRESULTDescription(
-			const HRESULT& aValue);
+      static HRESULT GetGUIDName(REFGUID aGUID, std::wstring& aNameGUID);
 
-		static HRESULT GetGUIDName(
-			REFGUID aGUID,
-			std::wstring& aNameGUID);
+      static HRESULT readMediaType(IUnknown* aPtrMediaType, pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT readMediaType(
-			IUnknown* aPtrMediaType,
-			pugi::xml_node& aRefRootAttributeNode);
+      static HRESULT readSourceActivate(IUnknown* aPtrSourceActivate, pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT readSourceActivate(
-			IUnknown* aPtrSourceActivate,
-			pugi::xml_node& aRefRootAttributeNode);
+      static HRESULT readPresentationDescriptor(IUnknown* aPtrPresentationDescriptor,
+                                                pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT readPresentationDescriptor(
-			IUnknown* aPtrPresentationDescriptor,
-			pugi::xml_node& aRefRootAttributeNode);
+      static HRESULT readStreamDescriptor(IUnknown* aPtrStreamDescriptor, pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT readStreamDescriptor(
-			IUnknown* aPtrStreamDescriptor,
-			pugi::xml_node& aRefRootAttributeNode);
+      static void unpack2UINT32AsUINT64(const PROPVARIANT& aVar, UINT32& aHigh, UINT32& aLow);
 
-		static void unpack2UINT32AsUINT64(
-			const PROPVARIANT& aVar,
-			UINT32& aHigh,
-			UINT32& aLow);
-		
+   private:
+      std::map<HRESULT, std::wstring> mHRESULTDescriptionDictionary;
 
-	private:
+      DataParser() = delete;
 
-		std::map<HRESULT, std::wstring> mHRESULTDescriptionDictionary;
+      ~DataParser() = delete;
 
-		DataParser() = delete;
-		~DataParser() = delete;
-		DataParser(
-			const DataParser&) = delete;
-		DataParser& operator=(
-			const DataParser&) = delete;
-		
-		static HRESULT parsVideoMediaFormatAttributesValueByIndex(
-			IUnknown* aPtrAttributes,
-			DWORD aIndex,
-			pugi::xml_node& aRefRootAttributeNode);
+      DataParser(const DataParser&) = delete;
 
-		static HRESULT parsAudioMediaFormatAttributesValueByIndex(
-			IUnknown* aPtrAttributes,
-			DWORD aIndex,
-			pugi::xml_node& aRefRootAttributeNode);
+      DataParser& operator=(const DataParser&) = delete;
 
-		static HRESULT parsVideoMediaFormatFormatAttributesValue(
-			REFGUID aGUID,
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefAttributeNode);
+      static HRESULT parsVideoMediaFormatAttributesValueByIndex(IUnknown* aPtrAttributes, DWORD aIndex,
+                                                                pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT parsAudioMediaFormatFormatAttributesValue(
-			REFGUID aGUID,
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefAttributeNode);
+      static HRESULT parsAudioMediaFormatAttributesValueByIndex(IUnknown* aPtrAttributes, DWORD aIndex,
+                                                                pugi::xml_node& aRefRootAttributeNode);
 
-		static HRESULT parsGeneralMediaTypeFormatAttributesValueByIndex(
-			REFGUID aGUID,
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefAttributeNode);
+      static HRESULT parsVideoMediaFormatFormatAttributesValue(REFGUID aGUID, const PROPVARIANT& aVar,
+                                                               pugi::xml_node& aRefAttributeNode);
 
-		static HRESULT parsSourceActivateAttributeValueByIndex(
-			IUnknown* aPtrAttributes,
-			DWORD aIndex,
-			pugi::xml_node& aRefAttributeNode);
+      static HRESULT parsAudioMediaFormatFormatAttributesValue(REFGUID aGUID, const PROPVARIANT& aVar,
+                                                               pugi::xml_node& aRefAttributeNode);
 
-		static HRESULT parsPresentationDescriptorAttributeValueByIndex(
-			IUnknown* aPtrAttributes,
-			DWORD aIndex,
-			pugi::xml_node& aRefAttributeNode);
-		
-		static LPCWSTR GetGUIDNameConst(
-			const GUID& aGUID);
+      static HRESULT parsGeneralMediaTypeFormatAttributesValueByIndex(
+         REFGUID aGUID, const PROPVARIANT& aVar, pugi::xml_node& aRefAttributeNode);
 
-		static HRESULT parsCaptureDeviceAttributeValue(
-			REFGUID aGUID,
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefValueNode);
+      static HRESULT parsSourceActivateAttributeValueByIndex(IUnknown* aPtrAttributes, DWORD aIndex,
+                                                             pugi::xml_node& aRefAttributeNode);
 
-		static HRESULT specialVideoAttributeValue(
-			REFGUID aGUID,
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefValueNode);
+      static HRESULT parsPresentationDescriptorAttributeValueByIndex(IUnknown* aPtrAttributes, DWORD aIndex,
+                                                                     pugi::xml_node& aRefAttributeNode);
 
-		static HRESULT parsStreamDescriptorAttributeValueByIndex(
-			IUnknown* aPtrAttributes,
-			DWORD aIndex,
-			pugi::xml_node& aRefAttributeNode);
-		
-		static HRESULT readAttribute(
-			const PROPVARIANT& aVar,
-			pugi::xml_node& aRefValueNode,
-			bool aIsBoolable = false,
-			bool aIsSigned = false);
+      static LPCWSTR GetGUIDNameConst(const GUID& aGUID);
 
-	};
+      static HRESULT parsCaptureDeviceAttributeValue(REFGUID aGUID, const PROPVARIANT& aVar,
+                                                     pugi::xml_node& aRefValueNode);
+
+      static HRESULT specialVideoAttributeValue(REFGUID aGUID, const PROPVARIANT& aVar, pugi::xml_node& aRefValueNode);
+
+      static HRESULT parsStreamDescriptorAttributeValueByIndex(IUnknown* aPtrAttributes, DWORD aIndex,
+                                                               pugi::xml_node& aRefAttributeNode);
+
+      static HRESULT readAttribute(const PROPVARIANT& aVar, pugi::xml_node& aRefValueNode, bool aIsBoolable = false,
+                                   bool aIsSigned = false);
+   };
 }

@@ -22,95 +22,93 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using MediaFoundation;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using CaptureManagerToCSharpProxy.Interfaces;
+using MediaFoundation;
 
 namespace WPFMediaFoundationPlayerHandler
 {
-    /// <summary>
-    /// Interaction logic for PlayerControl.xaml
-    /// </summary>
-    public partial class PlayerControl : UserControl
-    {
-        public IntPtr Handle { get { return mEVRDisplay.Handle; } }
+   /// <summary>
+   ///    Interaction logic for PlayerControl.xaml
+   /// </summary>
+   public partial class PlayerControl : UserControl
+   {
+      #region Constructors and destructors
 
-        List<Player> lPlayerList = new List<Player>();
+      public PlayerControl()
+      {
+         InitializeComponent();
+      }
 
-        public PlayerControl()
-        {
-            InitializeComponent();
-        }
+      #endregion
 
-        public void setRenderList(
-            List<IMFTopologyNode> aEVRList,
-            CaptureManagerToCSharpProxy.Interfaces.IEVRStreamControl aIEVRStreamControl,
-            uint aMaxVideoRenderStreamCount)
-        {
-            m_PlayerCanvas.Children.Clear();
+      #region  Fields
 
-            foreach (var item in lPlayerList)
-            {
-                item.Stop();
-            }
-            
-            lPlayerList.Clear();
+      private readonly List<Player> lPlayerList = new List<Player>();
 
-            int lColumnCount = 2;
+      #endregion
 
-            double lRowCount = Math.Ceiling((((double)aEVRList.Count / ((double)lColumnCount + 1.0)) + 1.0));
+      #region Public properties
 
-            double lRowHeight = m_PlayerCanvas.Height / lRowCount;
+      public IntPtr Handle => mEVRDisplay.Handle;
 
-            double lColumnWidth = m_PlayerCanvas.Width / lColumnCount;
+      #endregion
 
-            for (int i = 0; i < aEVRList.Count; i++)
-            {
-                Player lPlayer = new Player();
+      #region Public methods
 
-                m_PlayerCanvas.Children.Add(lPlayer);
+      public void setRenderList(List<IMFTopologyNode> aEVRList, IEVRStreamControl aIEVRStreamControl, uint aMaxVideoRenderStreamCount)
+      {
+         m_PlayerCanvas.Children.Clear();
 
-                lPlayerList.Add(lPlayer);
+         foreach (var item in lPlayerList) {
+            item.Stop();
+         }
 
-                lPlayer.Width = lColumnWidth;
+         lPlayerList.Clear();
 
-                lPlayer.Height = lRowHeight;
+         var lColumnCount = 2;
 
-                int lTopPos = i / (lColumnCount);
+         var lRowCount = Math.Ceiling((aEVRList.Count / (lColumnCount + 1.0)) + 1.0);
 
-                Canvas.SetTop(lPlayer, lTopPos * lRowHeight);
+         var lRowHeight = m_PlayerCanvas.Height / lRowCount;
 
-                double lLeftPos = i - (lTopPos * (lColumnCount));
+         var lColumnWidth = m_PlayerCanvas.Width / lColumnCount;
 
-                Canvas.SetLeft(lPlayer, lLeftPos * lColumnWidth);
+         for (var i = 0; i < aEVRList.Count; i++) {
+            var lPlayer = new Player();
 
-                lPlayer.mIMFTopologyNode = aEVRList[i];
+            m_PlayerCanvas.Children.Add(lPlayer);
 
-                lPlayer.mIEVRStreamControl = aIEVRStreamControl;
+            lPlayerList.Add(lPlayer);
 
-                lPlayer.mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
+            lPlayer.Width = lColumnWidth;
 
-                aIEVRStreamControl.setPosition(
-                    lPlayer.mIMFTopologyNode,
-                    (float)(((double)lLeftPos * lColumnWidth) / m_PlayerCanvas.Width),
-                    (float)((((double)lLeftPos * lColumnWidth) + lColumnWidth) / m_PlayerCanvas.Width),
-                    (float)(((double)lTopPos * lRowHeight) / m_PlayerCanvas.Height),
-                    (float)((((double)lTopPos * lRowHeight) + lRowHeight) / m_PlayerCanvas.Height));
-                
-                Canvas.SetZIndex(lPlayer, i);
-            }
-        }
-    }
+            lPlayer.Height = lRowHeight;
+
+            var lTopPos = i / lColumnCount;
+
+            Canvas.SetTop(lPlayer, lTopPos * lRowHeight);
+
+            double lLeftPos = i - (lTopPos * lColumnCount);
+
+            Canvas.SetLeft(lPlayer, lLeftPos * lColumnWidth);
+
+            lPlayer.mIMFTopologyNode = aEVRList[i];
+
+            lPlayer.mIEVRStreamControl = aIEVRStreamControl;
+
+            lPlayer.mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
+
+            aIEVRStreamControl.setPosition(lPlayer.mIMFTopologyNode, (float) ((lLeftPos * lColumnWidth) / m_PlayerCanvas.Width),
+                                           (float) (((lLeftPos * lColumnWidth) + lColumnWidth) / m_PlayerCanvas.Width), (float) ((lTopPos * lRowHeight) / m_PlayerCanvas.Height),
+                                           (float) (((lTopPos * lRowHeight) + lRowHeight) / m_PlayerCanvas.Height));
+
+            Panel.SetZIndex(lPlayer, i);
+         }
+      }
+
+      #endregion
+   }
 }

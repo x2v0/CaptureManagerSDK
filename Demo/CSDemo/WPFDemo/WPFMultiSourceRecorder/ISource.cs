@@ -22,19 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace WPFMultiSourceRecorder
 {
-    public interface ISource
-    {
-        object getCompressedMediaType();
+   public interface ISource
+   {
+      #region Public methods
 
-        object getSourceNode(object aOutputNode);
+      void access(bool aState);
+      object getCompressedMediaType();
 
-        void access(bool aState);
-    }
+      object getSourceNode(object aOutputNode);
+
+      #endregion
+   }
 }

@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SessionAsyncCallback.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../LogPrintOut/LogPrintOut.h"
@@ -29,51 +28,32 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		STDMETHODIMP SessionAsyncCallback::GetParameters(
-			__RPC__out DWORD *pdwFlags,
-			__RPC__out DWORD *pdwQueue)
-		{
-			HRESULT lresult;
+   namespace Core
+   {
+      STDMETHODIMP SessionAsyncCallback::GetParameters(__RPC__out DWORD* pdwFlags, __RPC__out DWORD* pdwQueue)
+      {
+         HRESULT lresult;
+         do {
+            lresult = E_NOTIMPL;
+         } while (false);
+         return lresult;
+      }
 
-			do
-			{
-				lresult = E_NOTIMPL;
-
-			} while (false);
-
-			return lresult;
-		}
-
-		STDMETHODIMP SessionAsyncCallback::Invoke(
-			IMFAsyncResult *aPtrAsyncResult)
-		{
-			HRESULT lresult;;
-
-			do
-			{				
-				LOG_CHECK_PTR_MEMORY(aPtrAsyncResult);
-				
-				std::lock_guard<std::mutex> lLock(mInvokeMutex);
-
-				CComPtrCustom<IUnknown> lUnkState;
-
-				CComQIPtrCustom<ISessionAsyncCallbackRequest> lRequest;
-
-				LOG_INVOKE_MF_METHOD(GetStatus, aPtrAsyncResult);
-
-				LOG_INVOKE_MF_METHOD(GetState, aPtrAsyncResult, &lUnkState);
-				
-				lRequest = lUnkState;
-
-				LOG_CHECK_PTR_MEMORY(lRequest);
-				
-				lRequest->invoke();
-
-			} while (false);
-			
-			return lresult;
-		}
-	}
+      STDMETHODIMP SessionAsyncCallback::Invoke(IMFAsyncResult* aPtrAsyncResult)
+      {
+         HRESULT lresult;
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrAsyncResult);
+            std::lock_guard<std::mutex> lLock(mInvokeMutex);
+            CComPtrCustom<IUnknown> lUnkState;
+            CComQIPtrCustom<ISessionAsyncCallbackRequest> lRequest;
+            LOG_INVOKE_MF_METHOD(GetStatus, aPtrAsyncResult);
+            LOG_INVOKE_MF_METHOD(GetState, aPtrAsyncResult, &lUnkState);
+            lRequest = lUnkState;
+            LOG_CHECK_PTR_MEMORY(lRequest);
+            lRequest->invoke();
+         } while (false);
+         return lresult;
+      }
+   }
 }

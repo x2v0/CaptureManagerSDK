@@ -1,29 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics.Contracts;
 
 namespace Rtsp.Sdp
 {
-    public class SdpTimeZone
-    {
-        public SdpTimeZone()
-        {
-        }
+   public class SdpTimeZone
+   {
+      #region Constructors and destructors
 
-        public static SdpTimeZone ParseInvariant(string value)
-        {
-            if (value == null)
-                throw new ArgumentNullException("value");
-            Contract.EndContractBlock();
+      #endregion
 
-            SdpTimeZone returnValue = new SdpTimeZone();
+      #region Public methods
 
-            throw new NotImplementedException();
-     
+      public static SdpTimeZone ParseInvariant(string value)
+      {
+         if (value == null) {
+            throw new ArgumentNullException("value");
+         }
 
-            return returnValue;
-        }
-    }
+         Contract.EndContractBlock();
+
+         var returnValue = new SdpTimeZone();
+
+         throw new NotImplementedException();
+
+
+         return returnValue;
+      }
+
+      #endregion
+   }
 }

@@ -3,45 +3,66 @@ using System.Runtime.InteropServices;
 
 namespace WPFVideoAndAudioRecorder.Interop
 {
-    internal sealed class Direct3DSurface9 : IDisposable
-    {
-        private ComInterface.IDirect3DSurface9 comObject;
-        private IntPtr native;
-        
-        public ComInterface.IDirect3DSurface9 texture { get { return comObject; } }
+   internal sealed class Direct3DSurface9 : IDisposable
+   {
+      #region Constructors and destructors
 
-        internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj)
-        {
-            this.comObject = obj;
-            this.native = Marshal.GetIUnknownForObject(this.comObject);
-        }
+      internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj)
+      {
+         texture = obj;
+         NativeInterface = Marshal.GetIUnknownForObject(texture);
+      }
 
-        ~Direct3DSurface9()
-        {
-            this.Release();
-        }
+      ~Direct3DSurface9()
+      {
+         Release();
+      }
 
-        public IntPtr NativeInterface
-        {
-            get { return this.native; }
-        }
+      #endregion
 
-        public void Dispose()
-        {
-            this.Release();
-            GC.SuppressFinalize(this);
-        }
+      #region  Fields
 
-        private void Release()
-        {
-            if (this.comObject != null)
-            {
-                Marshal.Release(this.native);
-                this.native = IntPtr.Zero;
+      #endregion
 
-                Marshal.ReleaseComObject(this.comObject);
-                this.comObject = null;
-            }
-        }
-    }
+      #region Public properties
+
+      public IntPtr NativeInterface
+      {
+         get;
+         private set;
+      }
+
+      public ComInterface.IDirect3DSurface9 texture
+      {
+         get;
+         private set;
+      }
+
+      #endregion
+
+      #region Interface methods
+
+      public void Dispose()
+      {
+         Release();
+         GC.SuppressFinalize(this);
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void Release()
+      {
+         if (texture != null) {
+            Marshal.Release(NativeInterface);
+            NativeInterface = IntPtr.Zero;
+
+            Marshal.ReleaseComObject(texture);
+            texture = null;
+         }
+      }
+
+      #endregion
+   }
 }

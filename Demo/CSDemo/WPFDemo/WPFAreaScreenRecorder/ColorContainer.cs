@@ -22,34 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace WPFAreaScreenRecorder
 {
-    public delegate void ColorUpdateDelegate(Color sender);
+   public delegate void ColorUpdateDelegate(Color sender);
 
-    public class ColorContainer
-    {
-        public Color color;
+   public class ColorContainer
+   {
+      #region  Fields
 
-        public event ColorUpdateDelegate colorUpdateEvent;
+      public Color color;
 
-        public void update(Color newColor)
-        {
-            color = newColor;
+      #endregion
 
-            if (colorUpdateEvent != null)
-                colorUpdateEvent(newColor);
-        }
+      #region Public events
 
-        public override string ToString()
-        {
-            return color.ToString();
-        }
-    }
+      public event ColorUpdateDelegate colorUpdateEvent;
+
+      #endregion
+
+      #region Public methods
+
+      public override string ToString()
+      {
+         return color.ToString();
+      }
+
+      public void update(Color newColor)
+      {
+         color = newColor;
+
+         if (colorUpdateEvent != null) {
+            colorUpdateEvent(newColor);
+         }
+      }
+
+      #endregion
+   }
 }

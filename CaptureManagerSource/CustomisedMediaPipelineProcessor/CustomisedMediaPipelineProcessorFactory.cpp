@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CustomisedMediaPipelineProcessorFactory.h"
 #include "CustomisedMediaPipelineProcessor.h"
 #include "../LogPrintOut/LogPrintOut.h"
@@ -30,44 +29,29 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
-			HRESULT CustomisedMediaPipelineProcessorFactory::createCustomisedMediaPipelineProcessor(
-				CustomisedMediaSession* aPtrCustomisedMediaSession,
-				CollectionOfIDs& aRefCollectionOfIDs,
-				IMFTopology* aPtrTopology,
-				IMFPresentationClock* aPtrPresentationClock,
-				IMediaPipeline** aPtrPtrIMediaPipeline)
-			{
-				HRESULT lresult;
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrCustomisedMediaSession);
-
-					LOG_CHECK_PTR_MEMORY(aPtrTopology);
-
-					LOG_CHECK_PTR_MEMORY(aPtrPresentationClock);
-					
-					CComPtrCustom<CustomisedMediaPipelineProcessor> 
-						lLocalMediaPipeline = new (std::nothrow)CustomisedMediaPipelineProcessor(
-						aPtrCustomisedMediaSession);
-
-					LOG_CHECK_PTR_MEMORY(lLocalMediaPipeline);
-					
-					LOG_INVOKE_POINTER_METHOD(lLocalMediaPipeline, init,
-						aRefCollectionOfIDs,
-						aPtrTopology,
-						aPtrPresentationClock);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lLocalMediaPipeline, aPtrPtrIMediaPipeline);
-					
-				} while (false);
-
-				return lresult;
-			}
-		}
-	}
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         HRESULT CustomisedMediaPipelineProcessorFactory::createCustomisedMediaPipelineProcessor(
+            CustomisedMediaSession* aPtrCustomisedMediaSession, CollectionOfIDs& aRefCollectionOfIDs,
+            IMFTopology* aPtrTopology, IMFPresentationClock* aPtrPresentationClock,
+            IMediaPipeline** aPtrPtrIMediaPipeline)
+         {
+            HRESULT lresult;
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrCustomisedMediaSession);
+               LOG_CHECK_PTR_MEMORY(aPtrTopology);
+               LOG_CHECK_PTR_MEMORY(aPtrPresentationClock);
+               CComPtrCustom<CustomisedMediaPipelineProcessor> lLocalMediaPipeline = new(std::nothrow)
+                  CustomisedMediaPipelineProcessor(aPtrCustomisedMediaSession);
+               LOG_CHECK_PTR_MEMORY(lLocalMediaPipeline);
+               LOG_INVOKE_POINTER_METHOD(lLocalMediaPipeline, init, aRefCollectionOfIDs, aPtrTopology,
+                                         aPtrPresentationClock);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lLocalMediaPipeline, aPtrPtrIMediaPipeline);
+            } while (false);
+            return lresult;
+         }
+      }
+   }
 }

@@ -23,217 +23,201 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System.Runtime.InteropServices;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
+   internal class StreamControl : IStreamControl
+   {
+      #region Constructors and destructors
 
-    class StreamControl : IStreamControl
-    {
-        CaptureManagerLibrary.IStreamControl mIStreamControl = null;
+      public StreamControl(CaptureManagerLibrary.IStreamControl aIStreamControl)
+      {
+         mIStreamControl = aIStreamControl;
+      }
 
-        public StreamControl(CaptureManagerLibrary.IStreamControl aIStreamControl)
-        {
-            mIStreamControl = aIStreamControl;
-        }
-        
-        public bool getCollectionOfStreamControlNodeFactories(ref string aInfoString)
-        {
-            bool lresult = false;
+      #endregion
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+      #region  Fields
 
-            do
-            {
-                try
-                {
+      private readonly CaptureManagerLibrary.IStreamControl mIStreamControl;
 
-                    if (mIStreamControl == null)
-                        break;
+      #endregion
 
-                    (mIStreamControl as IStreamControlInner).getCollectionOfStreamControlNodeFactories(out lPtrXMLstring);
+      #region Interface methods
 
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+      public bool createStreamControlNodeFactory(ref ISpreaderNodeFactory aISpreaderNodeFactory)
+      {
+         var lresult = false;
 
-                    lresult = true;
+         do {
+            try {
+               if (mIStreamControl == null) {
+                  break;
+               }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               object lIUnknown;
 
-            } while (false);
+               mIStreamControl.createStreamControlNodeFactory(typeof(CaptureManagerLibrary.ISpreaderNodeFactory).GUID, out lIUnknown);
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               if (lIUnknown == null) {
+                  break;
+               }
 
-            return lresult;
-        }
+               var lSpreaderNodeFactory = lIUnknown as CaptureManagerLibrary.ISpreaderNodeFactory;
 
-        public bool createStreamControlNodeFactory(ref ISpreaderNodeFactory aISpreaderNodeFactory)
-        {
-            bool lresult = false;
+               if (lSpreaderNodeFactory == null) {
+                  break;
+               }
 
-            do
-            {
-                try
-                {
+               aISpreaderNodeFactory = new SpreaderNodeFactory(lSpreaderNodeFactory);
 
-                    if (mIStreamControl == null)
-                        break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    object lIUnknown;
+         return lresult;
+      }
 
-                    mIStreamControl.createStreamControlNodeFactory(
-                        typeof(CaptureManagerLibrary.ISpreaderNodeFactory).GUID,
-                        out lIUnknown);
+      bool IStreamControl.createStreamControlNodeFactory(Guid aIID, ref ISpreaderNodeFactory aISpreaderNodeFactory)
+      {
+         var lresult = false;
 
-                    if (lIUnknown == null)
-                        break;
+         do {
+            try {
+               if (mIStreamControl == null) {
+                  break;
+               }
 
-                    var lSpreaderNodeFactory = lIUnknown as CaptureManagerLibrary.ISpreaderNodeFactory;
+               object lIUnknown;
 
-                    if (lSpreaderNodeFactory == null)
-                        break;
-                    
-                    aISpreaderNodeFactory = new SpreaderNodeFactory(lSpreaderNodeFactory);
+               mIStreamControl.createStreamControlNodeFactory(aIID, out lIUnknown);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lIUnknown == null) {
+                  break;
+               }
 
-            } while (false);
+               var lSpreaderNodeFactory = lIUnknown as CaptureManagerLibrary.ISpreaderNodeFactory;
 
-            return lresult;
-        }
+               if (lSpreaderNodeFactory == null) {
+                  break;
+               }
 
-        bool IStreamControl.createStreamControlNodeFactory(Guid aIID, ref ISpreaderNodeFactory aISpreaderNodeFactory)
-        {
-            bool lresult = false;
+               aISpreaderNodeFactory = new SpreaderNodeFactory(lSpreaderNodeFactory);
 
-            do
-            {
-                try
-                {
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (mIStreamControl == null)
-                        break;
+         return lresult;
+      }
 
-                    object lIUnknown;
+      public bool createStreamControlNodeFactory(ref ISwitcherNodeFactory aISwitcherNodeFactory)
+      {
+         var lresult = false;
 
-                    mIStreamControl.createStreamControlNodeFactory(
-                        aIID,
-                        out lIUnknown);
+         do {
+            try {
+               if (mIStreamControl == null) {
+                  break;
+               }
 
-                    if (lIUnknown == null)
-                        break;
+               object lIUnknown;
 
-                    var lSpreaderNodeFactory = lIUnknown as CaptureManagerLibrary.ISpreaderNodeFactory;
+               mIStreamControl.createStreamControlNodeFactory(typeof(CaptureManagerLibrary.ISwitcherNodeFactory).GUID, out lIUnknown);
 
-                    if (lSpreaderNodeFactory == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    aISpreaderNodeFactory = new SpreaderNodeFactory(lSpreaderNodeFactory);
+               var lSwitcherNodeFactory = lIUnknown as CaptureManagerLibrary.ISwitcherNodeFactory;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lSwitcherNodeFactory == null) {
+                  break;
+               }
 
-            } while (false);
+               aISwitcherNodeFactory = new SwitcherNodeFactory(lSwitcherNodeFactory);
 
-            return lresult;
-        }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-        public bool createStreamControlNodeFactory(ref ISwitcherNodeFactory aISwitcherNodeFactory)
-        {
-            bool lresult = false;
+         return lresult;
+      }
 
-            do
-            {
-                try
-                {
+      public bool createStreamControlNodeFactory(ref IMixerNodeFactory aIMixerNodeFactory)
+      {
+         var lresult = false;
 
-                    if (mIStreamControl == null)
-                        break;
+         do {
+            try {
+               if (mIStreamControl == null) {
+                  break;
+               }
 
-                    object lIUnknown;
+               object lIUnknown;
 
-                    mIStreamControl.createStreamControlNodeFactory(
-                        typeof(CaptureManagerLibrary.ISwitcherNodeFactory).GUID,
-                        out lIUnknown);
+               mIStreamControl.createStreamControlNodeFactory(typeof(CaptureManagerLibrary.IMixerNodeFactory).GUID, out lIUnknown);
 
-                    if (lIUnknown == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    var lSwitcherNodeFactory = lIUnknown as CaptureManagerLibrary.ISwitcherNodeFactory;
+               var lMixerNodeFactory = lIUnknown as CaptureManagerLibrary.IMixerNodeFactory;
 
-                    if (lSwitcherNodeFactory == null)
-                        break;
+               if (lMixerNodeFactory == null) {
+                  break;
+               }
 
-                    aISwitcherNodeFactory = new SwitcherNodeFactory(lSwitcherNodeFactory);
+               aIMixerNodeFactory = new MixerNodeFactory(lMixerNodeFactory);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
+      public bool getCollectionOfStreamControlNodeFactories(ref string aInfoString)
+      {
+         var lresult = false;
 
-        public bool createStreamControlNodeFactory(ref IMixerNodeFactory aIMixerNodeFactory)
-        {
-            bool lresult = false;
+         var lPtrXMLstring = IntPtr.Zero;
 
-            do
-            {
-                try
-                {
+         do {
+            try {
+               if (mIStreamControl == null) {
+                  break;
+               }
 
-                    if (mIStreamControl == null)
-                        break;
+               (mIStreamControl as IStreamControlInner).getCollectionOfStreamControlNodeFactories(out lPtrXMLstring);
 
-                    object lIUnknown;
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                    mIStreamControl.createStreamControlNodeFactory(
-                        typeof(CaptureManagerLibrary.IMixerNodeFactory).GUID,
-                        out lIUnknown);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lIUnknown == null)
-                        break;
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    var lMixerNodeFactory = lIUnknown as CaptureManagerLibrary.IMixerNodeFactory;
+         return lresult;
+      }
 
-                    if (lMixerNodeFactory == null)
-                        break;
-
-                    aIMixerNodeFactory = new MixerNodeFactory(lMixerNodeFactory);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

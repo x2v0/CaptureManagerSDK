@@ -22,62 +22,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerLibrary;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SampleGrabberCallback : CaptureManagerToCSharpProxy.Interfaces.ISampleGrabberCallback, CaptureManagerLibrary.ISampleGrabberCallback
-    {
-        public event UpdateDelegate mUpdateEvent;
+   internal class SampleGrabberCallback : ISampleGrabberCallback, CaptureManagerLibrary.ISampleGrabberCallback
+   {
+      #region  Fields
 
-        public event UpdateDelegateFull mUpdateFullEvent;
+      private byte[] mData = new byte[100];
 
-        public event UpdateDelegateNativeFull mUpdateNativeFullEvent;        
-		
-		private byte[] mData = new byte[100];
+      #endregion
 
-        public void invoke(ref Guid aGUIDMajorMediaType, uint aSampleFlags, long aSampleTime, long aSampleDuration, IntPtr aPtrSampleBuffer, uint aSampleSize)
-        {
-            if (mUpdateNativeFullEvent != null)
-                mUpdateNativeFullEvent(aSampleFlags, aSampleTime, aSampleDuration, aPtrSampleBuffer, aSampleSize);
-            else
-            {
-                if (mData.Length != aSampleSize)
-                    mData = new byte[aSampleSize];
+      #region Public events
 
-                Marshal.Copy(aPtrSampleBuffer, mData, 0, (int)aSampleSize);
+      public event UpdateDelegate mUpdateEvent;
 
+      public event UpdateDelegateFull mUpdateFullEvent;
 
-                if (mUpdateEvent != null)
-                {
-                    mUpdateEvent(
-                        mData,
-                        aSampleSize);
-                }
+      public event UpdateDelegateNativeFull mUpdateNativeFullEvent;
 
-                if (mUpdateFullEvent != null)
-                {
-                    mUpdateFullEvent(
-                        aSampleFlags,
-                        aSampleTime,
-                        aSampleDuration,
-                        mData,
-                        aSampleSize);
-                }
+      #endregion
+
+      #region Public properties
+
+      public object TopologyNode
+      {
+         get;
+         set;
+      }
+
+      #endregion
+
+      #region Interface methods
+
+      public object getTopologyNode()
+      {
+         return TopologyNode;
+      }
+
+      public void invoke(ref Guid aGUIDMajorMediaType, uint aSampleFlags, long aSampleTime, long aSampleDuration, IntPtr aPtrSampleBuffer, uint aSampleSize)
+      {
+         if (mUpdateNativeFullEvent != null) {
+            mUpdateNativeFullEvent(aSampleFlags, aSampleTime, aSampleDuration, aPtrSampleBuffer, aSampleSize);
+         } else {
+            if (mData.Length != aSampleSize) {
+               mData = new byte[aSampleSize];
             }
-        }
 
-        public object TopologyNode { get; set; }
+            Marshal.Copy(aPtrSampleBuffer, mData, 0, (int) aSampleSize);
 
-        public object getTopologyNode()
-        {
-            return TopologyNode;
-        }
-    }
+
+            if (mUpdateEvent != null) {
+               mUpdateEvent(mData, aSampleSize);
+            }
+
+            if (mUpdateFullEvent != null) {
+               mUpdateFullEvent(aSampleFlags, aSampleTime, aSampleDuration, mData, aSampleSize);
+            }
+         }
+      }
+
+      #endregion
+   }
 }

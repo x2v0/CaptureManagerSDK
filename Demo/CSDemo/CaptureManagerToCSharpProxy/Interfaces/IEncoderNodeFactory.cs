@@ -23,27 +23,17 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IEncoderNodeFactory
-    {
-        bool createCompressedMediaType(
-            object aUncompressedMediaType, 
-            Guid aEncodingModeGUID, 
-            uint aEncodingModeValue, 
-            uint aIndexCompressedMediaType, 
-            out object aCompressedMediaType);
+   public interface IEncoderNodeFactory
+   {
+      #region Public methods
 
-        bool createEncoderNode(
-            object aUncompressedMediaType,
-            Guid aEncodingModeGUID, 
-            uint aEncodingModeValue, 
-            uint aIndexCompressedMediaType, 
-            object aDownStreamNode, 
-            out object aEncoderNode);
-    }
+      bool createCompressedMediaType(object aUncompressedMediaType, Guid aEncodingModeGUID, uint aEncodingModeValue, uint aIndexCompressedMediaType, out object aCompressedMediaType);
+
+      bool createEncoderNode(object aUncompressedMediaType, Guid aEncodingModeGUID, uint aEncodingModeValue, uint aIndexCompressedMediaType, object aDownStreamNode, out object aEncoderNode);
+
+      #endregion
+   }
 }

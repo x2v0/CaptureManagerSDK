@@ -24,70 +24,71 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class ByteStreamSinkFactory : IByteStreamSinkFactory
-    {
-        CaptureManagerLibrary.IByteStreamSinkFactory mByteStreamSinkFactory;
+   internal class ByteStreamSinkFactory : IByteStreamSinkFactory
+   {
+      #region Constructors and destructors
 
-        public ByteStreamSinkFactory(CaptureManagerLibrary.IByteStreamSinkFactory aByteStreamSinkFactory)
-        {
-            mByteStreamSinkFactory = aByteStreamSinkFactory;
-        }
+      public ByteStreamSinkFactory(CaptureManagerLibrary.IByteStreamSinkFactory aByteStreamSinkFactory)
+      {
+         mByteStreamSinkFactory = aByteStreamSinkFactory;
+      }
 
-        public bool createOutputNodes(
-            List<object> aCompressedMediaTypeList, 
-            object aByteStreamActivate, 
-            out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
+      #endregion
 
-            aTopologyOutputNodesList = new List<object>();
+      #region  Fields
 
-            do
-            {
-                if (mByteStreamSinkFactory == null)
-                    break;
+      private readonly CaptureManagerLibrary.IByteStreamSinkFactory mByteStreamSinkFactory;
 
-                if (aByteStreamActivate == null)
-                    break;
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNodes(List<object> aCompressedMediaTypeList, object aByteStreamActivate, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
+
+         aTopologyOutputNodesList = new List<object>();
+
+         do {
+            if (mByteStreamSinkFactory == null) {
+               break;
+            }
+
+            if (aByteStreamActivate == null) {
+               break;
+            }
 
 
-                object lArrayCompressedMediaType = aCompressedMediaTypeList.ToArray();
+            object lArrayCompressedMediaType = aCompressedMediaTypeList.ToArray();
 
-                object lArrayMediaNodes = new Object();
-                
-                try
-                {
+            var lArrayMediaNodes = new object();
 
-                mByteStreamSinkFactory.createOutputNodes(
-                    lArrayCompressedMediaType,
-                    aByteStreamActivate,
-                    out lArrayMediaNodes);
+            try {
+               mByteStreamSinkFactory.createOutputNodes(lArrayCompressedMediaType, aByteStreamActivate, out lArrayMediaNodes);
 
-                    if(lArrayMediaNodes == null)
-                        break;
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
 
-                    object[] lArray = lArrayMediaNodes as object[];
+               var lArray = lArrayMediaNodes as object[];
 
-                    if(lArray == null)
-                        break;
+               if (lArray == null) {
+                  break;
+               }
 
-                    aTopologyOutputNodesList.AddRange(lArray);
+               aTopologyOutputNodesList.AddRange(lArray);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-                
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

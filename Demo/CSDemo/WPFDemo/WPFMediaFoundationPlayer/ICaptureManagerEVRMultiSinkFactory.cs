@@ -24,22 +24,20 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFMediaFoundationPlayer
 {
-    interface ICaptureManagerEVRMultiSinkFactory
-    {
-        bool createOutputNodes(
-            IntPtr aHandle,
-            object aPtrUnkSharedResource,
-            uint aOutputNodeAmount,
-            out List<object> aTopologyOutputNodesList);
+   internal interface ICaptureManagerEVRMultiSinkFactory
+   {
+      #region Public methods
 
-        uint getMaxVideoRenderStreamCount();
+      bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList);
 
-        CaptureManagerToCSharpProxy.Interfaces.IEVRStreamControl getIEVRStreamControl();
-    }
+      IEVRStreamControl getIEVRStreamControl();
+
+      uint getMaxVideoRenderStreamCount();
+
+      #endregion
+   }
 }

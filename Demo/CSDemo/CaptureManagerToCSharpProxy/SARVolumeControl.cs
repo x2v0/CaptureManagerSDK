@@ -22,110 +22,109 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SARVolumeControl: ISARVolumeControl
-    {
-        private CaptureManagerLibrary.ISARVolumeControl mISARVolumeControl = null;
+   internal class SARVolumeControl : ISARVolumeControl
+   {
+      #region Constructors and destructors
 
-        public SARVolumeControl(
-            CaptureManagerLibrary.ISARVolumeControl aISARVolumeControl)
-        {
-            mISARVolumeControl = aISARVolumeControl;
-        }
+      public SARVolumeControl(CaptureManagerLibrary.ISARVolumeControl aISARVolumeControl)
+      {
+         mISARVolumeControl = aISARVolumeControl;
+      }
 
-        public bool getChannelCount(object aPtrSARNode, out uint aPtrCount)
-        {
-            bool lresult = false;
+      #endregion
 
-            aPtrCount = 0;
+      #region  Fields
 
-            do
-            {
-                if (mISARVolumeControl == null)
-                    break;
+      private readonly CaptureManagerLibrary.ISARVolumeControl mISARVolumeControl;
 
-                if (aPtrSARNode == null)
-                    break;
+      #endregion
 
-                try
-                {
-                    mISARVolumeControl.getChannelCount(aPtrSARNode, out aPtrCount);
+      #region Interface methods
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      public bool getChannelCount(object aPtrSARNode, out uint aPtrCount)
+      {
+         var lresult = false;
 
-            } while (false);
+         aPtrCount = 0;
 
-            return lresult;
-        }
+         do {
+            if (mISARVolumeControl == null) {
+               break;
+            }
 
-        public bool getChannelVolume(object aPtrSARNode, uint aIndex, out float aPtrLevel)
-        {
-            bool lresult = false;
+            if (aPtrSARNode == null) {
+               break;
+            }
 
-            aPtrLevel = 0.0f;
+            try {
+               mISARVolumeControl.getChannelCount(aPtrSARNode, out aPtrCount);
 
-            do
-            {
-                if (mISARVolumeControl == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                if (aPtrSARNode == null)
-                    break;
+         return lresult;
+      }
 
-                try
-                {
-                    mISARVolumeControl.getChannelVolume(aPtrSARNode, aIndex, out aPtrLevel);
+      public bool getChannelVolume(object aPtrSARNode, uint aIndex, out float aPtrLevel)
+      {
+         var lresult = false;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         aPtrLevel = 0.0f;
 
-            } while (false);
+         do {
+            if (mISARVolumeControl == null) {
+               break;
+            }
 
-            return lresult;
-        }
+            if (aPtrSARNode == null) {
+               break;
+            }
 
-        public bool setChannelVolume(object aPtrSARNode, uint aIndex, float aLevel)
-        {
-            bool lresult = false;
-            
-            do
-            {
-                if (mISARVolumeControl == null)
-                    break;
+            try {
+               mISARVolumeControl.getChannelVolume(aPtrSARNode, aIndex, out aPtrLevel);
 
-                if (aPtrSARNode == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                try
-                {
-                    mISARVolumeControl.setChannelVolume(aPtrSARNode, aIndex, aLevel);
+         return lresult;
+      }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      public bool setChannelVolume(object aPtrSARNode, uint aIndex, float aLevel)
+      {
+         var lresult = false;
 
-            } while (false);
+         do {
+            if (mISARVolumeControl == null) {
+               break;
+            }
 
-            return lresult;
-        }
-    }
+            if (aPtrSARNode == null) {
+               break;
+            }
+
+            try {
+               mISARVolumeControl.setChannelVolume(aPtrSARNode, aIndex, aLevel);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

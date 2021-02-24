@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Messages
+﻿namespace Rtsp.Messages
 {
-    public class RtspRequestPlay : RtspRequest
-    {
+   public class RtspRequestPlay : RtspRequest
+   {
+      #region Constructors and destructors
 
-        // Constructor
-        public RtspRequestPlay()
-        {
-            Command = "PLAY * RTSP/1.0";
-        }
-    }
+      // Constructor
+      public RtspRequestPlay()
+      {
+         Command = "PLAY * RTSP/1.0";
+      }
+
+      #endregion
+   }
 }

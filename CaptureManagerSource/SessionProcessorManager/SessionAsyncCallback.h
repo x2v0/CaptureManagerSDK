@@ -1,7 +1,5 @@
 #pragma once
-
 #include <mutex>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/ComPtrCustom.h"
@@ -9,70 +7,46 @@
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		class SessionAsyncCallback:
-			public BaseUnknown<IMFAsyncCallback>
-		{
+   namespace Core
+   {
+      class SessionAsyncCallback : public BaseUnknown<IMFAsyncCallback>
+      {
+      public:
+         MIDL_INTERFACE("DFF03825-8AD5-4A5E-B7F0-F395F590798D") ISessionAsyncCallbackRequest : public IUnknown
+         {
+         public:
+            STDMETHOD(invoke)() = 0;
+         };
 
-		public:
+         class SessionAsyncCallbackRequest : public BaseUnknown<ISessionAsyncCallbackRequest>
+         {
+         public:
+            SessionAsyncCallbackRequest(CallbackEventCodeDescriptor aCodeDescriptor,
+                                        SessionDescriptor aSessionDescriptor,
+                                        CComPtrCustom<ISessionCallbackInner>& aISessionCallbackInner) :
+               mCodeDescriptor(aCodeDescriptor), mSessionDescriptor(aSessionDescriptor),
+               mISessionCallbackInner(aISessionCallbackInner) {}
 
-			MIDL_INTERFACE("DFF03825-8AD5-4A5E-B7F0-F395F590798D")
-			ISessionAsyncCallbackRequest : public IUnknown
-			{
-			public:
+            STDMETHOD(invoke)() override
+            {
+               if (mISessionCallbackInner) {
+                  mISessionCallbackInner->Invoke(mCodeDescriptor, mSessionDescriptor);
+               }
+               return S_OK;
+            }
 
-				STDMETHOD(invoke)() = 0;
-			};
+         private:
+            CallbackEventCodeDescriptor mCodeDescriptor;
+            SessionDescriptor mSessionDescriptor;
+            CComPtrCustom<ISessionCallbackInner> mISessionCallbackInner;
+         };
 
-			class SessionAsyncCallbackRequest :
-				public BaseUnknown<ISessionAsyncCallbackRequest>
-			{
-			public:
+         STDMETHOD(GetParameters)(__RPC__out DWORD* pdwFlags, __RPC__out DWORD* pdwQueue) override;
 
-				SessionAsyncCallbackRequest(
-					CallbackEventCodeDescriptor aCodeDescriptor,
-					SessionDescriptor aSessionDescriptor,
-					CComPtrCustom<ISessionCallbackInner>& aISessionCallbackInner) :
-					mCodeDescriptor(aCodeDescriptor),
-					mSessionDescriptor(aSessionDescriptor),
-					mISessionCallbackInner(aISessionCallbackInner)
-				{}
+         STDMETHOD(Invoke)(IMFAsyncResult* aPtrAsyncResult) override;
 
-				STDMETHOD(invoke)()
-				{
-
-					if (mISessionCallbackInner)
-					{
-						mISessionCallbackInner->Invoke(
-							mCodeDescriptor,
-							mSessionDescriptor);
-					}
-
-					return S_OK;
-				}
-
-			private:
-
-				CallbackEventCodeDescriptor mCodeDescriptor;
-
-				SessionDescriptor mSessionDescriptor;
-
-				CComPtrCustom<ISessionCallbackInner> mISessionCallbackInner;
-			};
-
-
-			STDMETHOD(GetParameters)(
-				__RPC__out DWORD *pdwFlags,
-				__RPC__out DWORD *pdwQueue);
-
-			STDMETHOD(Invoke)(
-				IMFAsyncResult *aPtrAsyncResult);
-
-		private:
-
-
-			std::mutex mInvokeMutex;
-		};
-	}
+      private:
+         std::mutex mInvokeMutex;
+      };
+   }
 }

@@ -23,118 +23,111 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
-using System.Linq;
-using System.Text;
-using System.Threading;
 
 namespace InterProcessRenderer.Communication
 {
+   public delegate void MessageDelegate(string aMessage);
 
-    public delegate void MessageDelegate(string aMessage);
-    
-    public class PipeProcessor
-    {
-        private string mPipeServerName;
+   public class PipeProcessor
+   {
+      #region Constructors and destructors
 
-        private string mPipeClientName;
+      public PipeProcessor(string aPipeServerName, string aPipeClientName)
+      {
+         mPipeServerName = aPipeServerName;
 
-        private NamedPipeServerStream mPipeServer;
+         mPipeClientName = aPipeClientName;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
-        public event MessageDelegate MessageDelegateEvent;
+         startListen();
+      }
 
-        public PipeProcessor(
-            string aPipeServerName,
-            string aPipeClientName)
-        {
+      #endregion
 
-            mPipeServerName = aPipeServerName;
+      #region  Fields
 
-            mPipeClientName = aPipeClientName;
+      private readonly string mPipeClientName;
 
+      private NamedPipeServerStream mPipeServer;
+      private readonly string mPipeServerName;
+
+      #endregion
+
+      #region Public events
+
+      [SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
+      public event MessageDelegate MessageDelegateEvent;
+
+      #endregion
+
+      #region Public methods
+
+      public void closeConnection()
+      {
+         mPipeServer.Close();
+      }
+
+      public string getServerName()
+      {
+         return mPipeServerName;
+      }
+
+      public void send(string SendStr, int TimeOut = 10000)
+      {
+         try {
+            using (var pipeStream = new NamedPipeClientStream(".", mPipeClientName, PipeDirection.Out)) {
+               pipeStream.Connect(TimeOut);
+
+               var lStreamString = new StreamString(pipeStream);
+
+               lStreamString.WriteString(SendStr);
+            }
+         } catch (Exception) {
+         }
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void callBack(IAsyncResult aIAsyncResult)
+      {
+         using (var lPipeServer = (NamedPipeServerStream) aIAsyncResult.AsyncState) {
+            try {
+               lPipeServer.EndWaitForConnection(aIAsyncResult);
+            } catch (Exception) {
+            }
+
+            // we have a connection established, time to wait for new ones while this thread does its business with the client
+            // this may look like a recursive call, but it is not: remember, we're in a lambda expression
+            // if this bothers you, just export the lambda into a named private method, like you did in your question
             startListen();
-        }
 
-        private void startListen()
-        {
-            mPipeServer = new NamedPipeServerStream(
-                mPipeServerName,
-                PipeDirection.In,
-                100,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous);
-
-            mPipeServer.BeginWaitForConnection(
-                new AsyncCallback(callBack),
-                mPipeServer);
-
-        }
-
-        public void closeConnection()
-        {
-            mPipeServer.Close();
-        }
-
-        public string getServerName()
-        {
-            return mPipeServerName;
-        }
-        
-        public void send(string SendStr, int TimeOut = 10000)
-        {
-            try
-            {                
-                using( NamedPipeClientStream pipeStream = new NamedPipeClientStream
-                   (".", mPipeClientName, PipeDirection.Out))
-                {
-
-                    pipeStream.Connect(TimeOut);
-                
-                    StreamString lStreamString = new StreamString(pipeStream);
-
-                    lStreamString.WriteString(SendStr);
-                }
-
+            if (!lPipeServer.IsConnected) {
+               return;
             }
-            catch (Exception)
-            {
+
+            var lStreamString = new StreamString(lPipeServer);
+
+
+            var stringData = lStreamString.ReadString();
+
+            lPipeServer.Close();
+
+            if (MessageDelegateEvent != null) {
+               MessageDelegateEvent(stringData);
             }
-        }
-               
-        private void callBack(IAsyncResult aIAsyncResult)
-        {
-            using (var lPipeServer = (NamedPipeServerStream)aIAsyncResult.AsyncState)
-                {
-                    try
-                    {
-                        lPipeServer.EndWaitForConnection(aIAsyncResult);
-                    }
-                    catch(Exception)
-                    {
-                    }
+         }
+      }
 
-                    // we have a connection established, time to wait for new ones while this thread does its business with the client
-                    // this may look like a recursive call, but it is not: remember, we're in a lambda expression
-                    // if this bothers you, just export the lambda into a named private method, like you did in your question
-                    startListen();
+      private void startListen()
+      {
+         mPipeServer = new NamedPipeServerStream(mPipeServerName, PipeDirection.In, 100, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
 
-                    if (!lPipeServer.IsConnected)
-                        return;
+         mPipeServer.BeginWaitForConnection(callBack, mPipeServer);
+      }
 
-                    StreamString lStreamString = new StreamString(lPipeServer);
-
-
-                    string stringData = lStreamString.ReadString();
-
-                    lPipeServer.Close();
-                
-                    if (MessageDelegateEvent != null)
-                        MessageDelegateEvent(stringData);
-                }            
-           
-        }
-
-    }
+      #endregion
+   }
 }

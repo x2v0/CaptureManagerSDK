@@ -28,530 +28,647 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Windows.Input;
 using System.Windows.Interop;
 
 namespace WPFAreaScreenRecorder
 {
-    public class HotKeyEventArgs : EventArgs
-    {
-        public HotKey HotKey { get; private set; }
+   public class HotKeyEventArgs : EventArgs
+   {
+      #region Constructors and destructors
 
-        public HotKeyEventArgs(HotKey hotKey)
-        {
-            HotKey = hotKey;
-        }
-    }
+      public HotKeyEventArgs(HotKey hotKey)
+      {
+         HotKey = hotKey;
+      }
 
-    [Serializable]
-    public class HotKeyAlreadyRegisteredException : Exception
-    {
-        public HotKey HotKey { get; private set; }
-        public HotKeyAlreadyRegisteredException(string message, HotKey hotKey) : base(message) { HotKey = hotKey; }
-        public HotKeyAlreadyRegisteredException(string message, HotKey hotKey, Exception inner) : base(message, inner) { HotKey = hotKey; }
-        protected HotKeyAlreadyRegisteredException(
-          SerializationInfo info,
-          StreamingContext context)
-            : base(info, context) { }
-    }
+      #endregion
 
-    [Serializable]
-    public class HotKey : INotifyPropertyChanged, ISerializable, IEquatable<HotKey>
-    {
-        /// <summary>
-        /// Creates an HotKey object. This instance has to be registered in an HotKeyHost.
-        /// </summary>
-        public HotKey() { }
+      #region Public properties
 
-        /// <summary>
-        /// Creates an HotKey object. This instance has to be registered in an HotKeyHost.
-        /// </summary>
-        /// <param name="key">The key</param>
-        /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
-        public HotKey(Key key, ModifierKeys modifiers) : this(key, modifiers, true) { }
+      public HotKey HotKey
+      {
+         get;
+      }
 
-        /// <summary>
-        /// Creates an HotKey object. This instance has to be registered in an HotKeyHost.
-        /// </summary>
-        /// <param name="key">The key</param>
-        /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
-        /// <param name="enabled">Specifies whether the HotKey will be enabled when registered to an HotKeyHost</param>
-        public HotKey(Key key, ModifierKeys modifiers, bool enabled)
-        {
-            Key = key;
-            Modifiers = modifiers;
-            Enabled = enabled;
-        }
+      #endregion
+   }
+
+   [Serializable]
+   public class HotKeyAlreadyRegisteredException : Exception
+   {
+      #region Constructors and destructors
+
+      public HotKeyAlreadyRegisteredException(string message, HotKey hotKey) : base(message)
+      {
+         HotKey = hotKey;
+      }
+
+      public HotKeyAlreadyRegisteredException(string message, HotKey hotKey, Exception inner) : base(message, inner)
+      {
+         HotKey = hotKey;
+      }
+
+      protected HotKeyAlreadyRegisteredException(SerializationInfo info, StreamingContext context) : base(info, context)
+      {
+      }
+
+      #endregion
+
+      #region Public properties
+
+      public HotKey HotKey
+      {
+         get;
+         private set;
+      }
+
+      #endregion
+   }
+
+   [Serializable]
+   public class HotKey : INotifyPropertyChanged, ISerializable, IEquatable<HotKey>
+   {
+      #region Constructors and destructors
+
+      /// <summary>
+      ///    Creates an HotKey object. This instance has to be registered in an HotKeyHost.
+      /// </summary>
+      public HotKey()
+      {
+      }
+
+      /// <summary>
+      ///    Creates an HotKey object. This instance has to be registered in an HotKeyHost.
+      /// </summary>
+      /// <param name="key">The key</param>
+      /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
+      public HotKey(Key key, ModifierKeys modifiers) : this(key, modifiers, true)
+      {
+      }
+
+      /// <summary>
+      ///    Creates an HotKey object. This instance has to be registered in an HotKeyHost.
+      /// </summary>
+      /// <param name="key">The key</param>
+      /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
+      /// <param name="enabled">Specifies whether the HotKey will be enabled when registered to an HotKeyHost</param>
+      public HotKey(Key key, ModifierKeys modifiers, bool enabled)
+      {
+         Key = key;
+         Modifiers = modifiers;
+         Enabled = enabled;
+      }
 
 
-        private Key key;
-        /// <summary>
-        /// The Key. Must not be null when registering to an HotKeyHost.
-        /// </summary>
-        public Key Key
-        {
-            get { return key; }
-            set
-            {
-                if (key != value)
-                {
-                    key = value;
-                    OnPropertyChanged("Key");
-                }
+      protected HotKey(SerializationInfo info, StreamingContext context)
+      {
+         Key = (Key) info.GetValue("Key", typeof(Key));
+         Modifiers = (ModifierKeys) info.GetValue("Modifiers", typeof(ModifierKeys));
+         Enabled = info.GetBoolean("Enabled");
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private bool enabled;
+
+
+      private Key key;
+
+      private bool mInnerModify;
+
+      private ModifierKeys modifiers;
+
+      private IDictionary<int, ModifierKeys> modifiersCollection = new Dictionary<int, ModifierKeys>();
+
+      #endregion
+
+      #region Public events
+
+      /// <summary>
+      ///    Will be raised if the hotkey is pressed (works only if registed in HotKeyHost)
+      /// </summary>
+      public event EventHandler<HotKeyEventArgs> HotKeyPressed;
+
+      public event PropertyChangedEventHandler PropertyChanged;
+
+      #endregion
+
+      #region Public properties
+
+      public bool Enabled
+      {
+         get => enabled;
+         set
+         {
+            if (value != enabled) {
+               enabled = value;
+               OnPropertyChanged("Enabled");
             }
-        }
+         }
+      }
 
-        private ModifierKeys modifiers;
-        /// <summary>
-        /// The modifier. Multiple modifiers can be combined with or.
-        /// </summary>
-        public ModifierKeys Modifiers
-        {
-            get { return modifiers; }
-            set
-            {
-
-                if (modifiers != value)
-                {
-                    modifiers = value;
-
-                    if (!mInnerModify)
-                        fillModifiersCollcection(modifiers);
-
-                    OnPropertyChanged("Modifiers");
-                }
+      /// <summary>
+      ///    The Key. Must not be null when registering to an HotKeyHost.
+      /// </summary>
+      public Key Key
+      {
+         get => key;
+         set
+         {
+            if (key != value) {
+               key = value;
+               OnPropertyChanged("Key");
             }
-        }
+         }
+      }
 
+      /// <summary>
+      ///    The modifier. Multiple modifiers can be combined with or.
+      /// </summary>
+      public ModifierKeys Modifiers
+      {
+         get => modifiers;
+         set
+         {
+            if (modifiers != value) {
+               modifiers = value;
 
-        private void fillModifiersCollcection(ModifierKeys aModifiers)
-        {
-            modifiersCollection.Clear();
+               if (!mInnerModify) {
+                  fillModifiersCollcection(modifiers);
+               }
 
-            int lKeyCount = 0;
-
-            do
-            {
-
-                ModifierKeys lModifierKey = ModifierKeys.None;
-                
-                if (aModifiers.HasFlag(ModifierKeys.Alt))
-                {
-                    lModifierKey = ModifierKeys.Alt;
-                }
-                else if (aModifiers.HasFlag(ModifierKeys.Control))
-                {
-                    lModifierKey = ModifierKeys.Control;
-                }
-                else if (aModifiers.HasFlag(ModifierKeys.Shift))
-                {
-                    lModifierKey = ModifierKeys.Shift;
-                }
-                else if (aModifiers.HasFlag(ModifierKeys.Windows))
-                {
-                    lModifierKey = ModifierKeys.Windows;
-                }
-
-                if (lModifierKey != ModifierKeys.None)
-                {
-                    aModifiers = aModifiers & (~lModifierKey);
-
-                    modifiersCollection[lKeyCount++] = lModifierKey;
-                }
-
-            } while (aModifiers != ModifierKeys.None);
-
-            mInnerModify = false;
-        }
-
-        private bool mInnerModify = false;
-
-        private IDictionary<int, ModifierKeys> modifiersCollection = new Dictionary<int, ModifierKeys>();
-        /// <summary>
-        /// The modifier. Multiple modifiers can be combined with or.
-        /// </summary>
-        public IDictionary<int, ModifierKeys> ModifiersCollection
-        {
-
-            get { return modifiersCollection; }
-            set
-            {
-                foreach (var item in value)
-	            {
-                    modifiersCollection[item.Key] = item.Value;
-                }
-
-                ModifierKeys lModifierKeys = ModifierKeys.None;
-                                
-                foreach (var item in modifiersCollection)
-	            {
-                    lModifierKeys |= item.Value;
-                }
-
-                mInnerModify = true;
-
-                Modifiers = lModifierKeys;
-
-                OnPropertyChanged("ModifiersCollection");
+               OnPropertyChanged("Modifiers");
             }
-        }
+         }
+      }
 
-        private bool enabled;
-        public bool Enabled
-        {
-            get { return enabled; }
-            set
-            {
-                if (value != enabled)
-                {
-                    enabled = value;
-                    OnPropertyChanged("Enabled");
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-
-        public override bool Equals(object obj)
-        {
-            HotKey hotKey = obj as HotKey;
-            if (hotKey != null)
-                return Equals(hotKey);
-            else
-                return false;
-        }
-
-        public bool Equals(HotKey other)
-        {
-            return (Key == other.Key && Modifiers == other.Modifiers);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)Modifiers + 10 * (int)Key;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("{0} + {1} ({2}Enabled)", Key, Modifiers, Enabled ? "" : "Not ");
-        }
-
-        /// <summary>
-        /// Will be raised if the hotkey is pressed (works only if registed in HotKeyHost)
-        /// </summary>
-        public event EventHandler<HotKeyEventArgs> HotKeyPressed;
-
-        protected virtual void OnHotKeyPress()
-        {
-            if (HotKeyPressed != null)
-                HotKeyPressed(this, new HotKeyEventArgs(this));
-        }
-
-        internal void RaiseOnHotKeyPressed()
-        {
-            OnHotKeyPress();
-        }
-
-
-        protected HotKey(SerializationInfo info, StreamingContext context)
-        {
-            Key = (Key)info.GetValue("Key", typeof(Key));
-            Modifiers = (ModifierKeys)info.GetValue("Modifiers", typeof(ModifierKeys));
-            Enabled = info.GetBoolean("Enabled");
-        }
-
-        public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue("Key", Key, typeof(Key));
-            info.AddValue("Modifiers", Modifiers, typeof(ModifierKeys));
-            info.AddValue("Enabled", Enabled);
-        }
-    }
-
-    /// <summary>
-    /// The HotKeyHost needed for working with hotKeys.
-    /// </summary>
-    public sealed class HotKeyHost : IDisposable
-    {
-        /// <summary>
-        /// Creates a new HotKeyHost
-        /// </summary>
-        /// <param name="hwndSource">The handle of the window. Must not be null.</param>
-        public HotKeyHost(HwndSource hwndSource)
-        {
-            if (hwndSource == null)
-                throw new ArgumentNullException("hwndSource");
-
-            this.hook = new HwndSourceHook(WndProc);
-            this.hwndSource = hwndSource;
-            hwndSource.AddHook(hook);
-        }
-
-        #region HotKey Interop
-
-        private const int WM_HotKey = 786;
-
-        [DllImport("user32", CharSet = CharSet.Ansi,
-                   SetLastError = true, ExactSpelling = true)]
-        private static extern int RegisterHotKey(IntPtr hwnd,
-                int id, int modifiers, int key);
-
-        [DllImport("user32", CharSet = CharSet.Ansi,
-                   SetLastError = true, ExactSpelling = true)]
-        private static extern int UnregisterHotKey(IntPtr hwnd, int id);
-
-        #endregion
-
-        #region Interop-Encapsulation
-
-        private HwndSourceHook hook;
-        private HwndSource hwndSource;
-
-        private void RegisterHotKey(int id, HotKey hotKey)
-        {
-            if ((int)hwndSource.Handle != 0)
-            {
-                RegisterHotKey(hwndSource.Handle, id, (int)hotKey.Modifiers, KeyInterop.VirtualKeyFromKey(hotKey.Key));
-                int error = Marshal.GetLastWin32Error();
-                if (error != 0)
-                {
-                    Exception e = new Win32Exception(error);
-
-                    if (error == 1409)
-                        throw new HotKeyAlreadyRegisteredException(e.Message, hotKey, e);
-                    else
-                        throw e;
-                }
-            }
-            else
-                throw new InvalidOperationException("Handle is invalid");
-        }
-
-        private void UnregisterHotKey(int id)
-        {
-            if ((int)hwndSource.Handle != 0)
-            {
-                UnregisterHotKey(hwndSource.Handle, id);
-                int error = Marshal.GetLastWin32Error();
-                if (error != 0)
-                    throw new Win32Exception(error);
-            }
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Will be raised if any registered hotKey is pressed
-        /// </summary>
-        public event EventHandler<HotKeyEventArgs> HotKeyPressed;
-
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == WM_HotKey)
-            {
-                if (hotKeys.ContainsKey((int)wParam))
-                {
-                    HotKey h = hotKeys[(int)wParam];
-                    h.RaiseOnHotKeyPressed();
-                    if (HotKeyPressed != null)
-                        HotKeyPressed(this, new HotKeyEventArgs(h));
-                }
+      /// <summary>
+      ///    The modifier. Multiple modifiers can be combined with or.
+      /// </summary>
+      public IDictionary<int, ModifierKeys> ModifiersCollection
+      {
+         get => modifiersCollection;
+         set
+         {
+            foreach (var item in value) {
+               modifiersCollection[item.Key] = item.Value;
             }
 
-            return new IntPtr(0);
-        }
+            var lModifierKeys = ModifierKeys.None;
 
-
-        void hotKey_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            var kvPair = hotKeys.FirstOrDefault(h => h.Value == sender);
-            if (kvPair.Value != null)
-            {
-                if (e.PropertyName == "Enabled")
-                {
-                    if (kvPair.Value.Enabled)
-                        RegisterHotKey(kvPair.Key, kvPair.Value);
-                    else
-                        UnregisterHotKey(kvPair.Key);
-                }
-                else if (e.PropertyName == "Key" || e.PropertyName == "Modifiers")
-                {
-                    if (kvPair.Value.Enabled)
-                    {
-                        UnregisterHotKey(kvPair.Key);
-                        RegisterHotKey(kvPair.Key, kvPair.Value);
-                    }
-                }
-            }
-        }
-
-
-        private Dictionary<int, HotKey> hotKeys = new Dictionary<int, HotKey>();
-
-
-        public class SerialCounter
-        {
-            public SerialCounter(int start)
-            {
-                Current = start;
+            foreach (var item in modifiersCollection) {
+               lModifierKeys |= item.Value;
             }
 
-            public int Current { get; private set; }
+            mInnerModify = true;
 
-            public int Next()
-            {
-                return ++Current;
+            Modifiers = lModifierKeys;
+
+            OnPropertyChanged("ModifiersCollection");
+         }
+      }
+
+      #endregion
+
+      #region Interface methods
+
+      public bool Equals(HotKey other)
+      {
+         return (Key == other.Key) && (Modifiers == other.Modifiers);
+      }
+
+      public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
+      {
+         info.AddValue("Key", Key, typeof(Key));
+         info.AddValue("Modifiers", Modifiers, typeof(ModifierKeys));
+         info.AddValue("Enabled", Enabled);
+      }
+
+      #endregion
+
+      #region Public methods
+
+      public override bool Equals(object obj)
+      {
+         var hotKey = obj as HotKey;
+         if (hotKey != null) {
+            return Equals(hotKey);
+         }
+
+         return false;
+      }
+
+      public override int GetHashCode()
+      {
+         return (int) Modifiers + (10 * (int) Key);
+      }
+
+      public override string ToString()
+      {
+         return string.Format("{0} + {1} ({2}Enabled)", Key, Modifiers, Enabled ? "" : "Not ");
+      }
+
+      #endregion
+
+      #region Internal methods
+
+      internal void RaiseOnHotKeyPressed()
+      {
+         OnHotKeyPress();
+      }
+
+      #endregion
+
+      #region Protected methods
+
+      protected virtual void OnHotKeyPress()
+      {
+         if (HotKeyPressed != null) {
+            HotKeyPressed(this, new HotKeyEventArgs(this));
+         }
+      }
+
+      protected virtual void OnPropertyChanged(string propertyName)
+      {
+         if (PropertyChanged != null) {
+            PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+         }
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void fillModifiersCollcection(ModifierKeys aModifiers)
+      {
+         modifiersCollection.Clear();
+
+         var lKeyCount = 0;
+
+         do {
+            var lModifierKey = ModifierKeys.None;
+
+            if (aModifiers.HasFlag(ModifierKeys.Alt)) {
+               lModifierKey = ModifierKeys.Alt;
+            } else if (aModifiers.HasFlag(ModifierKeys.Control)) {
+               lModifierKey = ModifierKeys.Control;
+            } else if (aModifiers.HasFlag(ModifierKeys.Shift)) {
+               lModifierKey = ModifierKeys.Shift;
+            } else if (aModifiers.HasFlag(ModifierKeys.Windows)) {
+               lModifierKey = ModifierKeys.Windows;
             }
-        }
 
-        /// <summary>
-        /// All registered hotKeys
-        /// </summary>
-        public IEnumerable<HotKey> HotKeys { get { return hotKeys.Values; } }
+            if (lModifierKey != ModifierKeys.None) {
+               aModifiers = aModifiers & ~lModifierKey;
 
-
-        private static readonly SerialCounter idGen = new SerialCounter(1); //Annotation: Can be replaced with "Random"-class
-
-        /// <summary>
-        /// Adds an hotKey.
-        /// </summary>
-        /// <param name="hotKey">The hotKey which will be added. Must not be null and can be registed only once.</param>
-        public void AddHotKey(HotKey hotKey)
-        {
-            if (hotKey == null)
-                throw new ArgumentNullException("value");
-            if (hotKey.Key == 0)
-                throw new ArgumentNullException("value.Key");
-            if (hotKeys.ContainsValue(hotKey))
-                throw new HotKeyAlreadyRegisteredException("HotKey already registered!", hotKey);
-
-            int id = idGen.Next();
-            if (hotKey.Enabled)
-                RegisterHotKey(id, hotKey);
-            hotKey.PropertyChanged += hotKey_PropertyChanged;
-            hotKeys[id] = hotKey;
-        }
-
-        /// <summary>
-        /// Removes an hotKey
-        /// </summary>
-        /// <param name="hotKey">The hotKey to be removed</param>
-        /// <returns>True if success, otherwise false</returns>
-        public bool RemoveHotKey(HotKey hotKey)
-        {
-            var kvPair = hotKeys.FirstOrDefault(h => h.Value == hotKey);
-            if (kvPair.Value != null)
-            {
-                kvPair.Value.PropertyChanged -= hotKey_PropertyChanged;
-                if (kvPair.Value.Enabled)
-                    UnregisterHotKey(kvPair.Key);
-                return hotKeys.Remove(kvPair.Key);
+               modifiersCollection[lKeyCount++] = lModifierKey;
             }
-            return false;
-        }
+         } while (aModifiers != ModifierKeys.None);
+
+         mInnerModify = false;
+      }
+
+      #endregion
+   }
+
+   /// <summary>
+   ///    The HotKeyHost needed for working with hotKeys.
+   /// </summary>
+   public sealed class HotKeyHost : IDisposable
+   {
+      #region Constants
+
+      private const int WM_HotKey = 786;
+
+      #endregion
+
+      #region Static fields
+
+      private static readonly SerialCounter idGen = new SerialCounter(1); //Annotation: Can be replaced with "Random"-class
+
+      #endregion
+
+      #region Constructors and destructors
+
+      /// <summary>
+      ///    Creates a new HotKeyHost
+      /// </summary>
+      /// <param name="hwndSource">The handle of the window. Must not be null.</param>
+      public HotKeyHost(HwndSource hwndSource)
+      {
+         if (hwndSource == null) {
+            throw new ArgumentNullException("hwndSource");
+         }
+
+         hook = WndProc;
+         this.hwndSource = hwndSource;
+         hwndSource.AddHook(hook);
+      }
+
+      ~HotKeyHost()
+      {
+         Dispose(false);
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private bool disposed;
+
+      private readonly HwndSourceHook hook;
 
 
-        #region Destructor
+      private readonly Dictionary<int, HotKey> hotKeys = new Dictionary<int, HotKey>();
+      private readonly HwndSource hwndSource;
 
-        private bool disposed;
+      #endregion
 
-        private void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
+      #region Public events
 
-            if (disposing)
-            {
-                hwndSource.RemoveHook(hook);
+      /// <summary>
+      ///    Will be raised if any registered hotKey is pressed
+      /// </summary>
+      public event EventHandler<HotKeyEventArgs> HotKeyPressed;
+
+      #endregion
+
+      #region Public properties
+
+      /// <summary>
+      ///    All registered hotKeys
+      /// </summary>
+      public IEnumerable<HotKey> HotKeys => hotKeys.Values;
+
+      #endregion
+
+      #region Interface methods
+
+      public void Dispose()
+      {
+         Dispose(true);
+         GC.SuppressFinalize(this);
+      }
+
+      #endregion
+
+      #region Public methods
+
+      /// <summary>
+      ///    Adds an hotKey.
+      /// </summary>
+      /// <param name="hotKey">The hotKey which will be added. Must not be null and can be registed only once.</param>
+      public void AddHotKey(HotKey hotKey)
+      {
+         if (hotKey == null) {
+            throw new ArgumentNullException("value");
+         }
+
+         if (hotKey.Key == 0) {
+            throw new ArgumentNullException("value.Key");
+         }
+
+         if (hotKeys.ContainsValue(hotKey)) {
+            throw new HotKeyAlreadyRegisteredException("HotKey already registered!", hotKey);
+         }
+
+         var id = idGen.Next();
+         if (hotKey.Enabled) {
+            RegisterHotKey(id, hotKey);
+         }
+
+         hotKey.PropertyChanged += hotKey_PropertyChanged;
+         hotKeys[id] = hotKey;
+      }
+
+      /// <summary>
+      ///    Removes an hotKey
+      /// </summary>
+      /// <param name="hotKey">The hotKey to be removed</param>
+      /// <returns>True if success, otherwise false</returns>
+      public bool RemoveHotKey(HotKey hotKey)
+      {
+         var kvPair = hotKeys.FirstOrDefault(h => h.Value == hotKey);
+         if (kvPair.Value != null) {
+            kvPair.Value.PropertyChanged -= hotKey_PropertyChanged;
+            if (kvPair.Value.Enabled) {
+               UnregisterHotKey(kvPair.Key);
             }
 
-            for (int i = hotKeys.Count - 1; i >= 0; i--)
-            {
-                RemoveHotKey(hotKeys.Values.ElementAt(i));
+            return hotKeys.Remove(kvPair.Key);
+         }
+
+         return false;
+      }
+
+      #endregion
+
+      #region Private methods
+
+      [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+      private static extern int RegisterHotKey(IntPtr hwnd, int id, int modifiers, int key);
+
+      [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+      private static extern int UnregisterHotKey(IntPtr hwnd, int id);
+
+      private void Dispose(bool disposing)
+      {
+         if (disposed) {
+            return;
+         }
+
+         if (disposing) {
+            hwndSource.RemoveHook(hook);
+         }
+
+         for (var i = hotKeys.Count - 1; i >= 0; i--) {
+            RemoveHotKey(hotKeys.Values.ElementAt(i));
+         }
+
+
+         disposed = true;
+      }
+
+
+      private void hotKey_PropertyChanged(object sender, PropertyChangedEventArgs e)
+      {
+         var kvPair = hotKeys.FirstOrDefault(h => h.Value == sender);
+         if (kvPair.Value != null) {
+            if (e.PropertyName == "Enabled") {
+               if (kvPair.Value.Enabled) {
+                  RegisterHotKey(kvPair.Key, kvPair.Value);
+               } else {
+                  UnregisterHotKey(kvPair.Key);
+               }
+            } else if ((e.PropertyName == "Key") ||
+                       (e.PropertyName == "Modifiers")) {
+               if (kvPair.Value.Enabled) {
+                  UnregisterHotKey(kvPair.Key);
+                  RegisterHotKey(kvPair.Key, kvPair.Value);
+               }
             }
+         }
+      }
 
+      private void RegisterHotKey(int id, HotKey hotKey)
+      {
+         if ((int) hwndSource.Handle != 0) {
+            RegisterHotKey(hwndSource.Handle, id, (int) hotKey.Modifiers, KeyInterop.VirtualKeyFromKey(hotKey.Key));
+            var error = Marshal.GetLastWin32Error();
+            if (error != 0) {
+               Exception e = new Win32Exception(error);
 
-            disposed = true;
-        }
+               if (error == 1409) {
+                  throw new HotKeyAlreadyRegisteredException(e.Message, hotKey, e);
+               }
 
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~HotKeyHost()
-        {
-            this.Dispose(false);
-        }
-
-        #endregion
-    }
-
-    [Serializable]
-    public class CustomHotKey : HotKey
-    {
-
-        private Action mAction;
-
-        public CustomHotKey(string name, Action aAction, Key key, ModifierKeys modifiers, bool enabled)
-            : base(key, modifiers, enabled)
-        {
-            mAction = aAction;
-
-            Name = name;
-        }
-
-        private string name;
-        public string Name
-        {
-            get { return name; }
-            set
-            {
-                if (value != name)
-                {
-                    name = value;
-                    OnPropertyChanged(name);
-                }
+               throw e;
             }
-        }
+         } else {
+            throw new InvalidOperationException("Handle is invalid");
+         }
+      }
 
-        public override string ToString()
-        {
-            return name;
-        }
+      private void UnregisterHotKey(int id)
+      {
+         if ((int) hwndSource.Handle != 0) {
+            UnregisterHotKey(hwndSource.Handle, id);
+            var error = Marshal.GetLastWin32Error();
+            if (error != 0) {
+               throw new Win32Exception(error);
+            }
+         }
+      }
 
-        protected override void OnHotKeyPress()
-        {
-            if (mAction != null)
-                mAction();
+      private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+      {
+         if (msg == WM_HotKey) {
+            if (hotKeys.ContainsKey((int) wParam)) {
+               var h = hotKeys[(int) wParam];
+               h.RaiseOnHotKeyPressed();
+               if (HotKeyPressed != null) {
+                  HotKeyPressed(this, new HotKeyEventArgs(h));
+               }
+            }
+         }
 
-          //  System.Windows.MessageBox.Show(string.Format("'{0}' has been pressed ({1})", Name, this));
+         return new IntPtr(0);
+      }
 
-            base.OnHotKeyPress();
-        }
+      #endregion
+
+      #region Nested classes
+
+      public class SerialCounter
+      {
+         #region Constructors and destructors
+
+         public SerialCounter(int start)
+         {
+            Current = start;
+         }
+
+         #endregion
+
+         #region Public properties
+
+         public int Current
+         {
+            get;
+            private set;
+         }
+
+         #endregion
+
+         #region Public methods
+
+         public int Next()
+         {
+            return ++Current;
+         }
+
+         #endregion
+      }
+
+      #endregion
+   }
+
+   [Serializable]
+   public class CustomHotKey : HotKey
+   {
+      #region Constructors and destructors
+
+      public CustomHotKey(string name, Action aAction, Key key, ModifierKeys modifiers, bool enabled) : base(key, modifiers, enabled)
+      {
+         mAction = aAction;
+
+         Name = name;
+      }
 
 
-        protected CustomHotKey(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
-            : base(info, context)
-        {
-            Name = info.GetString("Name");
-        }
+      protected CustomHotKey(SerializationInfo info, StreamingContext context) : base(info, context)
+      {
+         Name = info.GetString("Name");
+      }
 
-        public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
-        {
-            base.GetObjectData(info, context);
+      #endregion
 
-            info.AddValue("Name", Name);
-        }
-    }
+      #region  Fields
 
+      private Action mAction;
+
+      private string name;
+
+      #endregion
+
+      #region Public properties
+
+      public string Name
+      {
+         get => name;
+         set
+         {
+            if (value != name) {
+               name = value;
+               OnPropertyChanged(name);
+            }
+         }
+      }
+
+      #endregion
+
+      #region Public methods
+
+      public override void GetObjectData(SerializationInfo info, StreamingContext context)
+      {
+         base.GetObjectData(info, context);
+
+         info.AddValue("Name", Name);
+      }
+
+      public override string ToString()
+      {
+         return name;
+      }
+
+      #endregion
+
+      #region Protected methods
+
+      protected override void OnHotKeyPress()
+      {
+         if (mAction != null) {
+            mAction();
+         }
+
+         //  System.Windows.MessageBox.Show(string.Format("'{0}' has been pressed ({1})", Name, this));
+
+         base.OnHotKeyPress();
+      }
+
+      #endregion
+   }
 }

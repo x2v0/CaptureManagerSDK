@@ -23,74 +23,74 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class EVRSinkFactory : IEVRSinkFactory
-    {
-        private CaptureManagerLibrary.IEVRSinkFactory mIEVRSinkFactory;
+   internal class EVRSinkFactory : IEVRSinkFactory
+   {
+      #region Constructors and destructors
 
-        public EVRSinkFactory(
-            CaptureManagerLibrary.IEVRSinkFactory aIEVRSinkFactory)
-        {
-            mIEVRSinkFactory = aIEVRSinkFactory;
-        }
+      public EVRSinkFactory(CaptureManagerLibrary.IEVRSinkFactory aIEVRSinkFactory)
+      {
+         mIEVRSinkFactory = aIEVRSinkFactory;
+      }
 
-        public bool createOutputNode(
-            IntPtr aHandle,
-            out object aTopologyNode)
-        {
-            bool lresult = false;
+      #endregion
 
-            aTopologyNode = null;
+      #region  Fields
 
-            do
-            {
-                if (mIEVRSinkFactory == null)
-                    break;
-                
-                try
-                {
-                    mIEVRSinkFactory.createOutputNode(
-                        aHandle,
-                        out aTopologyNode);
-                    
-                    if (aTopologyNode == null)
+      private readonly CaptureManagerLibrary.IEVRSinkFactory mIEVRSinkFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNode(IntPtr aHandle, out object aTopologyNode)
+      {
+         var lresult = false;
+
+         aTopologyNode = null;
+
+         do {
+            if (mIEVRSinkFactory == null) {
+               break;
+            }
+
+            try {
+               mIEVRSinkFactory.createOutputNode(aHandle, out aTopologyNode);
+
+               if (aTopologyNode == null) {
+                  break;
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               if (mIEVRSinkFactory != null) {
+                  try {
+                     object[] largs = {
+                        aHandle.ToInt64()
+                     };
+
+                     aTopologyNode = Win32NativeMethods.Invoke<object>(mIEVRSinkFactory, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNode", largs);
+
+                     if (aTopologyNode == null) {
                         break;
+                     }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    if (mIEVRSinkFactory != null)
-                    {
-                        try
-                        {
-                            object[] largs = new object[] { aHandle.ToInt64()};
+                     lresult = true;
+                  } catch (Exception exc1) {
+                     LogManager.getInstance().write(exc1.Message);
+                  }
+               } else {
+                  LogManager.getInstance().write(exc.Message);
+               }
+            }
+         } while (false);
 
-                            aTopologyNode = Win32NativeMethods.Invoke<object>(mIEVRSinkFactory, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNode", largs);
+         return lresult;
+      }
 
-                            if (aTopologyNode == null)
-                                break;
-
-                            lresult = true;
-                        }
-                        catch (Exception exc1)
-                        {
-                            LogManager.getInstance().write(exc1.Message);
-                        }
-                    }
-                    else
-                        LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

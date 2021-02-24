@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SampleConvertor.h"
 #include "DirectX11ToSystemConvertor.h"
 #include "RgbToNV12.h"
@@ -34,78 +33,43 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	using namespace SampleConvertorInner;
+   using namespace SampleConvertorInner;
+   using namespace Core;
 
-	using namespace CaptureManager::Core;
+   HRESULT SampleConvertor::createDirectX11Convertor(IUnknown* aPtrInputDeviceManager, IMFMediaType* aPtrInputMediaType,
+                                                     IUnknown* aPtrOutputDeviceManager,
+                                                     IMFMediaType* aPtrOutputMediaType,
+                                                     ISampleConvertor** aPtrPtrSampleConvertor)
+   {
+      HRESULT lresult = E_FAIL;
+      do {
+         if (aPtrInputDeviceManager != nullptr && aPtrOutputDeviceManager == nullptr) {
+            CComPtrCustom<DirectX11ToSystemConvertor> lDirectX11ToSystemConvertor(new DirectX11ToSystemConvertor());
+            LOG_CHECK_PTR_MEMORY(lDirectX11ToSystemConvertor);
+            LOG_INVOKE_POINTER_METHOD(lDirectX11ToSystemConvertor, init, aPtrInputDeviceManager, aPtrInputMediaType);
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirectX11ToSystemConvertor, aPtrPtrSampleConvertor);
+         }
+      } while (false);
+      return lresult;
+   }
 
-	HRESULT SampleConvertor::createDirectX11Convertor(
-		IUnknown* aPtrInputDeviceManager,
-		IMFMediaType* aPtrInputMediaType,
-		IUnknown* aPtrOutputDeviceManager,
-		IMFMediaType* aPtrOutputMediaType,
-		ISampleConvertor** aPtrPtrSampleConvertor)
-	{
-		HRESULT lresult = E_FAIL;
-
-		do
-		{
-			if (aPtrInputDeviceManager != nullptr &&
-				aPtrOutputDeviceManager == nullptr)
-			{
-				CComPtrCustom<DirectX11ToSystemConvertor> lDirectX11ToSystemConvertor(new DirectX11ToSystemConvertor());
-
-				LOG_CHECK_PTR_MEMORY(lDirectX11ToSystemConvertor);
-
-				LOG_INVOKE_POINTER_METHOD(lDirectX11ToSystemConvertor, init, aPtrInputDeviceManager, aPtrInputMediaType);
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirectX11ToSystemConvertor, aPtrPtrSampleConvertor);
-			}
-
-		} while (false);
-
-		return lresult;
-	}
-
-	HRESULT SampleConvertor::createRgbToNV12(
-		IMFMediaType* aPtrInputMediaType,
-		IMFMediaType* aPtrOutputMediaType,
-		ISampleConvertor** aPtrPtrSampleConvertor)
-	{
-		HRESULT lresult = E_FAIL;
-
-		do
-		{
-			LOG_CHECK_PTR_MEMORY(aPtrInputMediaType);
-
-			LOG_CHECK_PTR_MEMORY(aPtrOutputMediaType);
-
-			LOG_CHECK_PTR_MEMORY(aPtrPtrSampleConvertor);
-
-			GUID lInputSubType;
-
-			LOG_INVOKE_MF_METHOD(GetGUID, aPtrInputMediaType,
-				MF_MT_SUBTYPE,
-				&lInputSubType);
-
-
-			GUID lOutputSubType;
-
-			LOG_INVOKE_MF_METHOD(GetGUID, aPtrOutputMediaType,
-				MF_MT_SUBTYPE,
-				&lOutputSubType);
-			
-			CComPtrCustom<RgbToNV12> lRgbToNV12(new RgbToNV12());
-
-			LOG_CHECK_PTR_MEMORY(lRgbToNV12);
-
-			LOG_INVOKE_POINTER_METHOD(lRgbToNV12, init,
-				aPtrInputMediaType,
-				aPtrOutputMediaType);
-
-			LOG_INVOKE_QUERY_INTERFACE_METHOD(lRgbToNV12, aPtrPtrSampleConvertor);
-
-		} while (false);
-
-		return lresult;
-	}
+   HRESULT SampleConvertor::createRgbToNV12(IMFMediaType* aPtrInputMediaType, IMFMediaType* aPtrOutputMediaType,
+                                            ISampleConvertor** aPtrPtrSampleConvertor)
+   {
+      HRESULT lresult = E_FAIL;
+      do {
+         LOG_CHECK_PTR_MEMORY(aPtrInputMediaType);
+         LOG_CHECK_PTR_MEMORY(aPtrOutputMediaType);
+         LOG_CHECK_PTR_MEMORY(aPtrPtrSampleConvertor);
+         GUID lInputSubType;
+         LOG_INVOKE_MF_METHOD(GetGUID, aPtrInputMediaType, MF_MT_SUBTYPE, &lInputSubType);
+         GUID lOutputSubType;
+         LOG_INVOKE_MF_METHOD(GetGUID, aPtrOutputMediaType, MF_MT_SUBTYPE, &lOutputSubType);
+         CComPtrCustom<RgbToNV12> lRgbToNV12(new RgbToNV12());
+         LOG_CHECK_PTR_MEMORY(lRgbToNV12);
+         LOG_INVOKE_POINTER_METHOD(lRgbToNV12, init, aPtrInputMediaType, aPtrOutputMediaType);
+         LOG_INVOKE_QUERY_INTERFACE_METHOD(lRgbToNV12, aPtrPtrSampleConvertor);
+      } while (false);
+      return lresult;
+   }
 }

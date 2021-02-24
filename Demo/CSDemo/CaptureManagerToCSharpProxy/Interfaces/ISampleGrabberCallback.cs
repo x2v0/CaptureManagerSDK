@@ -23,26 +23,28 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public delegate void UpdateDelegate(byte[] sender, uint e);
+   public delegate void UpdateDelegate(byte[] sender, uint e);
 
-    public delegate void UpdateDelegateFull(uint aSampleFlags, long aSampleTime, long aSampleDuration, byte[] data, uint size);
+   public delegate void UpdateDelegateFull(uint aSampleFlags, long aSampleTime, long aSampleDuration, byte[] data, uint size);
 
-    public delegate void UpdateDelegateNativeFull(uint aSampleFlags, long aSampleTime, long aSampleDuration, IntPtr aData, uint aSize);
-   
+   public delegate void UpdateDelegateNativeFull(uint aSampleFlags, long aSampleTime, long aSampleDuration, IntPtr aData, uint aSize);
 
-    public interface ISampleGrabberCallback : IMediaFoundationNode
-    {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
-        event UpdateDelegate mUpdateEvent;
 
-        event UpdateDelegateFull mUpdateFullEvent;
+   public interface ISampleGrabberCallback : IMediaFoundationNode
+   {
+      #region Public events
 
-        event UpdateDelegateNativeFull mUpdateNativeFullEvent;
-    }
+      [SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
+      event UpdateDelegate mUpdateEvent;
+
+      event UpdateDelegateFull mUpdateFullEvent;
+
+      event UpdateDelegateNativeFull mUpdateNativeFullEvent;
+
+      #endregion
+   }
 }

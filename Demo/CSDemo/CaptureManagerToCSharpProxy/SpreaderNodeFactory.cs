@@ -22,50 +22,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SpreaderNodeFactory : ISpreaderNodeFactory
-    {
-        CaptureManagerLibrary.ISpreaderNodeFactory mISpreaderNodeFactory = null;
+   internal class SpreaderNodeFactory : ISpreaderNodeFactory
+   {
+      #region Constructors and destructors
 
-        public SpreaderNodeFactory(
-            CaptureManagerLibrary.ISpreaderNodeFactory aISpreaderNodeFactory)
-        {
-            mISpreaderNodeFactory = aISpreaderNodeFactory;
-        }
+      public SpreaderNodeFactory(CaptureManagerLibrary.ISpreaderNodeFactory aISpreaderNodeFactory)
+      {
+         mISpreaderNodeFactory = aISpreaderNodeFactory;
+      }
 
-        public bool createSpreaderNode(
-            List<object> aDownStreamTopologyNodelist, 
-            out object aTopologyNode)
-        {
-            bool lresult = false;
+      #endregion
 
-            aTopologyNode = null;
+      #region  Fields
 
-            do
-            {
-                if(mISpreaderNodeFactory == null)
-                    break;
+      private readonly CaptureManagerLibrary.ISpreaderNodeFactory mISpreaderNodeFactory;
 
-                if (aDownStreamTopologyNodelist == null ||
-                    aDownStreamTopologyNodelist.Count == 0)
-                    break;
+      #endregion
 
-                object lArrayDownStreamTopologyNodelist = aDownStreamTopologyNodelist.ToArray();
+      #region Interface methods
 
-                mISpreaderNodeFactory.createSpreaderNode(
-                    lArrayDownStreamTopologyNodelist,
-                    out aTopologyNode);
-                
-            } while (false);
+      public bool createSpreaderNode(List<object> aDownStreamTopologyNodelist, out object aTopologyNode)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
-    }
+         aTopologyNode = null;
+
+         do {
+            if (mISpreaderNodeFactory == null) {
+               break;
+            }
+
+            if ((aDownStreamTopologyNodelist == null) ||
+                (aDownStreamTopologyNodelist.Count == 0)) {
+               break;
+            }
+
+            object lArrayDownStreamTopologyNodelist = aDownStreamTopologyNodelist.ToArray();
+
+            mISpreaderNodeFactory.createSpreaderNode(lArrayDownStreamTopologyNodelist, out aTopologyNode);
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

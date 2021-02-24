@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "MemoryBufferManager.h"
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
@@ -32,225 +31,151 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		using namespace MediaFoundation;
+   namespace Core
+   {
+      using namespace MediaFoundation;
 
-		namespace
-		{
+      namespace
+      {
+         template <typename MemmoryAllocator> class MemoryBufferManagerInner : public BaseUnknown<IMemoryBufferManager>
+         {
+            class ProxyMediaBuffer : public BaseUnknown<IMFMediaBuffer>
+            {
+            private:
+               CComPtrCustom<IMFMediaBuffer> mIMFMediaBuffer;
+               MemoryBufferManagerInner* mPtrParent;
+            public:
+               ProxyMediaBuffer(IMFMediaBuffer* aPtrMediaBuffer, MemoryBufferManagerInner* aPtrParent) :
+                  mIMFMediaBuffer(aPtrMediaBuffer), mPtrParent(aPtrParent) {}
 
-			template<typename MemmoryAllocator>
-			class MemoryBufferManagerInner :
-				public BaseUnknown<IMemoryBufferManager>
-			{
-				class ProxyMediaBuffer :
-					public BaseUnknown<IMFMediaBuffer>
-				{
-				private:
-					CComPtrCustom<IMFMediaBuffer> mIMFMediaBuffer;
+               virtual ~ProxyMediaBuffer() {}
 
-					MemoryBufferManagerInner* mPtrParent;
+               void clearParent()
+               {
+                  mPtrParent = nullptr;
+               }
 
-				public:
+               STDMETHODIMP_(ULONG) Release() override
+               {
+                  auto lCount = BaseUnknown::Release();
+                  if (lCount == 1 && mPtrParent != nullptr) {
+                     mPtrParent->pushMediaBuffer(this);
+                  }
+                  return lCount;
+               }
 
-					ProxyMediaBuffer(
-						IMFMediaBuffer* aPtrMediaBuffer,
-						MemoryBufferManagerInner* aPtrParent) :
-						mIMFMediaBuffer(aPtrMediaBuffer),
-						mPtrParent(aPtrParent)
-					{}
+               HRESULT STDMETHODCALLTYPE Lock(BYTE** ppbBuffer, DWORD* pcbMaxLength, DWORD* pcbCurrentLength) override
+               {
+                  return mIMFMediaBuffer->Lock(ppbBuffer, pcbMaxLength, pcbCurrentLength);
+               }
 
-					virtual ~ProxyMediaBuffer()
-					{}
+               HRESULT STDMETHODCALLTYPE Unlock() override
+               {
+                  return mIMFMediaBuffer->Unlock();
+               }
 
-					void clearParent()
-					{
-						mPtrParent = nullptr;
-					}
+               HRESULT STDMETHODCALLTYPE GetCurrentLength(DWORD* pcbCurrentLength) override
+               {
+                  return mIMFMediaBuffer->GetCurrentLength(pcbCurrentLength);
+               }
 
-					virtual STDMETHODIMP_(ULONG) Release()
-					{
-						auto lCount = BaseUnknown::Release();
+               HRESULT STDMETHODCALLTYPE SetCurrentLength(DWORD cbCurrentLength) override
+               {
+                  return mIMFMediaBuffer->SetCurrentLength(cbCurrentLength);
+               }
 
-						if (lCount == 1 && mPtrParent != nullptr)
-						{
-							mPtrParent->pushMediaBuffer(this);
-						}
+               HRESULT STDMETHODCALLTYPE GetMaxLength(DWORD* pcbMaxLength) override
+               {
+                  return mIMFMediaBuffer->GetMaxLength(pcbMaxLength);
+               }
+            };
 
-						return lCount;
-					}
+         public:
+            MemoryBufferManagerInner(DWORD aMaxBufferLength) : mMaxBufferLength(aMaxBufferLength) {}
 
-					virtual HRESULT STDMETHODCALLTYPE Lock(
-						BYTE **ppbBuffer,
-						DWORD *pcbMaxLength,
-						DWORD *pcbCurrentLength)
-					{
-						return mIMFMediaBuffer->Lock(ppbBuffer, pcbMaxLength, pcbCurrentLength);
-					}
+            HRESULT getMediaBuffer(IMFMediaBuffer** aPtrPtrMediaBuffer) override
+            {
+               HRESULT lresult;
+               do {
+                  if (mBufferStack.empty()) {
+                     IMFMediaBuffer* lPtrMediaBuffer;
+                     LOG_INVOKE_FUNCTION(mMemmoryAllocator, mMaxBufferLength, &lPtrMediaBuffer);
+                     LOG_CHECK_PTR_MEMORY(lPtrMediaBuffer);
+                     CComPtrCustom<IMFMediaBuffer> lMediaBuffer = new(std::nothrow) ProxyMediaBuffer(
+                        lPtrMediaBuffer, this);
+                     mMemoryList.push_back(lMediaBuffer);
+                     *aPtrPtrMediaBuffer = lMediaBuffer.detach();
+                  } else {
+                     popMediaBuffer(aPtrPtrMediaBuffer);
+                     lresult = S_OK;
+                  }
+               } while (false);
+               return lresult;
+            }
 
-					virtual HRESULT STDMETHODCALLTYPE Unlock()
-					{
-						return mIMFMediaBuffer->Unlock();
-					}
+            void clearMemory() override
+            {
+               {
+                  std::lock_guard<std::mutex> lLock(mAccessMutex);
+                  for (auto& item : mMemoryList) {
+                     static_cast<ProxyMediaBuffer*>(item.get())->clearParent();
+                  }
+                  while (!mBufferStack.empty()) {
+                     mBufferStack.pop();
+                  }
+               }
+               mMemoryList.clear();
+            }
 
-					virtual HRESULT STDMETHODCALLTYPE GetCurrentLength(
-						DWORD *pcbCurrentLength)
-					{
-						return mIMFMediaBuffer->GetCurrentLength(pcbCurrentLength);
-					}
+            static HRESULT createSystem(IMemoryBufferManager** aPtrPtrMemoryBufferManager);
 
-					virtual HRESULT STDMETHODCALLTYPE SetCurrentLength(
-						DWORD cbCurrentLength)
-					{
-						return mIMFMediaBuffer->SetCurrentLength(cbCurrentLength);
-					}
+         private:
+            virtual ~MemoryBufferManagerInner() {}
+            MemmoryAllocator mMemmoryAllocator;
 
-					virtual HRESULT STDMETHODCALLTYPE GetMaxLength(
-						DWORD *pcbMaxLength)
-					{
-						return mIMFMediaBuffer->GetMaxLength(pcbMaxLength);
-					}
-				};
+            void pushMediaBuffer(IMFMediaBuffer* aPtrMediaBuffer)
+            {
+               std::lock_guard<std::mutex> lLock(mAccessMutex);
+               mBufferStack.push(aPtrMediaBuffer);
+            }
 
-			public:
-				MemoryBufferManagerInner(DWORD aMaxBufferLength) :
-					mMaxBufferLength(aMaxBufferLength) {}
+            void popMediaBuffer(IMFMediaBuffer** aPtrPtrMediaBuffer)
+            {
+               std::lock_guard<std::mutex> lLock(mAccessMutex);
+               *aPtrPtrMediaBuffer = mBufferStack.top();
+               (*aPtrPtrMediaBuffer)->AddRef();
+               mBufferStack.pop();
+            }
 
-				virtual HRESULT getMediaBuffer(
-					IMFMediaBuffer** aPtrPtrMediaBuffer)
-				{
+            DWORD mMaxBufferLength;
+            std::stack<IMFMediaBuffer*> mBufferStack;
+            std::list<CComPtrCustom<IMFMediaBuffer>> mMemoryList;
+            std::mutex mAccessMutex;
+         };
+      }
 
-					HRESULT lresult;
-
-					do
-					{
-						if (mBufferStack.empty())
-						{
-							IMFMediaBuffer* lPtrMediaBuffer;
-
-							LOG_INVOKE_FUNCTION(mMemmoryAllocator,
-								mMaxBufferLength,
-								&lPtrMediaBuffer);
-
-							LOG_CHECK_PTR_MEMORY(lPtrMediaBuffer);
-
-							CComPtrCustom<IMFMediaBuffer> lMediaBuffer = new (std::nothrow) ProxyMediaBuffer(
-								lPtrMediaBuffer,
-								this);
-
-							mMemoryList.push_back(lMediaBuffer);
-
-							*aPtrPtrMediaBuffer = lMediaBuffer.detach();
-
-						}
-						else
-						{
-							popMediaBuffer(aPtrPtrMediaBuffer);
-
-							lresult = S_OK;
-						}
-
-
-					} while (false);
-
-					return lresult;
-				}
-
-				virtual void clearMemory()
-				{
-					{
-						std::lock_guard<std::mutex> lLock(mAccessMutex);
-
-						for (auto& item : mMemoryList)
-						{
-							((ProxyMediaBuffer*)item.get())->clearParent();
-						}
-						
-						while (!mBufferStack.empty())
-						{
-							mBufferStack.pop();
-						}
-					}
-
-					mMemoryList.clear();
-				}
-
-
-				static HRESULT createSystem(IMemoryBufferManager** aPtrPtrMemoryBufferManager);
-			private:
-				virtual ~MemoryBufferManagerInner() {}
-
-				MemmoryAllocator mMemmoryAllocator;
-
-				void pushMediaBuffer(IMFMediaBuffer* aPtrMediaBuffer)
-				{
-					std::lock_guard<std::mutex> lLock(mAccessMutex);
-
-					mBufferStack.push(aPtrMediaBuffer);
-				}
-
-				void popMediaBuffer(IMFMediaBuffer** aPtrPtrMediaBuffer)
-				{
-					std::lock_guard<std::mutex> lLock(mAccessMutex);
-
-					*aPtrPtrMediaBuffer = mBufferStack.top();
-
-					(*aPtrPtrMediaBuffer)->AddRef();
-
-					mBufferStack.pop();
-				}
-
-
-				DWORD mMaxBufferLength;
-
-				std::stack<IMFMediaBuffer*> mBufferStack;
-
-				std::list<CComPtrCustom<IMFMediaBuffer>> mMemoryList;
-
-				std::mutex mAccessMutex;
-			};
-
-		}
-
-		HRESULT MemoryBufferManager::createSystemMemoryBufferManager(
-			DWORD aMaxBufferLength,
-			IMemoryBufferManager** aPtrPtrMemoryBufferManager)
-		{
-			struct SystemMemoryAllocator
-			{
-				HRESULT operator()(
-					DWORD aMaxBufferLength,
-					IMFMediaBuffer** aPtrPtrMediaBuffer) const {
-
-					HRESULT lresult(E_FAIL);
-
-					do
-					{
-						LOG_INVOKE_MF_FUNCTION(MFCreateMemoryBuffer,
-							aMaxBufferLength,
-							aPtrPtrMediaBuffer);
-
-					} while (false);
-
-					return lresult;
-				};
-			};
-
-
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-
-				CComPtrCustom<IMemoryBufferManager> lMemoryBufferManager(new (std::nothrow) MemoryBufferManagerInner<SystemMemoryAllocator>(aMaxBufferLength));
-
-				LOG_CHECK_PTR_MEMORY(lMemoryBufferManager);
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(lMemoryBufferManager, aPtrPtrMemoryBufferManager);
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT MemoryBufferManager::createSystemMemoryBufferManager(DWORD aMaxBufferLength,
+                                                                   IMemoryBufferManager** aPtrPtrMemoryBufferManager)
+      {
+         struct SystemMemoryAllocator
+         {
+            HRESULT operator()(DWORD aMaxBufferLength, IMFMediaBuffer** aPtrPtrMediaBuffer) const
+            {
+               HRESULT lresult(E_FAIL);
+               do {
+                  LOG_INVOKE_MF_FUNCTION(MFCreateMemoryBuffer, aMaxBufferLength, aPtrPtrMediaBuffer);
+               } while (false);
+               return lresult;
+            };
+         };
+         HRESULT lresult = E_FAIL;
+         do {
+            CComPtrCustom<IMemoryBufferManager> lMemoryBufferManager(
+               new(std::nothrow) MemoryBufferManagerInner<SystemMemoryAllocator>(aMaxBufferLength));
+            LOG_CHECK_PTR_MEMORY(lMemoryBufferManager);
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(lMemoryBufferManager, aPtrPtrMemoryBufferManager);
+         } while (false);
+         return lresult;
+      }
+   }
 }

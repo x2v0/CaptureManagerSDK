@@ -21,215 +21,133 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "ScheduleWorkImpl.h"
-
 #include "../MediaFoundationManager/MediaFoundationManager.h"
-
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Common.h"
 
 namespace EVRMultiSink
 {
-	namespace Sinks
-	{
-		namespace EVR
-		{
-			namespace Scheduler
-			{
-				using namespace CaptureManager;
-				using namespace CaptureManager::Core;
+   namespace Sinks
+   {
+      namespace EVR
+      {
+         namespace Scheduler
+         {
+            using namespace CaptureManager;
+            using namespace Core;
+            ScheduleWorkImpl::ScheduleWorkImpl(ISchedulerCallback* aPtrCallback) : mPtrCallback(aPtrCallback) { }
+            ScheduleWorkImpl::~ScheduleWorkImpl() { }
 
-				ScheduleWorkImpl::ScheduleWorkImpl(
-					ISchedulerCallback* aPtrCallback) :
-					mPtrCallback(aPtrCallback)
-				{
-				}
+            HRESULT ScheduleWorkImpl::init(INT64 aFrameDuration100nseconds)
+            {
+               HRESULT lresult;
+               do {
+                  lCycleMax = 4;
+                  lCycleCount = 0;
+                  LOG_INVOKE_MF_FUNCTION(MFCreateAsyncResult, nullptr, this, nullptr, &mAsyncResult);
+                  mFrameDuration100nseconds = aFrameDuration100nseconds;
+                  mPartFrameDuration100nsecondsTimeout = mFrameDuration100nseconds / lCycleMax;
+                  mPartFrameDurationMillSecTimeout = mPartFrameDuration100nsecondsTimeout / 10000;
+               } while (false);
+               return lresult;
+            }
 
-				ScheduleWorkImpl::~ScheduleWorkImpl()
-				{
-				}
+            HRESULT ScheduleWorkImpl::start()
+            {
+               HRESULT lresult;
+               do {
+                  auto lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
+                  if (lInitTime == 0) {
+                     lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
+                  }
+                  LOG_CHECK_STATE(lInitTime == 0);
+                  mLastTme = 0;
+                  mInitTime = 0;
+                  mShiftTime = 0;
+                  mStopFlag = false;
+                  LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx, mAsyncResult, mPartFrameDurationMillSecTimeout,
+                                         &mCancelKey);
+               } while (false);
+               return lresult;
+            }
 
-				HRESULT ScheduleWorkImpl::init(
-					INT64 aFrameDuration100nseconds)
-				{
-					HRESULT lresult;
+            HRESULT ScheduleWorkImpl::stop()
+            {
+               std::unique_lock<std::mutex> lLock(mStopMutex);
+               mStopFlag = true;
+               HRESULT lresult(E_FAIL);
+               do {
+                  LOG_INVOKE_MF_FUNCTION(MFCancelWorkItem, mCancelKey);
+               } while (false);
+               mStopCondition.wait_for(lLock, std::chrono::milliseconds(100));
+               return S_OK;
+            }
 
-					do
-					{
-						lCycleMax = 4;
-
-						lCycleCount = 0;
-
-						LOG_INVOKE_MF_FUNCTION(MFCreateAsyncResult,
-							nullptr,
-							this,
-							nullptr,
-							&mAsyncResult);
-
-						mFrameDuration100nseconds = aFrameDuration100nseconds;
-
-						mPartFrameDuration100nsecondsTimeout = mFrameDuration100nseconds / lCycleMax;
-
-						mPartFrameDurationMillSecTimeout = mPartFrameDuration100nsecondsTimeout / 10000;
-
-
-					} while (false);
-
-					return lresult;
-				}
-
-				HRESULT ScheduleWorkImpl::start()
-				{
-					HRESULT lresult;
-
-					do
-					{
-						auto lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
-
-						if (lInitTime == 0)
-						{
-							lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
-						}
-
-						LOG_CHECK_STATE(lInitTime == 0);
-
-						mLastTme = 0;
-
-						mInitTime = 0;
-
-						mShiftTime = 0;
-
-						mStopFlag = false;
-
-						LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx,
-							mAsyncResult,
-							mPartFrameDurationMillSecTimeout,
-							&mCancelKey);
-
-					} while (false);
-
-					return lresult;
-
-				}
-
-				HRESULT ScheduleWorkImpl::stop()
-				{
-					std::unique_lock<std::mutex> lLock(mStopMutex);
-
-					mStopFlag = true;
-
-					HRESULT lresult(E_FAIL);
-
-					do
-					{
-						LOG_INVOKE_MF_FUNCTION(MFCancelWorkItem,
-							mCancelKey);
-
-					} while (false);
-
-					mStopCondition.wait_for(lLock, std::chrono::milliseconds(100));
-
-					return S_OK;
-				}
-
-				STDMETHODIMP ScheduleWorkImpl::GetParameters(DWORD*, DWORD*)
-				{
-					return E_NOTIMPL;
-				}
-
-				//int j = 0;
-
-				STDMETHODIMP ScheduleWorkImpl::Invoke(IMFAsyncResult* pAsyncResult)
-				{
-					if (mStopFlag)
-					{
-						std::lock_guard<std::mutex> lLock(mStopMutex);
-
-						mStopCondition.notify_one();
-
-						return S_OK;
-					}
-
-					//auto lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
-
-					//if (mLastTme == 0)
-					//{
-					//	HRESULT lresult;
-
-					//	mLastTme = lInitTime;
-
-					//	mInitTime = lInitTime;
-
-					//	lCycleCount = 0;
-
-					//	do
-					//	{
-
-					//		LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx,
-					//			mAsyncResult,
-					//			-mPartFrameDurationMillSecTimeout,
-					//			&mCancelKey);
-
-					//	} while (false);
-
-					//	return S_OK;
-					//}
-
-					//if (++lCycleCount >= lCycleMax)
-					//{
-					//	if (mPtrCallback != nullptr)
-					//		mPtrCallback->callback();
-
-					//	lCycleCount = 0;
-
-					//	auto lduration = (lInitTime - mLastTme);
-
-					//	mShiftTime += lduration - mFrameDuration100nseconds;
-
-					//	mLastTme = lInitTime;
-
-					//	auto lTemp = mShiftTime;
-
-
-					//	while (lTemp >= mPartFrameDuration100nsecondsTimeout)
-					//	{
-					//		if (++lCycleCount >= lCycleMax)
-					//			break;
-					//		lTemp -= mPartFrameDuration100nsecondsTimeout;
-					//	}
-
-					//	//LogPrintOut::getInstance().printOutln(
-					//	//	LogPrintOut::ERROR_LEVEL,
-					//	//	L" mShiftTime: ",
-					//	//	mShiftTime,
-					//	//	L", lduration: ",
-					//	//	lduration,
-					//	//	L", Time: ",
-					//	//	lInitTime - mInitTime,
-					//	//	L", lCycleCount: ",
-					//	//	lCycleCount,
-					//	//	L", J: ",
-					//	//	++j);
-					//}
-
-					HRESULT lresult;
-
-					do
-					{
-						if (mPtrCallback != nullptr)
-							mPtrCallback->callback();
-
-						LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx,
-							mAsyncResult,
-							mPartFrameDurationMillSecTimeout,
-							&mCancelKey);
-
-					} while (false);
-
-					return S_OK;
-				}
-			}
-		}
-	}
+            STDMETHODIMP ScheduleWorkImpl::GetParameters(DWORD*, DWORD*)
+            {
+               return E_NOTIMPL;
+            } //int j = 0;
+            STDMETHODIMP ScheduleWorkImpl::Invoke(IMFAsyncResult* pAsyncResult)
+            {
+               if (mStopFlag) {
+                  std::lock_guard<std::mutex> lLock(mStopMutex);
+                  mStopCondition.notify_one();
+                  return S_OK;
+               } //auto lInitTime = MediaFoundation::MediaFoundationManager::MFGetSystemTime();
+               //if (mLastTme == 0)
+               //{
+               //	HRESULT lresult;
+               //	mLastTme = lInitTime;
+               //	mInitTime = lInitTime;
+               //	lCycleCount = 0;
+               //	do
+               //	{
+               //		LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx,
+               //			mAsyncResult,
+               //			-mPartFrameDurationMillSecTimeout,
+               //			&mCancelKey);
+               //	} while (false);
+               //	return S_OK;
+               //}
+               //if (++lCycleCount >= lCycleMax)
+               //{
+               //	if (mPtrCallback != nullptr)
+               //		mPtrCallback->callback();
+               //	lCycleCount = 0;
+               //	auto lduration = (lInitTime - mLastTme);
+               //	mShiftTime += lduration - mFrameDuration100nseconds;
+               //	mLastTme = lInitTime;
+               //	auto lTemp = mShiftTime;
+               //	while (lTemp >= mPartFrameDuration100nsecondsTimeout)
+               //	{
+               //		if (++lCycleCount >= lCycleMax)
+               //			break;
+               //		lTemp -= mPartFrameDuration100nsecondsTimeout;
+               //	}
+               //	//LogPrintOut::getInstance().printOutln(
+               //	//	LogPrintOut::ERROR_LEVEL,
+               //	//	L" mShiftTime: ",
+               //	//	mShiftTime,
+               //	//	L", lduration: ",
+               //	//	lduration,
+               //	//	L", Time: ",
+               //	//	lInitTime - mInitTime,
+               //	//	L", lCycleCount: ",
+               //	//	lCycleCount,
+               //	//	L", J: ",
+               //	//	++j);
+               //}
+               HRESULT lresult;
+               do {
+                  if (mPtrCallback != nullptr)
+                     mPtrCallback->callback();
+                  LOG_INVOKE_MF_FUNCTION(MFScheduleWorkItemEx, mAsyncResult, mPartFrameDurationMillSecTimeout,
+                                         &mCancelKey);
+               } while (false);
+               return S_OK;
+            }
+         }
+      }
+   }
 }

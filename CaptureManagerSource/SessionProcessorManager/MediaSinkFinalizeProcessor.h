@@ -1,38 +1,27 @@
 #pragma once
-
 #include <condition_variable>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		class MediaSinkFinalizeProcessor :
-			public BaseUnknown<IMFAsyncCallback>
-		{
-		public:
-			MediaSinkFinalizeProcessor();
-			virtual ~MediaSinkFinalizeProcessor();
+   namespace Core
+   {
+      class MediaSinkFinalizeProcessor : public BaseUnknown<IMFAsyncCallback>
+      {
+      public:
+         MediaSinkFinalizeProcessor();
 
-			HRESULT finalizeMediaSink(
-				IMFMediaSink* aPtrMediaSink);
+         virtual ~MediaSinkFinalizeProcessor();
 
-			// IMFAsyncCallback implements
+         HRESULT finalizeMediaSink(IMFMediaSink* aPtrMediaSink); // IMFAsyncCallback implements
+         HRESULT STDMETHODCALLTYPE GetParameters(DWORD* aPtrFlags, DWORD* aPtrQueue) override;
 
-			virtual HRESULT STDMETHODCALLTYPE GetParameters(
-				DWORD* aPtrFlags,
-				DWORD* aPtrQueue);
+         HRESULT STDMETHODCALLTYPE Invoke(IMFAsyncResult* aPtrAsyncResult) override;
 
-			virtual HRESULT STDMETHODCALLTYPE Invoke(
-				IMFAsyncResult* aPtrAsyncResult);
-			
-		private:
-
-			std::mutex mMutex;
-
-			std::condition_variable mConditionVariable;
-		};
-	}
+      private:
+         std::mutex mMutex;
+         std::condition_variable mConditionVariable;
+      };
+   }
 }

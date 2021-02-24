@@ -22,52 +22,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class AudioMixerControl: IAudioMixerControl
-    {
-        private CaptureManagerLibrary.IAudioMixerControl mIAudioMixerControl;
+   internal class AudioMixerControl : IAudioMixerControl
+   {
+      #region Constructors and destructors
 
-        public AudioMixerControl(
-            CaptureManagerLibrary.IAudioMixerControl aIAudioMixerControl)
-        {
-            mIAudioMixerControl = aIAudioMixerControl;
-        }
-        
-        public bool setRelativeVolume(object aPtrAudioMixerNode, float aRelativeVolume)
-        {
-            bool lresult = false;
+      public AudioMixerControl(CaptureManagerLibrary.IAudioMixerControl aIAudioMixerControl)
+      {
+         mIAudioMixerControl = aIAudioMixerControl;
+      }
 
-            do
-            {
-                if (mIAudioMixerControl == null)
-                    break;
+      #endregion
 
-                if (aPtrAudioMixerNode == null)
-                    break;
+      #region  Fields
 
-                try
-                {
-                    mIAudioMixerControl.setRelativeVolume(
-                        aPtrAudioMixerNode,
-                        aRelativeVolume);
+      private readonly CaptureManagerLibrary.IAudioMixerControl mIAudioMixerControl;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      #endregion
 
-            } while (false);
+      #region Interface methods
 
-            return lresult;
-        }
-    }
+      public bool setRelativeVolume(object aPtrAudioMixerNode, float aRelativeVolume)
+      {
+         var lresult = false;
+
+         do {
+            if (mIAudioMixerControl == null) {
+               break;
+            }
+
+            if (aPtrAudioMixerNode == null) {
+               break;
+            }
+
+            try {
+               mIAudioMixerControl.setRelativeVolume(aPtrAudioMixerNode, aRelativeVolume);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

@@ -24,68 +24,67 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
-
 
 namespace CaptureManagerToCSharpProxy
 {
-    class FileSinkFactory : IFileSinkFactory
-    {
-        CaptureManagerLibrary.IFileSinkFactory mFileSinkFactory;
-        
-        public FileSinkFactory(CaptureManagerLibrary.IFileSinkFactory aFileSinkFactory)
-        {
-            mFileSinkFactory = aFileSinkFactory;
-        }
+   internal class FileSinkFactory : IFileSinkFactory
+   {
+      #region Constructors and destructors
 
-        public bool createOutputNodes(
-            List<object> aCompressedMediaTypeList, 
-            string aPtrFileName, 
-            out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
+      public FileSinkFactory(CaptureManagerLibrary.IFileSinkFactory aFileSinkFactory)
+      {
+         mFileSinkFactory = aFileSinkFactory;
+      }
 
-            aTopologyOutputNodesList = new List<object>();
+      #endregion
 
-            do
-            {
-                if (mFileSinkFactory == null)
-                    break;
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.IFileSinkFactory mFileSinkFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNodes(List<object> aCompressedMediaTypeList, string aPtrFileName, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
+
+         aTopologyOutputNodesList = new List<object>();
+
+         do {
+            if (mFileSinkFactory == null) {
+               break;
+            }
 
 
-                object lArrayCompressedMediaType = aCompressedMediaTypeList.ToArray();
+            object lArrayCompressedMediaType = aCompressedMediaTypeList.ToArray();
 
-                object lArrayMediaNodes = new Object();
-                
-                try
-                {
+            var lArrayMediaNodes = new object();
 
-                mFileSinkFactory.createOutputNodes(
-                    lArrayCompressedMediaType,
-                    aPtrFileName,
-                    out lArrayMediaNodes);
+            try {
+               mFileSinkFactory.createOutputNodes(lArrayCompressedMediaType, aPtrFileName, out lArrayMediaNodes);
 
-                    if(lArrayMediaNodes == null)
-                        break;
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
 
-                    object[] lArray = lArrayMediaNodes as object[];
+               var lArray = lArrayMediaNodes as object[];
 
-                    if(lArray == null)
-                        break;
+               if (lArray == null) {
+                  break;
+               }
 
-                    aTopologyOutputNodesList.AddRange(lArray);
+               aTopologyOutputNodesList.AddRange(lArray);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-                
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

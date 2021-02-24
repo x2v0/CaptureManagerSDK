@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "../LogPrintOut/LogPrintOut.h"
 #include "SessionProcessorManager.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
@@ -33,408 +32,239 @@ SOFTWARE.
 //#include "ISessionCallbackInner.h"
 #include "SessionAsyncCallback.h"
 
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-
-		SessionProcessorManager::SessionProcessorManager():
-			mSessionAsyncCallback(new (std::nothrow) SessionAsyncCallback())
-		{
-		}
-		
-		SessionProcessorManager::~SessionProcessorManager()
-		{
-			mSessionProcessorDictionary.clear();
-		}
-
-		HRESULT SessionProcessorManager::createSession(
-			std::vector<IMFTopologyNode*>& aSourceNodes,
-			IUnknown* aPtrISessionCallback,
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-
-			using namespace CaptureManager::MediaSession::CustomisedMediaSession;
-
-			HRESULT lresult;
-
-			do
-			{
-				aRefSessionDescriptor = -1;
-
-				LOG_CHECK_STATE(aSourceNodes.empty());
-
-				LOG_CHECK_PTR_MEMORY(aPtrISessionCallback);
-				
-				CComPtrCustom<IMFTopology> lTopology;
-
-				LOG_INVOKE_MF_FUNCTION(MFCreateTopology,
-					&lTopology);
-				
-				for (auto lpair : aSourceNodes)
-				{
-					LOG_INVOKE_FUNCTION(enumAndAddOutputTopologyNode,
-						lTopology, 
-						lpair);			
-				}
-
-				LOG_CHECK_STATE_DESCR(FAILED(lresult), lresult);
-				
-				CComPtrCustom<IMFMediaSession> lSession;
-
-				lSession = new (std::nothrow)CustomisedMediaSession();
-
-				LOG_CHECK_PTR_MEMORY(lSession);
-					
-				CComQIPtrCustom<ISessionCallbackInner> lISessionCallback;
-
-				lISessionCallback = aPtrISessionCallback;
-
-				CComQIPtrCustom<IMFAsyncCallback> lSessionAsyncCallback = mSessionAsyncCallback;
-
-				CComPtrCustom<SessionProcessor> lSessionProcessor(
-					new (std::nothrow) SessionProcessor(
-					lSession, 
-					mNextSessionDescriptor, 
-					lISessionCallback,
-					lSessionAsyncCallback));
-
-				LOG_CHECK_PTR_MEMORY(lSessionProcessor);
-				
-				LOG_INVOKE_MF_METHOD(BeginGetEvent,
-					lSession, 
-					lSessionProcessor, 
-					nullptr);
-
-				LOG_INVOKE_POINTER_METHOD(lSessionProcessor, 
-					setTopology,
-					lTopology);
-				
-				aRefSessionDescriptor = mNextSessionDescriptor;
-
-				CComPtrCustom<IUnknown> lUnk;
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(lSessionProcessor, &lUnk);
-
-				mSessionProcessorDictionary[mNextSessionDescriptor++] = lUnk;
-
-			} while (false);
-
-			return lresult;
-		}
-
-		// Stop all devices
-		HRESULT SessionProcessorManager::closeAllSessions()
-		{
-			HRESULT lresult(S_OK);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.begin();
-
-			for (; itr != mSessionProcessorDictionary.end(); itr++)
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					auto resultStop = lSessionProcessor->stopCapture();
-
-					resultStop = lSessionProcessor->close();
-
-					if (FAILED(resultStop))
-						lresult = resultStop;
-				}
-			}
-
-			mSessionProcessorDictionary.clear();
-			
-			return lresult;
-		}
-
-		HRESULT SessionProcessorManager::closeSession(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if(itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = S_OK;
-
-					auto resultStop = lSessionProcessor->stopCapture();
-
-					resultStop = lSessionProcessor->close();
-
-					if (FAILED(resultStop))
-						lresult = resultStop;
-				}
-
-				mSessionProcessorDictionary.erase(itr);
-			}
-					
-			return lresult;
-		}
-
-		HRESULT SessionProcessorManager::startSession(
-			SessionDescriptor& aRefSessionDescriptor, 
-			LONGLONG aStartPosition, 
-			const GUID aGUIDTimeFormat)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				PROPVARIANT var;
-
-				PropVariantInit(&var);
-
-				if (aStartPosition != 0)
-					var.hVal.QuadPart = aStartPosition;
-
-
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->startCapture(aGUIDTimeFormat, &var);
-				}
-
-				PropVariantClear(&var);
-			}
-
-			if (FAILED(lresult))
-			{
-				mSessionProcessorDictionary.erase(itr);
-			}
-			
-			return lresult;
-		}
-
-		HRESULT SessionProcessorManager::pauseSession(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->pauseCapture();
-				}
-			}
-			
-			return lresult;
-		}
-
-		HRESULT SessionProcessorManager::stopSession(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->stopCapture();
-				}
-			}
-			
-			return lresult;
-		}
-		
-		HRESULT SessionProcessorManager::pauseSwitchers(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->pauseSwitchers();
-				}
-			}
-
-			return lresult;
-		}
-		
-		HRESULT SessionProcessorManager::resumeSwitchers(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->resumeSwitchers();
-				}
-			}
-
-			return lresult;
-		}
-
-
-		HRESULT SessionProcessorManager::detachSwitchers(
-			SessionDescriptor& aRefSessionDescriptor)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(aRefSessionDescriptor);
-
-			if (itr != mSessionProcessorDictionary.end())
-			{
-				CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-				lSessionProcessor = (*itr).second;
-
-				if (lSessionProcessor)
-				{
-					lresult = lSessionProcessor->detachSwitchers();
-				}
-			}
-
-			return lresult;
-		}
-		
-		HRESULT SessionProcessorManager::attachSwitcher(
-			/* [in] */ IUnknown *aPtrSwitcherNode,
-			/* [in] */ IUnknown *aPtrDownStreamNode)
-		{
-			HRESULT lresult(MF_E_OUT_OF_RANGE);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrSwitcherNode);
-
-				LOG_CHECK_PTR_MEMORY(aPtrDownStreamNode);
-
-				CComPtrCustom<IMFTopologyNode> lIMFTopologyNode;
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrSwitcherNode, &lIMFTopologyNode);
-
-				LOG_CHECK_PTR_MEMORY(lIMFTopologyNode);
-
-				CComPtrCustom<IMFTopologyNode> lDownStreamTopologyNode;
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrDownStreamNode, &lDownStreamTopologyNode);
-
-				LOG_CHECK_PTR_MEMORY(lDownStreamTopologyNode);
-				
-				for (auto& litem: mSessionProcessorDictionary)
-				{
-					CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
-
-					lSessionProcessor = litem.second;
-
-					if (lSessionProcessor)
-					{
-						lresult = lSessionProcessor->checkToplogyNode(lIMFTopologyNode);
-
-						if (SUCCEEDED(lresult))
-						{
-							lSessionProcessor->attachSwitcher(
-								lIMFTopologyNode,
-								lDownStreamTopologyNode);						
-
-							break;
-						}
-					}
-				}
-
-				lresult = S_OK;
-
-			} while (false);
-
-			return lresult;
-		}
-		
-		HRESULT SessionProcessorManager::enumAndAddOutputTopologyNode(
-			IMFTopology* aPtrTopology, 
-			IMFTopologyNode* aPtrTopologyNode)
-		{
-			HRESULT lresult;
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrTopology);
-
-				LOG_CHECK_PTR_MEMORY(aPtrTopologyNode);
-				
-				LOG_INVOKE_MF_METHOD(AddNode,
-					aPtrTopology, 
-					aPtrTopologyNode);
-
-				LOG_INVOKE_MF_METHOD(SetUINT32, 
-					aPtrTopologyNode,
-					CM_TARGET_NODE,
-					TRUE);
-												
-				DWORD lRefOutputNodeCount;
-
-				LOG_INVOKE_MF_METHOD(GetOutputCount,
-					aPtrTopologyNode, 
-					&lRefOutputNodeCount);
-
-				for (DWORD lIndex = 0; lIndex < lRefOutputNodeCount; lIndex++)
-				{
-					DWORD lDownstreamIndex = 0;
-
-					CComPtrCustom<IMFTopologyNode> lChildNode;
-
-					LOG_INVOKE_MF_METHOD(GetOutput,
-						aPtrTopologyNode,
-						lIndex,
-						&lChildNode,
-						&lDownstreamIndex);
-					
-					LOG_CHECK_PTR_MEMORY(lChildNode);
-					
-					LOG_INVOKE_FUNCTION(enumAndAddOutputTopologyNode,
-						aPtrTopology,
-						lChildNode);
-				}
-
-			} while (false);
-									
-			return lresult;
-		}
-	}
+   namespace Core
+   {
+      SessionProcessorManager::SessionProcessorManager(): mSessionAsyncCallback(
+         new(std::nothrow) SessionAsyncCallback()) { }
+
+      SessionProcessorManager::~SessionProcessorManager()
+      {
+         mSessionProcessorDictionary.clear();
+      }
+
+      HRESULT SessionProcessorManager::createSession(std::vector<IMFTopologyNode*>& aSourceNodes,
+                                                     IUnknown* aPtrISessionCallback,
+                                                     SessionDescriptor& aRefSessionDescriptor)
+      {
+         using namespace MediaSession::CustomisedMediaSession;
+         HRESULT lresult;
+         do {
+            aRefSessionDescriptor = -1;
+            LOG_CHECK_STATE(aSourceNodes.empty());
+            LOG_CHECK_PTR_MEMORY(aPtrISessionCallback);
+            CComPtrCustom<IMFTopology> lTopology;
+            LOG_INVOKE_MF_FUNCTION(MFCreateTopology, &lTopology);
+            for (auto lpair : aSourceNodes) {
+               LOG_INVOKE_FUNCTION(enumAndAddOutputTopologyNode, lTopology, lpair);
+            }
+            LOG_CHECK_STATE_DESCR(FAILED(lresult), lresult);
+            CComPtrCustom<IMFMediaSession> lSession;
+            lSession = new(std::nothrow)CustomisedMediaSession();
+            LOG_CHECK_PTR_MEMORY(lSession);
+            CComQIPtrCustom<ISessionCallbackInner> lISessionCallback;
+            lISessionCallback = aPtrISessionCallback;
+            CComQIPtrCustom<IMFAsyncCallback> lSessionAsyncCallback = mSessionAsyncCallback;
+            CComPtrCustom<SessionProcessor> lSessionProcessor(
+               new(std::nothrow) SessionProcessor(lSession, mNextSessionDescriptor, lISessionCallback,
+                                                  lSessionAsyncCallback));
+            LOG_CHECK_PTR_MEMORY(lSessionProcessor);
+            LOG_INVOKE_MF_METHOD(BeginGetEvent, lSession, lSessionProcessor, nullptr);
+            LOG_INVOKE_POINTER_METHOD(lSessionProcessor, setTopology, lTopology);
+            aRefSessionDescriptor = mNextSessionDescriptor;
+            CComPtrCustom<IUnknown> lUnk;
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(lSessionProcessor, &lUnk);
+            mSessionProcessorDictionary[mNextSessionDescriptor++] = lUnk;
+         } while (false);
+         return lresult;
+      } // Stop all devices
+      HRESULT SessionProcessorManager::closeAllSessions()
+      {
+         HRESULT lresult(S_OK);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.begin();
+         for (; itr != mSessionProcessorDictionary.end(); ++itr) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               auto resultStop = lSessionProcessor->stopCapture();
+               resultStop = lSessionProcessor->close();
+               if (FAILED(resultStop))
+                  lresult = resultStop;
+            }
+         }
+         mSessionProcessorDictionary.clear();
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::closeSession(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = S_OK;
+               auto resultStop = lSessionProcessor->stopCapture();
+               resultStop = lSessionProcessor->close();
+               if (FAILED(resultStop))
+                  lresult = resultStop;
+            }
+            mSessionProcessorDictionary.erase(itr);
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::startSession(SessionDescriptor& aRefSessionDescriptor, LONGLONG aStartPosition,
+                                                    const GUID aGUIDTimeFormat)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            PROPVARIANT var;
+            PropVariantInit(&var);
+            if (aStartPosition != 0)
+               var.hVal.QuadPart = aStartPosition;
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->startCapture(aGUIDTimeFormat, &var);
+            }
+            PropVariantClear(&var);
+         }
+         if (FAILED(lresult)) {
+            mSessionProcessorDictionary.erase(itr);
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::pauseSession(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->pauseCapture();
+            }
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::stopSession(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->stopCapture();
+            }
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::pauseSwitchers(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->pauseSwitchers();
+            }
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::resumeSwitchers(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->resumeSwitchers();
+            }
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::detachSwitchers(SessionDescriptor& aRefSessionDescriptor)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>>::iterator itr = mSessionProcessorDictionary.find(
+            aRefSessionDescriptor);
+         if (itr != mSessionProcessorDictionary.end()) {
+            CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+            lSessionProcessor = (*itr).second;
+            if (lSessionProcessor) {
+               lresult = lSessionProcessor->detachSwitchers();
+            }
+         }
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::attachSwitcher(/* [in] */ IUnknown* aPtrSwitcherNode, /* [in] */
+                                                                 IUnknown* aPtrDownStreamNode)
+      {
+         HRESULT lresult(MF_E_OUT_OF_RANGE);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrSwitcherNode);
+            LOG_CHECK_PTR_MEMORY(aPtrDownStreamNode);
+            CComPtrCustom<IMFTopologyNode> lIMFTopologyNode;
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrSwitcherNode, &lIMFTopologyNode);
+            LOG_CHECK_PTR_MEMORY(lIMFTopologyNode);
+            CComPtrCustom<IMFTopologyNode> lDownStreamTopologyNode;
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrDownStreamNode, &lDownStreamTopologyNode);
+            LOG_CHECK_PTR_MEMORY(lDownStreamTopologyNode);
+            for (auto& litem : mSessionProcessorDictionary) {
+               CComQIPtrCustom<ISessionProcessor> lSessionProcessor;
+               lSessionProcessor = litem.second;
+               if (lSessionProcessor) {
+                  lresult = lSessionProcessor->checkToplogyNode(lIMFTopologyNode);
+                  if (SUCCEEDED(lresult)) {
+                     lSessionProcessor->attachSwitcher(lIMFTopologyNode, lDownStreamTopologyNode);
+                     break;
+                  }
+               }
+            }
+            lresult = S_OK;
+         } while (false);
+         return lresult;
+      }
+
+      HRESULT SessionProcessorManager::enumAndAddOutputTopologyNode(IMFTopology* aPtrTopology,
+                                                                    IMFTopologyNode* aPtrTopologyNode)
+      {
+         HRESULT lresult;
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrTopology);
+            LOG_CHECK_PTR_MEMORY(aPtrTopologyNode);
+            LOG_INVOKE_MF_METHOD(AddNode, aPtrTopology, aPtrTopologyNode);
+            LOG_INVOKE_MF_METHOD(SetUINT32, aPtrTopologyNode, CM_TARGET_NODE, TRUE);
+            DWORD lRefOutputNodeCount;
+            LOG_INVOKE_MF_METHOD(GetOutputCount, aPtrTopologyNode, &lRefOutputNodeCount);
+            for (DWORD lIndex = 0; lIndex < lRefOutputNodeCount; lIndex++) {
+               DWORD lDownstreamIndex = 0;
+               CComPtrCustom<IMFTopologyNode> lChildNode;
+               LOG_INVOKE_MF_METHOD(GetOutput, aPtrTopologyNode, lIndex, &lChildNode, &lDownstreamIndex);
+               LOG_CHECK_PTR_MEMORY(lChildNode);
+               LOG_INVOKE_FUNCTION(enumAndAddOutputTopologyNode, aPtrTopology, lChildNode);
+            }
+         } while (false);
+         return lresult;
+      }
+   }
 }

@@ -23,361 +23,320 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
-
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SinkControl : ISinkControl
-    {
-        CaptureManagerLibrary.ISinkControl mSinkControl;
-
-        public SinkControl(CaptureManagerLibrary.ISinkControl aSinkControl)
-        {
-            mSinkControl = aSinkControl;
-        }
-
-        public bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out IFileSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
-
-            aSinkFactory = null;
-
-            do
-	        {
-                if(mSinkControl == null)
-                    break;
-
-
-                try 
-	            {
-                    object lIUnknown;
+   internal class SinkControl : ISinkControl
+   {
+      #region Constructors and destructors
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.IFileSinkFactory).GUID,
-                        out lIUnknown);
-
-                    if (lIUnknown == null)
-                        break;
-
-                    var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.IFileSinkFactory;
+      public SinkControl(CaptureManagerLibrary.ISinkControl aSinkControl)
+      {
+         mSinkControl = aSinkControl;
+      }
 
-                    if (lFileSinkFactory == null)
-                        break;
+      #endregion
 
-                    aSinkFactory = new FileSinkFactory(lFileSinkFactory);
-	            }
-	            catch (Exception exc)
-	            {
-                    LogManager.getInstance().write(exc.Message);
-	            }
-	         
-	        } while (false);
+      #region  Fields
 
-            return lresult;
-        }
+      private readonly CaptureManagerLibrary.ISinkControl mSinkControl;
 
-        public bool createSinkFactory(
-            Guid aContainerTypeGUID,
-            out ISampleGrabberCallSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+      #endregion
 
-            aSinkFactory = null;
+      #region Interface methods
 
-            do
-	        {
-                if(mSinkControl == null)
-                    break;
+      public bool createCompatibleEVRMultiSinkFactory(Guid aContainerTypeGUID, out IEVRMultiSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
+         aSinkFactory = null;
 
-                try 
-	            {
-                    object lIUnknown;
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.ISampleGrabberCallSinkFactory).GUID,
-                        out lIUnknown);
 
-                    if (lIUnknown == null)
-                        break;
+            try {
+               object lIUnknown;
 
-                    var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.ISampleGrabberCallSinkFactory;
+               mSinkControl.createSinkFactory(aContainerTypeGUID, new Guid("{A2224D8D-C3C1-4593-8AC9-C0FCF318FF05}"), // typeof(CaptureManagerLibrary.IEVRMultiSinkFactory).GUID,
+                                              out lIUnknown);
 
-                    if (lFileSinkFactory == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    aSinkFactory = new SampleGrabberCallSinkFactory(lFileSinkFactory);
-	            }
-	            catch (Exception exc)
-	            {
-                    LogManager.getInstance().write(exc.Message);
-	            }
-	         
-	        } while (false);
+               var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;
 
-            return lresult;
-        }
-        
-        public bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out ISampleGrabberCallbackSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+               if (lEVRSinkFactory == null) {
+                  break;
+               }
 
-            aSinkFactory = null;
+               aSinkFactory = new EVRMultiSinkFactory(lEVRSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
+         return lresult;
+      }
 
+      public bool createSinkFactory(Guid aContainerTypeGUID, out IFileSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-                try
-                {
-                    object lIUnknown;
+         aSinkFactory = null;
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory).GUID,
-                        out lIUnknown);
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
-                    if (lIUnknown == null)
-                        break;
 
-                    var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory;
+            try {
+               object lIUnknown;
 
-                    if (lFileSinkFactory == null)
-                        break;
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.IFileSinkFactory).GUID, out lIUnknown);
 
-                    aSinkFactory = new SampleGrabberCallbackSinkFactory(lFileSinkFactory);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lIUnknown == null) {
+                  break;
+               }
 
-            } while (false);
+               var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.IFileSinkFactory;
 
-            return lresult;
-        }
+               if (lFileSinkFactory == null) {
+                  break;
+               }
 
+               aSinkFactory = new FileSinkFactory(lFileSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-        public bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out IEVRSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+         return lresult;
+      }
 
-            aSinkFactory = null;
+      public bool createSinkFactory(Guid aContainerTypeGUID, out ISampleGrabberCallSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
+         aSinkFactory = null;
 
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
-                try
-                {
-                    object lIUnknown;
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.IEVRSinkFactory).GUID,
-                        out lIUnknown);
+            try {
+               object lIUnknown;
 
-                    if (lIUnknown == null)
-                        break;
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.ISampleGrabberCallSinkFactory).GUID, out lIUnknown);
 
-                    var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRSinkFactory;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    if (lEVRSinkFactory == null)
-                        break;
+               var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.ISampleGrabberCallSinkFactory;
 
-                    aSinkFactory = new EVRSinkFactory(lEVRSinkFactory);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lFileSinkFactory == null) {
+                  break;
+               }
 
-            } while (false);
+               aSinkFactory = new SampleGrabberCallSinkFactory(lFileSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            return lresult;
-        }
+         return lresult;
+      }
 
+      public bool createSinkFactory(Guid aContainerTypeGUID, out ISampleGrabberCallbackSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-        public bool createSinkFactory(
-            Guid aContainerTypeGUID, 
-            out IByteStreamSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+         aSinkFactory = null;
 
-            aSinkFactory = null;
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
 
+            try {
+               object lIUnknown;
 
-                try
-                {
-                    object lIUnknown;
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory).GUID, out lIUnknown);
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.IByteStreamSinkFactory).GUID,
-                        out lIUnknown);
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    if (lIUnknown == null)
-                        break;
+               var lFileSinkFactory = lIUnknown as CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory;
 
-                    var lByteStreamSinkFactory = lIUnknown as CaptureManagerLibrary.IByteStreamSinkFactory;
+               if (lFileSinkFactory == null) {
+                  break;
+               }
 
-                    if (lByteStreamSinkFactory == null)
-                        break;
+               aSinkFactory = new SampleGrabberCallbackSinkFactory(lFileSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    aSinkFactory = new ByteStreamSinkFactory(lByteStreamSinkFactory);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
 
-            return lresult;
-        }
-        
-        public bool createSinkFactory(Guid aContainerTypeGUID, out IEVRMultiSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+      public bool createSinkFactory(Guid aContainerTypeGUID, out IEVRSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-            aSinkFactory = null;
+         aSinkFactory = null;
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
 
-                try
-                {
-                    object lIUnknown;
+            try {
+               object lIUnknown;
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.IEVRMultiSinkFactory).GUID,
-                        out lIUnknown);
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.IEVRSinkFactory).GUID, out lIUnknown);
 
-                    if (lIUnknown == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;                                   
+               var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRSinkFactory;
 
-                    if (lEVRSinkFactory == null)
-                        break;
+               if (lEVRSinkFactory == null) {
+                  break;
+               }
 
-                    aSinkFactory = new EVRMultiSinkFactory(lIUnknown);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               aSinkFactory = new EVRSinkFactory(lEVRSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
 
-        public bool createCompatibleEVRMultiSinkFactory(Guid aContainerTypeGUID, out IEVRMultiSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+      public bool createSinkFactory(Guid aContainerTypeGUID, out IByteStreamSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-            aSinkFactory = null;
+         aSinkFactory = null;
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
 
-                try
-                {
-                    object lIUnknown;
+            try {
+               object lIUnknown;
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        new Guid("{A2224D8D-C3C1-4593-8AC9-C0FCF318FF05}"),// typeof(CaptureManagerLibrary.IEVRMultiSinkFactory).GUID,
-                        out lIUnknown);
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.IByteStreamSinkFactory).GUID, out lIUnknown);
 
-                    if (lIUnknown == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;
+               var lByteStreamSinkFactory = lIUnknown as CaptureManagerLibrary.IByteStreamSinkFactory;
 
-                    if (lEVRSinkFactory == null)
-                        break;
+               if (lByteStreamSinkFactory == null) {
+                  break;
+               }
 
-                    aSinkFactory = new EVRMultiSinkFactory(lEVRSinkFactory);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               aSinkFactory = new ByteStreamSinkFactory(lByteStreamSinkFactory);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
+      public bool createSinkFactory(Guid aContainerTypeGUID, out IEVRMultiSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-        public bool createSinkFactory(Guid aContainerTypeGUID, out ISARSinkFactory aSinkFactory)
-        {
-            bool lresult = false;
+         aSinkFactory = null;
 
-            aSinkFactory = null;
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
 
-            do
-            {
-                if (mSinkControl == null)
-                    break;
 
+            try {
+               object lIUnknown;
 
-                try
-                {
-                    object lIUnknown;
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.IEVRMultiSinkFactory).GUID, out lIUnknown);
 
-                    mSinkControl.createSinkFactory(
-                        aContainerTypeGUID,
-                        typeof(CaptureManagerLibrary.ISARSinkFactory).GUID,
-                        out lIUnknown);
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    if (lIUnknown == null)
-                        break;
+               var lEVRSinkFactory = lIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;
 
-                    var lSinkFactory = lIUnknown as CaptureManagerLibrary.ISARSinkFactory;
+               if (lEVRSinkFactory == null) {
+                  break;
+               }
 
-                    if (lSinkFactory == null)
-                        break;
+               aSinkFactory = new EVRMultiSinkFactory(lIUnknown);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    aSinkFactory = new SARSinkFactory(lIUnknown);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool createSinkFactory(Guid aContainerTypeGUID, out ISARSinkFactory aSinkFactory)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
-    }
+         aSinkFactory = null;
+
+         do {
+            if (mSinkControl == null) {
+               break;
+            }
+
+
+            try {
+               object lIUnknown;
+
+               mSinkControl.createSinkFactory(aContainerTypeGUID, typeof(CaptureManagerLibrary.ISARSinkFactory).GUID, out lIUnknown);
+
+               if (lIUnknown == null) {
+                  break;
+               }
+
+               var lSinkFactory = lIUnknown as CaptureManagerLibrary.ISARSinkFactory;
+
+               if (lSinkFactory == null) {
+                  break;
+               }
+
+               aSinkFactory = new SARSinkFactory(lIUnknown);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

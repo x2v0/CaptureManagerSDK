@@ -1,43 +1,39 @@
 #pragma once
-
 #include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <string>
-
-
 #include "../Common/IInnerCaptureProcessor.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/IMaker.h"
-
-
 struct IBaseFilter;
 
 namespace CaptureManager
 {
-	namespace Sources
-	{
-		class DirectShowCaptureProcessorFactory
-		{
-		public:
-			DirectShowCaptureProcessorFactory();
-			~DirectShowCaptureProcessorFactory();
+   namespace Sources
+   {
+      class DirectShowCaptureProcessorFactory
+      {
+      public:
+         DirectShowCaptureProcessorFactory();
 
-			static HRESULT createDirectShowVideoInputCaptureProcessors(
-				std::vector<std::wstring>& aUsedSymbolicLinks,
-				std::vector<CComPtrCustom<IInnerCaptureProcessor>>& aVectorAudioEndpointCaptureProcessors);
+         ~DirectShowCaptureProcessorFactory();
 
-			static HRESULT createDirectShowVideoInputCaptureProcessor(
-				std::wstring aSymbolicLink,
-				IInnerCaptureProcessor** aPtrPtrIInnerCaptureProcessor);
+         static HRESULT createDirectShowVideoInputCaptureProcessors(std::vector<std::wstring>& aUsedSymbolicLinks,
+                                                                    std::vector<CComPtrCustom<IInnerCaptureProcessor>>&
+                                                                    aVectorAudioEndpointCaptureProcessors);
 
-		private:
+         static HRESULT createDirectShowVideoInputCaptureProcessor(std::wstring aSymbolicLink,
+                                                                   IInnerCaptureProcessor**
+                                                                   aPtrPtrIInnerCaptureProcessor);
 
-			static HRESULT checkCrossbar(IBaseFilter* aPtrVideoInputFilter, std::unordered_map<int, std::vector<long>>& aRefOutputInputPinMap);
+      private:
+         static HRESULT checkCrossbar(IBaseFilter* aPtrVideoInputFilter,
+                                      std::unordered_map<int, std::vector<long>>& aRefOutputInputPinMap);
 
-			static HRESULT checkVideoCapture(IBaseFilter* aPtrVideoInputFilter, std::unordered_map<int, std::vector<long>>& aRefOutputInputPinMap);
-
-		};
-	}
+         static HRESULT checkVideoCapture(IBaseFilter* aPtrVideoInputFilter,
+                                          std::unordered_map<int, std::vector<long>>& aRefOutputInputPinMap);
+      };
+   }
 }

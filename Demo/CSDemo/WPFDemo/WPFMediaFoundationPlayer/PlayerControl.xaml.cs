@@ -22,98 +22,96 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using MediaFoundation;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using CaptureManagerToCSharpProxy.Interfaces;
+using MediaFoundation;
+using WPFMediaFoundationPlayer.Interop;
 
 namespace WPFMediaFoundationPlayer
 {
-    /// <summary>
-    /// Interaction logic for PlayerControl.xaml
-    /// </summary>
-    public partial class PlayerControl : UserControl
-    {
+   /// <summary>
+   ///    Interaction logic for PlayerControl.xaml
+   /// </summary>
+   public partial class PlayerControl : UserControl
+   {
+      #region Constructors and destructors
 
-        public IntPtr SurfaceNativeInterface { get { return mEVRDisplay.Surface.NativeInterface; } }
+      public PlayerControl()
+      {
+         InitializeComponent();
+      }
 
-        public Interop.Direct3DSurface9 Surface { get { return mEVRDisplay.Surface; } }
+      #endregion
 
-        List<Player> lPlayerList = new List<Player>();
+      #region  Fields
 
-        public PlayerControl()
-        {
-            InitializeComponent();
-        }
+      private readonly List<Player> lPlayerList = new List<Player>();
 
-        public void setRenderList(
-            List<IMFTopologyNode> aEVRList,
-            CaptureManagerToCSharpProxy.Interfaces.IEVRStreamControl aIEVRStreamControl,
-            uint aMaxVideoRenderStreamCount)
-        {
-            m_PlayerCanvas.Children.Clear();
+      #endregion
 
-            foreach (var item in lPlayerList)
-            {
-                item.Stop();
-            }
-            
-            lPlayerList.Clear();
+      #region Public properties
 
-            int lColumnCount = 2;
+      public Direct3DSurface9 Surface => mEVRDisplay.Surface;
 
-            double lRowCount = Math.Ceiling((((double)aEVRList.Count / ((double)lColumnCount + 1.0)) + 1.0));
+      public IntPtr SurfaceNativeInterface => mEVRDisplay.Surface.NativeInterface;
 
-            double lRowHeight = m_PlayerCanvas.Height / lRowCount;
+      #endregion
 
-            double lColumnWidth = m_PlayerCanvas.Width / lColumnCount;
+      #region Public methods
 
-            for (int i = 0; i < aEVRList.Count; i++)
-            {
-                Player lPlayer = new Player();
+      public void setRenderList(List<IMFTopologyNode> aEVRList, IEVRStreamControl aIEVRStreamControl, uint aMaxVideoRenderStreamCount)
+      {
+         m_PlayerCanvas.Children.Clear();
 
-                m_PlayerCanvas.Children.Add(lPlayer);
+         foreach (var item in lPlayerList) {
+            item.Stop();
+         }
 
-                lPlayerList.Add(lPlayer);
+         lPlayerList.Clear();
 
-                lPlayer.Width = lColumnWidth;
+         var lColumnCount = 2;
 
-                lPlayer.Height = lRowHeight;
+         var lRowCount = Math.Ceiling((aEVRList.Count / (lColumnCount + 1.0)) + 1.0);
 
-                int lTopPos = i / (lColumnCount);
+         var lRowHeight = m_PlayerCanvas.Height / lRowCount;
 
-                Canvas.SetTop(lPlayer, lTopPos * lRowHeight);
+         var lColumnWidth = m_PlayerCanvas.Width / lColumnCount;
 
-                double lLeftPos = i - (lTopPos * (lColumnCount));
+         for (var i = 0; i < aEVRList.Count; i++) {
+            var lPlayer = new Player();
 
-                Canvas.SetLeft(lPlayer, lLeftPos * lColumnWidth);
+            m_PlayerCanvas.Children.Add(lPlayer);
 
-                lPlayer.mIMFTopologyNode = aEVRList[i];
+            lPlayerList.Add(lPlayer);
 
-                lPlayer.mIEVRStreamControl = aIEVRStreamControl;
+            lPlayer.Width = lColumnWidth;
 
-                lPlayer.mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
+            lPlayer.Height = lRowHeight;
 
-                aIEVRStreamControl.setPosition(
-                    lPlayer.mIMFTopologyNode,
-                    (float)(((double)lLeftPos * lColumnWidth) / m_PlayerCanvas.Width),
-                    (float)((((double)lLeftPos * lColumnWidth) + lColumnWidth) / m_PlayerCanvas.Width),
-                    (float)(((double)lTopPos * lRowHeight) / m_PlayerCanvas.Height),
-                    (float)((((double)lTopPos * lRowHeight) + lRowHeight) / m_PlayerCanvas.Height));
-                
-                Canvas.SetZIndex(lPlayer, i);
-            }
-        }
-    }
+            var lTopPos = i / lColumnCount;
+
+            Canvas.SetTop(lPlayer, lTopPos * lRowHeight);
+
+            double lLeftPos = i - (lTopPos * lColumnCount);
+
+            Canvas.SetLeft(lPlayer, lLeftPos * lColumnWidth);
+
+            lPlayer.mIMFTopologyNode = aEVRList[i];
+
+            lPlayer.mIEVRStreamControl = aIEVRStreamControl;
+
+            lPlayer.mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
+
+            aIEVRStreamControl.setPosition(lPlayer.mIMFTopologyNode, (float) ((lLeftPos * lColumnWidth) / m_PlayerCanvas.Width),
+                                           (float) (((lLeftPos * lColumnWidth) + lColumnWidth) / m_PlayerCanvas.Width), (float) ((lTopPos * lRowHeight) / m_PlayerCanvas.Height),
+                                           (float) (((lTopPos * lRowHeight) + lRowHeight) / m_PlayerCanvas.Height));
+
+            Panel.SetZIndex(lPlayer, i);
+         }
+      }
+
+      #endregion
+   }
 }

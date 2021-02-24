@@ -23,143 +23,133 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System.Runtime.InteropServices;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class EncoderControl : IEncoderControl
-    {
-        CaptureManagerLibrary.IEncoderControl mIEncoderControl;
+   internal class EncoderControl : IEncoderControl
+   {
+      #region Constructors and destructors
 
-        public EncoderControl(CaptureManagerLibrary.IEncoderControl aIEncoderControl)
-        {
-            mIEncoderControl = aIEncoderControl;
-        }
+      public EncoderControl(CaptureManagerLibrary.IEncoderControl aIEncoderControl)
+      {
+         mIEncoderControl = aIEncoderControl;
+      }
 
-        public bool createEncoderNodeFactory(
-            Guid aRefEncoderTypeGUID,
-            out IEncoderNodeFactory aIEncoderNodeFactory)
-        {
-            bool lresult = false;
+      #endregion
 
-            aIEncoderNodeFactory = null;
+      #region  Fields
 
-            do
-            {
-                if (mIEncoderControl == null)
-                    break;
-                
-                try
-                {
-                    object IUnknown;
+      private readonly CaptureManagerLibrary.IEncoderControl mIEncoderControl;
 
-                    mIEncoderControl.createEncoderNodeFactory(
-                        aRefEncoderTypeGUID,
-                        typeof(CaptureManagerLibrary.IEncoderNodeFactory).GUID,
-                        out IUnknown);
+      #endregion
 
-                    if (IUnknown == null)
-                        break;
+      #region Interface methods
 
-                    var lIEncoderNodeFactory = IUnknown as CaptureManagerLibrary.IEncoderNodeFactory;
+      public bool createEncoderNodeFactory(Guid aRefEncoderTypeGUID, out IEncoderNodeFactory aIEncoderNodeFactory)
+      {
+         var lresult = false;
 
-                    if (lIEncoderNodeFactory == null)
-                        break;
-                    
-                    aIEncoderNodeFactory = new EncoderNodeFactory(lIEncoderNodeFactory);
+         aIEncoderNodeFactory = null;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         do {
+            if (mIEncoderControl == null) {
+               break;
+            }
 
-            } while (false);
+            try {
+               object IUnknown;
 
-            return lresult;
-        }
+               mIEncoderControl.createEncoderNodeFactory(aRefEncoderTypeGUID, typeof(CaptureManagerLibrary.IEncoderNodeFactory).GUID, out IUnknown);
 
-        public bool getCollectionOfEncoders(out string aPtrPtrXMLstring)
-        {
-            bool lresult = false;
+               if (IUnknown == null) {
+                  break;
+               }
 
-            aPtrPtrXMLstring = "";
+               var lIEncoderNodeFactory = IUnknown as CaptureManagerLibrary.IEncoderNodeFactory;
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+               if (lIEncoderNodeFactory == null) {
+                  break;
+               }
 
-            do
-            {
-                if (mIEncoderControl == null)
-                    break;
+               aIEncoderNodeFactory = new EncoderNodeFactory(lIEncoderNodeFactory);
 
-                try
-                {
-                    (mIEncoderControl as IEncoderControlInner).getCollectionOfEncoders(
-                            out lPtrXMLstring);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
-                    
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool getCollectionOfEncoders(out string aPtrPtrXMLstring)
+      {
+         var lresult = false;
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+         aPtrPtrXMLstring = "";
 
-            return lresult;
-        }
-        
-        public bool getMediaTypeCollectionOfEncoder(
-            object aPtrUncompressedMediaType, 
-            Guid aRefEncoderCLSID, 
-            out string aPtrPtrXMLstring)
-        {
-            bool lresult = false;
+         var lPtrXMLstring = IntPtr.Zero;
 
-            aPtrPtrXMLstring = "";
+         do {
+            if (mIEncoderControl == null) {
+               break;
+            }
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+            try {
+               (mIEncoderControl as IEncoderControlInner).getCollectionOfEncoders(out lPtrXMLstring);
 
-            do
-            {
-                if (mIEncoderControl == null)
-                    break;
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                try
-                {
-                    (mIEncoderControl as IEncoderControlInner).getMediaTypeCollectionOfEncoder(
-                            Marshal.GetIUnknownForObject(aPtrUncompressedMediaType),
-                            ref aRefEncoderCLSID, 
-                            out lPtrXMLstring);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool getMediaTypeCollectionOfEncoder(object aPtrUncompressedMediaType, Guid aRefEncoderCLSID, out string aPtrPtrXMLstring)
+      {
+         var lresult = false;
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+         aPtrPtrXMLstring = "";
 
-            return lresult;
-        }
+         var lPtrXMLstring = IntPtr.Zero;
 
-    }
+         do {
+            if (mIEncoderControl == null) {
+               break;
+            }
+
+            try {
+               (mIEncoderControl as IEncoderControlInner).getMediaTypeCollectionOfEncoder(Marshal.GetIUnknownForObject(aPtrUncompressedMediaType), ref aRefEncoderCLSID, out lPtrXMLstring);
+
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aPtrPtrXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

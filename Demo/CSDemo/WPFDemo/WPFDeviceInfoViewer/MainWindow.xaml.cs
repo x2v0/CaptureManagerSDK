@@ -22,113 +22,99 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Xml;
+using CaptureManagerToCSharpProxy;
 
 namespace WPFDeviceInfoViewer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
-    {
-        public MainWindow()
-        {
-            InitializeComponent();
+   /// <summary>
+   ///    Interaction logic for MainWindow.xaml
+   /// </summary>
+   public partial class MainWindow : Window
+   {
+      #region Constructors and destructors
 
-            CaptureManager lCaptureManager = null;
+      public MainWindow()
+      {
+         InitializeComponent();
 
-            try
-            {
-                lCaptureManager = new CaptureManager("CaptureManager.dll");
+         CaptureManager lCaptureManager = null;
+
+         try {
+            lCaptureManager = new CaptureManager("CaptureManager.dll");
+         } catch (Exception exc) {
+            try {
+               lCaptureManager = new CaptureManager();
+            } catch (Exception exc1) {
             }
-            catch (System.Exception exc)
-            {
-                try
-                {
-                    lCaptureManager = new CaptureManager();
-                }
-                catch (System.Exception exc1)
-                {
+         }
 
-                }
+         if (lCaptureManager == null) {
+            return;
+         }
+
+         var lXmlDataProvider = (XmlDataProvider) Resources["XmlLogProvider"];
+
+         if (lXmlDataProvider == null) {
+            return;
+         }
+
+         var doc = new XmlDocument();
+
+         var lxmldoc = "";
+
+         lCaptureManager.getCollectionOfSources(ref lxmldoc);
+
+         doc.LoadXml(lxmldoc);
+
+         var lDeviceLinkNodeList = doc.SelectNodes("Sources/Source/Source.Attributes/Attribute[@Name='CM_DEVICE_LINK']/SingleValue/@Value");
+
+         var lDeviceLinkList = new List<string>();
+
+         for (var i = 0; i < lDeviceLinkNodeList.Count; i++) {
+            if (!lDeviceLinkList.Contains(lDeviceLinkNodeList.Item(i).Value)) {
+               lDeviceLinkList.Add(lDeviceLinkNodeList.Item(i).Value);
             }
+         }
 
-            if (lCaptureManager == null)
-                return;
+         var groupDoc = new XmlDocument();
 
-            XmlDataProvider lXmlDataProvider = (XmlDataProvider)this.Resources["XmlLogProvider"];
+         var lroot = groupDoc.CreateElement("Sources");
 
-            if (lXmlDataProvider == null)
-                return;
+         groupDoc.AppendChild(lroot);
 
-            System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+         foreach (var item in lDeviceLinkList) {
+            var ldevices = doc.SelectNodes("Sources/Source[Source.Attributes/Attribute[@Name='CM_DEVICE_LINK']/SingleValue[@Value='" + item + "']]");
 
-            string lxmldoc = "";
+            if (ldevices != null) {
+               var lgroup = groupDoc.CreateElement("DeviceGroup");
 
-            lCaptureManager.getCollectionOfSources(ref lxmldoc);
+               var lTitle = groupDoc.CreateAttribute("Title");
 
-            doc.LoadXml(lxmldoc);
+               lTitle.Value = item;
 
-            var lDeviceLinkNodeList = doc.SelectNodes("Sources/Source/Source.Attributes/Attribute[@Name='CM_DEVICE_LINK']/SingleValue/@Value");
+               lgroup.Attributes.Append(lTitle);
 
-            List<string> lDeviceLinkList = new List<string>();
+               foreach (var node in ldevices) {
+                  var lSourceNode = groupDoc.ImportNode(node as XmlNode, true);
 
-            for (int i = 0; i < lDeviceLinkNodeList.Count; i++)
-            {
-                if (!lDeviceLinkList.Contains(lDeviceLinkNodeList.Item(i).Value))
-                {
-                    lDeviceLinkList.Add(lDeviceLinkNodeList.Item(i).Value);
-                }
+                  lgroup.AppendChild(lSourceNode);
+               }
+
+               lroot.AppendChild(lgroup);
             }
-            
-            System.Xml.XmlDocument groupDoc = new System.Xml.XmlDocument();
+         }
 
-            var lroot = groupDoc.CreateElement("Sources");
 
-            groupDoc.AppendChild(lroot);
+         lXmlDataProvider.XPath = "Sources/DeviceGroup";
 
-            foreach (var item in lDeviceLinkList)
-            {
-                var ldevices = doc.SelectNodes("Sources/Source[Source.Attributes/Attribute[@Name='CM_DEVICE_LINK']/SingleValue[@Value='" + item + "']]");
+         lXmlDataProvider.Document = groupDoc;
+      }
 
-                if (ldevices != null)
-                {
-                    var lgroup = groupDoc.CreateElement("DeviceGroup");
-
-                    var lTitle = groupDoc.CreateAttribute("Title");
-
-                    lTitle.Value = item;
-
-                    lgroup.Attributes.Append(lTitle);
-
-                    foreach (var node in ldevices)
-                    {
-                        var lSourceNode = groupDoc.ImportNode((node as System.Xml.XmlNode), true);
-
-                        lgroup.AppendChild(lSourceNode);
-                    }
-
-                    lroot.AppendChild(lgroup);
-                }
-            }
-
-            
-            lXmlDataProvider.XPath = "Sources/DeviceGroup";
-
-            lXmlDataProvider.Document = groupDoc;
-        }
-    }
+      #endregion
+   }
 }

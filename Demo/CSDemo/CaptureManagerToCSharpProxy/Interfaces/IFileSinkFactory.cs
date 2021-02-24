@@ -22,18 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IFileSinkFactory
-    {
-        bool createOutputNodes(
-            List<object> aCompressedMediaTypeList, 
-            string aPtrFileName,
-            out List<object> aTopologyOutputNodesList);
-    }
+   public interface IFileSinkFactory
+   {
+      #region Public methods
+
+      bool createOutputNodes(List<object> aCompressedMediaTypeList, string aPtrFileName, out List<object> aTopologyOutputNodesList);
+
+      #endregion
+   }
 }

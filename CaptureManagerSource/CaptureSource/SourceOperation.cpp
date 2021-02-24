@@ -21,90 +21,59 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SourceOperation.h"
 #include "../Common/Common.h"
 #include "../LogPrintOut/LogPrintOut.h"
 
-
 namespace CaptureManager
 {
-	namespace Sources
-	{
-		SourceOperation::SourceOperation(
-			SourceOperationType aSourceOperationType,
-			IUnknown* aPtrObject):
-			mSourceOperationType(aSourceOperationType)
-		{
-			mObject = aPtrObject;
-		}
+   namespace Sources
+   {
+      SourceOperation::SourceOperation(SourceOperationType aSourceOperationType, IUnknown* aPtrObject):
+            mSourceOperationType(aSourceOperationType)
+      {
+         mObject = aPtrObject;
+      }
 
-		SourceOperation::SourceOperation(
-			SourceOperationType aSourceOperationType,
-			DWORD aStreamIdentifier,
-			IUnknown* aPtrObject):
-			mSourceOperationType(aSourceOperationType),
-			mStreamIdentifier(aStreamIdentifier)
-		{
-			mObject = aPtrObject;
-		}
+      SourceOperation::SourceOperation(SourceOperationType aSourceOperationType, DWORD aStreamIdentifier,
+                                       IUnknown* aPtrObject): mSourceOperationType(aSourceOperationType),
+                                                              mStreamIdentifier(aStreamIdentifier)
+      {
+         mObject = aPtrObject;
+      }
 
-		SourceOperation::~SourceOperation()
-		{
-		}
-		
-		// ISourceOperation interface
-		HRESULT SourceOperation::getObject(
-			IUnknown** aPtrPtrObject)
-		{
-			HRESULT lresult(S_OK);
+      SourceOperation::~SourceOperation() { } // ISourceOperation interface
+      HRESULT SourceOperation::getObject(IUnknown** aPtrPtrObject)
+      {
+         HRESULT lresult(S_OK);
+         do {
+            if (mObject) {
+               LOG_CHECK_PTR_MEMORY(aPtrPtrObject);
+               LOG_CHECK_PTR_MEMORY(mObject);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(mObject, aPtrPtrObject);
+            }
+         } while (false);
+         return lresult;
+      }
 
-			do
-			{
-				if (mObject)
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrPtrObject);
+      HRESULT SourceOperation::getSourceOperationType(SourceOperationType* aPtrSourceOperationType)
+      {
+         HRESULT lresult(S_OK);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrSourceOperationType);
+            *aPtrSourceOperationType = mSourceOperationType;
+         } while (false);
+         return lresult;
+      }
 
-					LOG_CHECK_PTR_MEMORY(mObject);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(mObject, aPtrPtrObject);
-				}
-
-			} while (false);
-
-			return lresult;
-		}		
-
-		HRESULT SourceOperation::getSourceOperationType(
-			SourceOperationType* aPtrSourceOperationType)
-		{
-			HRESULT lresult(S_OK);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrSourceOperationType);
-				
-				*aPtrSourceOperationType = mSourceOperationType;
-
-			} while (false);
-
-			return lresult;			
-		}
-		
-		HRESULT SourceOperation::getStreamIdentifier(
-			DWORD* aPtrStreamIdentifier)
-		{
-			HRESULT lresult(S_OK);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrStreamIdentifier);
-
-				*aPtrStreamIdentifier = mStreamIdentifier;
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT SourceOperation::getStreamIdentifier(DWORD* aPtrStreamIdentifier)
+      {
+         HRESULT lresult(S_OK);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrStreamIdentifier);
+            *aPtrStreamIdentifier = mStreamIdentifier;
+         } while (false);
+         return lresult;
+      }
+   }
 }

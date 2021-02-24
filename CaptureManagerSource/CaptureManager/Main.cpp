@@ -21,9 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #define WIN32_LEAN_AND_MEAN
-
 #include "../Common/Singleton.h"
 #include "CommercialConfig.h"
 #include "Libraries.h"
@@ -31,86 +29,55 @@ SOFTWARE.
 #include "../COMServer/ClassFactory.h"
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Macros.h"
-
- 
-
 using namespace CaptureManager;
-using namespace CaptureManager::COMServer;
-
-HINSTANCE gModuleInstance = NULL;
+using namespace COMServer;
+HINSTANCE gModuleInstance = nullptr;
 
 BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	switch (dwReason)
-	{
-	case DLL_PROCESS_ATTACH:
-		gModuleInstance = hInstance;
-		break;
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-
-	return TRUE;
+   switch (dwReason) {
+      case DLL_PROCESS_ATTACH:
+         gModuleInstance = hInstance;
+         break;
+      case DLL_THREAD_ATTACH: case DLL_THREAD_DETACH: case DLL_PROCESS_DETACH:
+         break;
+   }
+   return TRUE;
 }
 
 STDAPI DllCanUnloadNow()
 {
-	return Singleton<ClassFactory>::getInstance().checkLock();
+   return Singleton<ClassFactory>::getInstance().checkLock();
 }
 
-STDAPI DllGetClassObject(
-	REFCLSID aRefCLSID,
-	REFIID aRefIID,
-	void** aPtrPtrVoidObject)
+STDAPI DllGetClassObject(REFCLSID aRefCLSID, REFIID aRefIID, void** aPtrPtrVoidObject)
 {
-	return Singleton<ClassFactory>::getInstance().getClassObject(
-		aRefCLSID,
-		aRefIID,
-		aPtrPtrVoidObject);
+   return Singleton<ClassFactory>::getInstance().getClassObject(aRefCLSID, aRefIID, aPtrPtrVoidObject);
 }
 
 STDAPI DllRegisterServer()
 {
-	return Singleton<RegisterManager>::getInstance().registerServer(gModuleInstance);
+   return Singleton<RegisterManager>::getInstance().registerServer(gModuleInstance);
 }
 
 STDAPI DllUnregisterServer()
 {
-	return Singleton<RegisterManager>::getInstance().unregisterServer(gModuleInstance);	
+   return Singleton<RegisterManager>::getInstance().unregisterServer(gModuleInstance);
 }
 
 void InitLogOut()
 {
-	LogPrintOut::getInstance().printOutln(
-		LogPrintOut::INFO_LEVEL,
-		L"***** CAPTUREMANAGER SDK ",
-		(int)VERSION_MAJOR,
-		L".",
-		(int)VERSION_MINOR,
-		L".",
-		(int)VERSION_PATCH,
-		L" ",
-		WSTRINGIZE(ADDITIONAL_LABEL),
-		L" - ",
-		__DATE__,
-		L" (Author: Evgeny Pereguda) *****\n");
+   LogPrintOut::getInstance().printOutln(LogPrintOut::INFO_LEVEL, L"***** CAPTUREMANAGER SDK ",
+                                         static_cast<int>(VERSION_MAJOR), L".", static_cast<int>(VERSION_MINOR), L".",
+                                         static_cast<int>(VERSION_PATCH), L" ", WSTRINGIZE(ADDITIONAL_LABEL), L" - ",
+                                         __DATE__, L" (Author: Evgeny Pereguda) *****\n");
 }
 
 void UnInitLogOut()
 {
-	LogPrintOut::getInstance().printOutlnUnlock(
-		LogPrintOut::INFO_LEVEL,
-		L"***** CAPTUREMANAGER SDK ",
-		(int)VERSION_MAJOR,
-		L".",
-		(int)VERSION_MINOR,
-		L".",
-		(int)VERSION_PATCH,
-		L" ",
-		WSTRINGIZE(ADDITIONAL_LABEL),
-		L" - ",
-		__DATE__,
-		L" (Author: Evgeny Pereguda) - is closed *****\n");
+   LogPrintOut::getInstance().printOutlnUnlock(LogPrintOut::INFO_LEVEL, L"***** CAPTUREMANAGER SDK ",
+                                               static_cast<int>(VERSION_MAJOR), L".", static_cast<int>(VERSION_MINOR),
+                                               L".", static_cast<int>(VERSION_PATCH), L" ",
+                                               WSTRINGIZE(ADDITIONAL_LABEL), L" - ", __DATE__,
+                                               L" (Author: Evgeny Pereguda) - is closed *****\n");
 }

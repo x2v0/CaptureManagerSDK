@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include <memory>
 #include "CoCaptureManagerClassFactory.h"
 #include "../Common/Singleton.h"
@@ -34,55 +33,38 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		CoCaptureManagerClassFactory::CoCaptureManagerClassFactory()
-		{
-			Singleton<ClassFactory>::getInstance().lock();
+   namespace COMServer
+   {
+      CoCaptureManagerClassFactory::CoCaptureManagerClassFactory()
+      {
+         Singleton<ClassFactory>::getInstance().lock();
+         Singleton<CaptureManagerBroker>::getInstance();
+      }
 
-			Singleton<CaptureManagerBroker>::getInstance();
-		}
+      CoCaptureManagerClassFactory::~CoCaptureManagerClassFactory()
+      {
+         Singleton<ClassFactory>::getInstance().unlock();
+      } // IClassFactory interface implementation
+      STDMETHODIMP CoCaptureManagerClassFactory::LockServer(BOOL aLock)
+      {
+         if (aLock)
+            Singleton<ClassFactory>::getInstance().lock();
+         else
+            Singleton<ClassFactory>::getInstance().unlock();
+         return S_OK;
+      }
 
-		CoCaptureManagerClassFactory::~CoCaptureManagerClassFactory()
-		{
-			Singleton<ClassFactory>::getInstance().unlock();
-		}
-
-
-		// IClassFactory interface implementation
-		STDMETHODIMP CoCaptureManagerClassFactory::LockServer(BOOL aLock)
-		{
-			if (aLock)
-				Singleton<ClassFactory>::getInstance().lock();
-			else
-				Singleton<ClassFactory>::getInstance().unlock();
-
-			return S_OK;
-		}
-
-		STDMETHODIMP CoCaptureManagerClassFactory::CreateInstance(
-			LPUNKNOWN aPtrUnkOuter,
-			REFIID aRefIID,
-			void** aPtrPtrVoidObject)
-		{
-			HRESULT lresult = E_NOINTERFACE;
-
-			do
-			{
-				LOG_CHECK_STATE_DESCR(aPtrUnkOuter != nullptr, CLASS_E_NOAGGREGATION);
-				
-				CComPtrCustom<CoCaptureManager> lCoCaptureManager(new (std::nothrow) CoCaptureManager());
-
-				LOG_CHECK_PTR_MEMORY(lCoCaptureManager);
-				
-				LOG_INVOKE_POINTER_METHOD(lCoCaptureManager, QueryInterface,
-					aRefIID,
-					aPtrPtrVoidObject);
-				
-			} while (false);
-
-			return lresult;
-
-		}
-	}
+      STDMETHODIMP CoCaptureManagerClassFactory::CreateInstance(LPUNKNOWN aPtrUnkOuter, REFIID aRefIID,
+                                                                void** aPtrPtrVoidObject)
+      {
+         HRESULT lresult = E_NOINTERFACE;
+         do {
+            LOG_CHECK_STATE_DESCR(aPtrUnkOuter != nullptr, CLASS_E_NOAGGREGATION);
+            CComPtrCustom<CoCaptureManager> lCoCaptureManager(new(std::nothrow) CoCaptureManager());
+            LOG_CHECK_PTR_MEMORY(lCoCaptureManager);
+            LOG_INVOKE_POINTER_METHOD(lCoCaptureManager, QueryInterface, aRefIID, aPtrPtrVoidObject);
+         } while (false);
+         return lresult;
+      }
+   }
 }

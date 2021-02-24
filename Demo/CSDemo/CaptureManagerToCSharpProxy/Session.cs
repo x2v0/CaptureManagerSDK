@@ -24,216 +24,199 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
-using System.Text;
+using CaptureManagerLibrary;
 using CaptureManagerToCSharpProxy.Interfaces;
-
+using ISession = CaptureManagerToCSharpProxy.Interfaces.ISession;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class Session : ISession
-    {
-        CaptureManagerLibrary.ISession mSession = null;
+   internal class Session : ISession
+   {
+      #region Constructors and destructors
 
-        Dictionary<UpdateStateDelegate, int> mStateDelegate = new Dictionary<UpdateStateDelegate, int>();
-        
-        public Session(CaptureManagerLibrary.ISession aSession)
-        {
-            mSession = aSession;
-        }
+      public Session(CaptureManagerLibrary.ISession aSession)
+      {
+         mSession = aSession;
+      }
 
-        public CaptureManagerLibrary.ISession getNative()
-        {
-            return mSession;
-        }
+      #endregion
 
-        public bool closeSession()
-        {
-            bool lresult = false;
+      #region  Fields
 
-            do
-            {
-                if (mSession == null)
-                    break;
+      private readonly Dictionary<UpdateStateDelegate, int> mStateDelegate = new Dictionary<UpdateStateDelegate, int>();
 
-                try
-                {
-                    mSession.closeSession();
+      private CaptureManagerLibrary.ISession mSession;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      #endregion
 
-                mSession = null;
+      #region Interface methods
 
-            } while (false);
+      public bool closeSession()
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         do {
+            if (mSession == null) {
+               break;
+            }
 
-        public bool pauseSession()
-        {
-            bool lresult = false;
+            try {
+               mSession.closeSession();
 
-            do
-            {
-                if (mSession == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
 
-                try
-                {
-                    mSession.pauseSession();
+            mSession = null;
+         } while (false);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool getSessionDescriptor(out uint aSessionDescriptor)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         do {
+            aSessionDescriptor = 0;
 
-        public bool startSession(
-            long aStartPositionInHundredNanosecondUnits, 
-            Guid aGUIDTimeFormat)
-        {
-            bool lresult = false;
+            if (mSession == null) {
+               break;
+            }
 
-            do
-	        {
-                if(mSession == null)
-                    break;
-                
-                try
-                {
-                    mSession.startSession(
-                        aStartPositionInHundredNanosecondUnits,
-                        aGUIDTimeFormat);
+            try {
+               mSession.getSessionDescriptor(out aSessionDescriptor);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-	         
-	        } while (false);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            return lresult;
-        }
+         return lresult;
+      }
 
-        public bool stopSession()
-        {
-            bool lresult = false;
+      public bool pauseSession()
+      {
+         var lresult = false;
 
-            do
-            {
-                if (mSession == null)
-                    break;
+         do {
+            if (mSession == null) {
+               break;
+            }
 
-                try
-                {
-                    mSession.stopSession();
+            try {
+               mSession.pauseSession();
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
+      public bool registerUpdateStateDelegate(UpdateStateDelegate aUpdateStateDelegate)
+      {
+         var lresult = false;
 
-        public bool getSessionDescriptor(out uint aSessionDescriptor)
-        {
-            bool lresult = false;
+         do {
+            if (mSession == null) {
+               break;
+            }
 
-            do
-            {
-                aSessionDescriptor = 0;
+            try {
+               object lUnknown;
 
-                if (mSession == null)
-                    break;
+               mSession.getIConnectionPointContainer(typeof(IConnectionPointContainer).GUID, out lUnknown);
 
-                try
-                {
-                    mSession.getSessionDescriptor(out aSessionDescriptor);
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               var lConnectionPointContainer = lUnknown as IConnectionPointContainer;
 
-            } while (false);
+               if (lConnectionPointContainer == null) {
+                  break;
+               }
 
-            return lresult;
-        }
-        
-        public bool registerUpdateStateDelegate(
-            UpdateStateDelegate aUpdateStateDelegate)
-        {
-            bool lresult = false;
+               IConnectionPoint lConnectionPoint = null;
 
-            do
-            {
-                if (mSession == null)
-                    break;
+               lConnectionPointContainer.FindConnectionPoint(typeof(ISessionCallback).GUID, out lConnectionPoint);
 
-                try
-                {
-                    object lUnknown;                                      
+               if (lConnectionPoint == null) {
+                  break;
+               }
 
-                    mSession.getIConnectionPointContainer(
-                        typeof(IConnectionPointContainer).GUID,
-                        out lUnknown);
+               var lId = 0;
 
-                    if(lUnknown == null)
-                        break;
+               lConnectionPoint.Advise(new SessionCallback(aUpdateStateDelegate), out lId);
 
-                    var lConnectionPointContainer = lUnknown as IConnectionPointContainer;
+               mStateDelegate[aUpdateStateDelegate] = lId;
 
-                    if(lConnectionPointContainer == null)
-                        break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    IConnectionPoint lConnectionPoint = null;
+         return lresult;
+      }
 
-                    lConnectionPointContainer.FindConnectionPoint(
-                        typeof(CaptureManagerLibrary.ISessionCallback).GUID,
-                        out lConnectionPoint);
+      public bool startSession(long aStartPositionInHundredNanosecondUnits, Guid aGUIDTimeFormat)
+      {
+         var lresult = false;
 
-                    if(lConnectionPoint == null)
-                        break;
+         do {
+            if (mSession == null) {
+               break;
+            }
 
-                    int lId = 0;
-                    
-                    lConnectionPoint.Advise(
-                        new SessionCallback(aUpdateStateDelegate),
-                        out lId);
+            try {
+               mSession.startSession(aStartPositionInHundredNanosecondUnits, aGUIDTimeFormat);
 
-                    mStateDelegate[aUpdateStateDelegate] = lId;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool stopSession()
+      {
+         var lresult = false;
 
-            return lresult;
-        }
-    }
+         do {
+            if (mSession == null) {
+               break;
+            }
+
+            try {
+               mSession.stopSession();
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+
+      #region Public methods
+
+      public CaptureManagerLibrary.ISession getNative()
+      {
+         return mSession;
+      }
+
+      #endregion
+   }
 }

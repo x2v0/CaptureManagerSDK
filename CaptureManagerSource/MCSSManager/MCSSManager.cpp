@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "MCSSManager.h"
 #include <VersionHelpers.h>
 #include <Avrt.h>
@@ -32,132 +31,78 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		const wchar_t* MCSSManager::mProAudioTaskName = L"Pro Audio";
+   namespace Core
+   {
+      const wchar_t* MCSSManager::mProAudioTaskName = L"Pro Audio";
+      const wchar_t* MCSSManager::mCaptureTaskName = L"Capture";
+      const wchar_t* MCSSManager::mLowLatencyTaskName = L"Low Latency";
+      DWORD MCSSManager::mProAudioTaskID = 0;
+      DWORD MCSSManager::mCaptureTaskID = 0;
+      MCSSManager::MCSSManager() { }
+      MCSSManager::~MCSSManager() { }
 
-		const wchar_t* MCSSManager::mCaptureTaskName = L"Capture";
+      HRESULT MCSSManager::createCaptureWorkQueue(DWORD* aPtrWorkQueue)
+      {
+         HRESULT lresult = E_FAIL;
+         do {
+            if (IsWindows8OrGreater()) {
+               if (IsWindows8OrGreater()) {
+                  LOG_INVOKE_MF_FUNCTION(MFLockSharedWorkQueue, mCaptureTaskName, AVRT_PRIORITY_CRITICAL,
+                                         &mCaptureTaskID, aPtrWorkQueue);
+               } else {
+                  LOG_INVOKE_MF_FUNCTION(MFAllocateWorkQueueEx, _MF_MULTITHREADED_WORKQUEUE, aPtrWorkQueue);
+               }
+            }
+         } while (false);
+         return lresult;
+      }
 
-		const wchar_t* MCSSManager::mLowLatencyTaskName = L"Low Latency";
+      HRESULT MCSSManager::createProAudioWorkQueue(DWORD* aPtrWorkQueue)
+      {
+         HRESULT lresult = E_FAIL;
+         do {
+            if (IsWindows8OrGreater()) {
+               LOG_INVOKE_MF_FUNCTION(MFLockSharedWorkQueue, mProAudioTaskName, AVRT_PRIORITY_CRITICAL,
+                                      &mProAudioTaskID, aPtrWorkQueue);
+            } else {
+               LOG_INVOKE_MF_FUNCTION(MFAllocateWorkQueueEx, _MF_MULTITHREADED_WORKQUEUE, aPtrWorkQueue);
+            }
+         } while (false);
+         if (FAILED(lresult)) {
+            *aPtrWorkQueue = MFASYNC_CALLBACK_QUEUE_MULTITHREADED;
+            lresult = S_OK;
+         }
+         return lresult;
+      }
 
-		DWORD MCSSManager::mProAudioTaskID = 0;
-
-		DWORD MCSSManager::mCaptureTaskID = 0;
-
-		MCSSManager::MCSSManager()
-		{
-		}
-
-		MCSSManager::~MCSSManager()
-		{
-		}
-
-		HRESULT MCSSManager::createCaptureWorkQueue(DWORD* aPtrWorkQueue)
-		{
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-				if (IsWindows8OrGreater())
-				{
-					if (IsWindows8OrGreater())
-					{
-						LOG_INVOKE_MF_FUNCTION(MFLockSharedWorkQueue,
-							mCaptureTaskName,
-							AVRT_PRIORITY_CRITICAL,
-							&mCaptureTaskID,
-							aPtrWorkQueue);
-					}
-					else
-					{
-						LOG_INVOKE_MF_FUNCTION(MFAllocateWorkQueueEx,
-							_MF_MULTITHREADED_WORKQUEUE,
-							aPtrWorkQueue);
-					}
-				}
-
-			} while (false);
-			
-			return lresult;
-		}
-
-		HRESULT MCSSManager::createProAudioWorkQueue(DWORD* aPtrWorkQueue)
-		{
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-				if (IsWindows8OrGreater())
-				{
-					LOG_INVOKE_MF_FUNCTION(MFLockSharedWorkQueue,
-						mProAudioTaskName,
-						AVRT_PRIORITY_CRITICAL,
-						&mProAudioTaskID,
-						aPtrWorkQueue);
-				}
-				else
-				{
-					LOG_INVOKE_MF_FUNCTION(MFAllocateWorkQueueEx,
-						_MF_MULTITHREADED_WORKQUEUE,
-						aPtrWorkQueue);
-				}
-
-			} while (false);
-
-			if (FAILED(lresult))
-			{
-				*aPtrWorkQueue = MFASYNC_CALLBACK_QUEUE_MULTITHREADED;
-
-				lresult = S_OK;
-			}
-
-			return lresult;
-		}
-		
-		HRESULT MCSSManager::unlockWorkQueue(DWORD aWorkQueue)
-		{
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-
-				LOG_INVOKE_MF_FUNCTION(MFUnlockWorkQueue,
-					aWorkQueue);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		// Initialize MCSS support
-		HRESULT MCSSManager::initialize()
-		{
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-				if (IsWindows8OrGreater())
-				{
-					//LOG_INVOKE_MF_FUNCTION(MFRegisterPlatformWithMMCSS,
-					//	L"Pro Audio",
-					//	&mTaskId,
-					//	AVRT_PRIORITY_CRITICAL);
-				}
-
-			} while (false);
-
-			lresult = S_OK;
-
-			//if (FAILED(lresult))
-			//{
-			//	LogPrintOut::getInstance().printOutln(LogPrintOut::ERROR_LEVEL, L"DMOManager: DMO cannot be initialized!!!");
-			//}
-			//else
-			//{
-			//	LogPrintOut::getInstance().printOutln(LogPrintOut::INFO_LEVEL, L"DMOManager: DMO is initialized!!!");
-			//}
-
-			return lresult;
-		}
-	}
+      HRESULT MCSSManager::unlockWorkQueue(DWORD aWorkQueue)
+      {
+         HRESULT lresult = E_FAIL;
+         do {
+            LOG_INVOKE_MF_FUNCTION(MFUnlockWorkQueue, aWorkQueue);
+         } while (false);
+         return lresult;
+      } // Initialize MCSS support
+      HRESULT MCSSManager::initialize()
+      {
+         HRESULT lresult = E_FAIL;
+         do {
+            if (IsWindows8OrGreater()) {
+               //LOG_INVOKE_MF_FUNCTION(MFRegisterPlatformWithMMCSS,
+               //	L"Pro Audio",
+               //	&mTaskId,
+               //	AVRT_PRIORITY_CRITICAL);
+            }
+         } while (false);
+         lresult = S_OK; //if (FAILED(lresult))
+         //{
+         //	LogPrintOut::getInstance().printOutln(LogPrintOut::ERROR_LEVEL, L"DMOManager: DMO cannot be initialized!!!");
+         //}
+         //else
+         //{
+         //	LogPrintOut::getInstance().printOutln(LogPrintOut::INFO_LEVEL, L"DMOManager: DMO is initialized!!!");
+         //}
+         return lresult;
+      }
+   }
 }

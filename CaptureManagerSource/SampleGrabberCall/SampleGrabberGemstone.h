@@ -5,49 +5,35 @@
 #include "../Common/ComPtrCustom.h"
 #include "IRead.h"
 
-
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberCall
-		{
-			class SampleGrabberGemstone :
-				public BaseUnknown<ISampleGrabberCallInner>
-			{
-			public:
-				SampleGrabberGemstone(
-					CComPtrCustom<IMFTopologyNode>& aRefOutputNode,
-					CComPtrCustom<IRead>& aReadBuffer);
-				virtual ~SampleGrabberGemstone();
+   namespace Sinks
+   {
+      namespace SampleGrabberCall
+      {
+         class SampleGrabberGemstone : public BaseUnknown<ISampleGrabberCallInner>
+         {
+         public:
+            SampleGrabberGemstone(CComPtrCustom<IMFTopologyNode>& aRefOutputNode, CComPtrCustom<IRead>& aReadBuffer);
 
-				virtual HRESULT readData(
-					unsigned char* aPtrData,
-					DWORD& aRefByteSize);
+            virtual ~SampleGrabberGemstone();
 
-			protected:
+            HRESULT readData(unsigned char* aPtrData, DWORD& aRefByteSize) override;
 
+         protected:
+            bool findIncapsulatedInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+            {
+               if (aRefIID == __uuidof(IMFTopologyNode) && mOutputNode) {
+                  auto lr = mOutputNode->QueryInterface(aRefIID, aPtrPtrVoidObject);
+                  return SUCCEEDED(lr);
+               }
+               return false;
+            }
 
-				virtual bool findIncapsulatedInterface(
-					REFIID aRefIID,
-					void** aPtrPtrVoidObject)
-				{
-					if (aRefIID == __uuidof(IMFTopologyNode) && mOutputNode)
-					{
-						auto lr = mOutputNode->QueryInterface(aRefIID, aPtrPtrVoidObject);
-
-						return SUCCEEDED(lr);
-					}
-
-					return false;
-				}
-
-			private:
-
-				CComPtrCustom<IMFTopologyNode> mOutputNode;
-
-				CComPtrCustom<IRead> mReadBuffer;
-			};
-		}
-	}
+         private:
+            CComPtrCustom<IMFTopologyNode> mOutputNode;
+            CComPtrCustom<IRead> mReadBuffer;
+         };
+      }
+   }
 }

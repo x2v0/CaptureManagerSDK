@@ -22,15 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISampleGrabberCall : IMediaFoundationNode
-    {
-        void readData(byte[] aData, out uint aByteSize);
-    }
+   public interface ISampleGrabberCall : IMediaFoundationNode
+   {
+      #region Public methods
+
+      void readData(byte[] aData, out uint aByteSize);
+
+      #endregion
+   }
 }

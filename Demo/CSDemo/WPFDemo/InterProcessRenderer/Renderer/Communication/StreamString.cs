@@ -22,56 +22,64 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace InterProcessRenderer.Communication
 {
-    class StreamString
-    {
-        private Stream ioStream;
-        private UnicodeEncoding streamEncoding;
+   internal class StreamString
+   {
+      #region Constructors and destructors
 
-        public StreamString(Stream ioStream)
-        {
-            this.ioStream = ioStream;
-            streamEncoding = new UnicodeEncoding();
+      public StreamString(Stream ioStream)
+      {
+         this.ioStream = ioStream;
+         streamEncoding = new UnicodeEncoding();
+      }
 
-        }
+      #endregion
 
-        public string ReadString()
-        {
-            int len = 0;
+      #region  Fields
 
-            len = ioStream.ReadByte() << 24;
+      private readonly Stream ioStream;
+      private readonly UnicodeEncoding streamEncoding;
 
-            len += ioStream.ReadByte() << 16;
+      #endregion
 
-            len += ioStream.ReadByte() << 8;
+      #region Public methods
 
-            len += ioStream.ReadByte();
+      public string ReadString()
+      {
+         var len = 0;
 
-            byte[] inBuffer = new byte[len];
+         len = ioStream.ReadByte() << 24;
 
-            ioStream.Read(inBuffer, 0, len);
+         len += ioStream.ReadByte() << 16;
 
-            return streamEncoding.GetString(inBuffer);
-        }
+         len += ioStream.ReadByte() << 8;
 
-        public int WriteString(string outString)
-        {
-            byte[] outBuffer = streamEncoding.GetBytes(outString);
-            int len = outBuffer.Length;
-            ioStream.WriteByte((byte)(len >> 24));
-            ioStream.WriteByte((byte)(len >> 16));
-            ioStream.WriteByte((byte)(len >> 8));
-            ioStream.WriteByte((byte)len);
-            ioStream.Write(outBuffer, 0, len);
-            ioStream.Flush();
-            return outBuffer.Length + 4;
-        }
-    }
+         len += ioStream.ReadByte();
+
+         var inBuffer = new byte[len];
+
+         ioStream.Read(inBuffer, 0, len);
+
+         return streamEncoding.GetString(inBuffer);
+      }
+
+      public int WriteString(string outString)
+      {
+         var outBuffer = streamEncoding.GetBytes(outString);
+         var len = outBuffer.Length;
+         ioStream.WriteByte((byte) (len >> 24));
+         ioStream.WriteByte((byte) (len >> 16));
+         ioStream.WriteByte((byte) (len >> 8));
+         ioStream.WriteByte((byte) len);
+         ioStream.Write(outBuffer, 0, len);
+         ioStream.Flush();
+         return outBuffer.Length + 4;
+      }
+
+      #endregion
+   }
 }

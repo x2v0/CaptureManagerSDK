@@ -23,31 +23,36 @@ SOFTWARE.
 */
 
 using CaptureManagerLibrary;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SessionCallback : CaptureManagerLibrary.ISessionCallback
-    {
-        private UpdateStateDelegate mUpdateStateDelegate;
+   internal class SessionCallback : ISessionCallback
+   {
+      #region Constructors and destructors
 
-        public SessionCallback(
-            UpdateStateDelegate aUpdateStateDelegate)
-        {
-            mUpdateStateDelegate = aUpdateStateDelegate;
-        }
+      public SessionCallback(UpdateStateDelegate aUpdateStateDelegate)
+      {
+         mUpdateStateDelegate = aUpdateStateDelegate;
+      }
 
-        public void invoke(uint aCallbackEventCode, uint aSessionDescriptor)
-        {
-            if (mUpdateStateDelegate != null)
-                mUpdateStateDelegate(
-                    aCallbackEventCode, 
-                    aSessionDescriptor);
-        }
+      #endregion
 
-    }
+      #region  Fields
+
+      private readonly UpdateStateDelegate mUpdateStateDelegate;
+
+      #endregion
+
+      #region Interface methods
+
+      public void invoke(uint aCallbackEventCode, uint aSessionDescriptor)
+      {
+         if (mUpdateStateDelegate != null) {
+            mUpdateStateDelegate(aCallbackEventCode, aSessionDescriptor);
+         }
+      }
+
+      #endregion
+   }
 }

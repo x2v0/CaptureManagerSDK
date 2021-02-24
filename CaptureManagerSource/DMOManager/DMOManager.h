@@ -1,13 +1,8 @@
 #pragma once
-
 #include <Unknwnbase.h>
 #include <vector>
-
 #include "../Common/Common.h"
-
-
 typedef struct _DMOMediaType DMO_MEDIA_TYPE;
-
 #ifdef _DEBUG_CAPTUREMANAGER
 #define LOG_INVOKE_DMO_FUNCTION(Function, ...) lresult = DMO::DMOManager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -23,8 +18,7 @@ typedef struct _DMOMediaType DMO_MEDIA_TYPE;
 		L" Error code: ",\
 		lresult);\
 		break;\
-			}\
-
+			}
 #else
 #define LOG_INVOKE_DMO_FUNCTION(Function, ...)lresult = DMO::DMOManager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -33,48 +27,41 @@ typedef struct _DMOMediaType DMO_MEDIA_TYPE;
 			}\
 
 #endif
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		namespace DMO
-		{
-			typedef HRESULT(STDAPICALLTYPE *MoFreeMediaType)(
-				DMO_MEDIA_TYPE*);
+   namespace Core
+   {
+      namespace DMO
+      {
+         typedef HRESULT (STDAPICALLTYPE *MoFreeMediaType)(DMO_MEDIA_TYPE*);
 
-			class DMOManager
-			{
-			public:
+         class DMOManager
+         {
+         public:
+            static MoFreeMediaType MoFreeMediaType;
 
-				static MoFreeMediaType MoFreeMediaType;
+            static HRESULT STDAPICALLTYPE stubMoFreeMediaType(DMO_MEDIA_TYPE*)
+            {
+               return E_NOTIMPL;
+            }
 
+            HRESULT initialize();
 
+         protected:
+            DMOManager();
 
-				static HRESULT STDAPICALLTYPE stubMoFreeMediaType(
-					DMO_MEDIA_TYPE*){
-					return E_NOTIMPL;
-				}
+            virtual ~DMOManager();
 
-				HRESULT initialize();
+         private:
+            static HRESULT mResult;
+            static std::vector<HMODULE> mModules;
 
-			protected:
+            HRESULT loadLibraries();
 
-				DMOManager();
-				virtual ~DMOManager();
+            HRESULT initFunctions(HMODULE aModule);
 
-			private:
-
-				static HRESULT mResult;
-
-				static std::vector<HMODULE> mModules;
-
-				HRESULT loadLibraries();
-
-				HRESULT initFunctions(HMODULE aModule);
-
-				HRESULT fillPtrFuncCollection();
-			};
-		}
-	}
+            HRESULT fillPtrFuncCollection();
+         };
+      }
+   }
 }

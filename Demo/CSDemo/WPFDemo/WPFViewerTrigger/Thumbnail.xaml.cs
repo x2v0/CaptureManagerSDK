@@ -22,268 +22,271 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Xml;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFViewerTrigger
 {
-    public delegate void ChangeState(bool isEnable);
+   public delegate void ChangeState(bool isEnable);
 
-    /// <summary>
-    /// Interaction logic for Thumbnail.xaml
-    /// </summary>
-    public partial class Thumbnail : UserControl
-    {
-        uint mVideoWidth = 0;
-        
-        uint mVideoHeight = 0;
+   /// <summary>
+   ///    Interaction logic for Thumbnail.xaml
+   /// </summary>
+   public partial class Thumbnail : UserControl
+   {
+      #region Constructors and destructors
 
-        int mChannels = 0;
+      public Thumbnail()
+      {
+         InitializeComponent();
 
-        ISampleGrabberCallSinkFactory mSampleGrabberSinkFactory = null;
+         mTimer.Interval = new TimeSpan(0, 0, 1);
+      }
 
-        ISinkControl mSinkControl = null;
+      #endregion
 
-        DispatcherTimer mTimer = new DispatcherTimer();
+      #region  Fields
 
-        Guid mReadMode;
+      public bool mEnableTrigger = false;
 
-        byte[] mData = null;
+      public float mThreshold = 50.0f;
 
-        public event ChangeState mChangeState = null;
+      private int mChannels;
 
-        public bool mEnableTrigger = false;
+      private byte[] mData;
 
-        public float mThreshold = 50.0f;
+      private Guid mReadMode;
 
-        public Thumbnail()
-        {
-            InitializeComponent();
+      private ISampleGrabberCallSinkFactory mSampleGrabberSinkFactory;
 
-            mTimer.Interval = new TimeSpan(0, 0, 1);
-        }
+      private ISinkControl mSinkControl;
 
-        private void initInterface()
-        {
-            mSinkControl = MainWindow.mCaptureManager.createSinkControl();
+      private readonly DispatcherTimer mTimer = new DispatcherTimer();
 
-            if (mSinkControl == null)
-                return;
+      private uint mVideoHeight;
+      private uint mVideoWidth;
 
-            string lxmldoc = "";
+      #endregion
 
-            MainWindow.mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+      #region Public events
 
-            XmlDocument doc = new XmlDocument();
+      public event ChangeState mChangeState;
 
-            doc = new XmlDocument();
+      #endregion
 
-            doc.LoadXml(lxmldoc);
+      #region Public methods
 
-            var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{759D24FF-C5D6-4B65-8DDF-8A2B2BECDE39}']");
+      public object init(XmlNode aMediaTypeXmlNode)
+      {
+         initInterface();
 
-            if (lSinkNode == null)
-                return;
+         object lresult = null;
 
-            var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[3]");
+         do {
+            if (aMediaTypeXmlNode == null) {
+               break;
+            }
 
-            if (lContainerNode == null)
-                return;
+            var lNode = aMediaTypeXmlNode.SelectSingleNode("@Index");
 
-            setContainerFormat(lContainerNode);
+            if (lNode == null) {
+               break;
+            }
 
-            mSinkControl.createSinkFactory(
-            mReadMode,
-            out mSampleGrabberSinkFactory);
-        }
+            uint lMediaTypeIndex = 0;
 
-        public void start()
-        {
-            mTimer.Start();
-        }
+            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+               break;
+            }
 
-        public void stop()
-        {
-            mTimer.Stop();
-        }
+            lNode = aMediaTypeXmlNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[1]/@Value");
 
-        private void setContainerFormat(XmlNode aXmlNode)
-        {
-            do
+            if (lNode == null) {
+               break;
+            }
+
+            if (!uint.TryParse(lNode.Value, out mVideoWidth)) {
+               break;
+            }
+
+            lNode = aMediaTypeXmlNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[2]/@Value");
+
+            if (lNode == null) {
+               break;
+            }
+
+            if (!uint.TryParse(lNode.Value, out mVideoHeight)) {
+               break;
+            }
+
+            var MFMediaType_Video = new Guid(0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+            var MFVideoFormat_RGB24 = new Guid(20, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+            var MFVideoFormat_RGB32 = new Guid(22, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+            int lWidthInBytes;
+
+            MainWindow.mCaptureManager.getStrideForBitmapInfoHeader(MFVideoFormat_RGB32, mVideoWidth, out lWidthInBytes);
+
+            var lsampleByteSize = (uint) Math.Abs(lWidthInBytes) * mVideoHeight;
+
+            ISampleGrabberCall lSampleGrabberCall;
+
+            mChannels = 4;
+
+            mSampleGrabberSinkFactory.createOutputNode(MFMediaType_Video, MFVideoFormat_RGB32, lsampleByteSize, out lSampleGrabberCall);
+
+            if (lSampleGrabberCall == null) {
+               break;
+            }
+
+            mData = new byte[lsampleByteSize];
+
+            lresult = lSampleGrabberCall.getTopologyNode();
+
+            mTimer.Tick += delegate
             {
-                if (aXmlNode == null)
-                    break;
+               var lByteSize = (uint) mData.Length;
 
-                var lAttrNode = aXmlNode.SelectSingleNode("@Value");
+               try {
+                  lSampleGrabberCall.readData(mData, out lByteSize);
 
-                if (lAttrNode == null)
-                    break;
+                  if (mEnableTrigger && (mChangeState != null)) {
+                     float lvalue = 0;
 
-                lAttrNode = aXmlNode.SelectSingleNode("@GUID");
+                     for (var i = 0; i < lByteSize; i++) {
+                        lvalue += mData[i];
+                     }
 
-                if (lAttrNode == null)
-                    break;
+                     lvalue = ((lvalue / lByteSize) * 100) / 255.0f;
 
-                Guid lContainerFormatGuid;
+                     if (lvalue >= mThreshold) {
+                        mChangeState(true);
+                     } else {
+                        mChangeState(false);
+                     }
+                  }
+               } finally {
+                  updateDisplayImage();
+               }
+            };
+         } while (false);
 
-                if (Guid.TryParse(lAttrNode.Value, out lContainerFormatGuid))
-                {
-                    mReadMode = lContainerFormatGuid;
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public void start()
+      {
+         mTimer.Start();
+      }
 
-        }
-        
-        public object init(XmlNode aMediaTypeXmlNode)
-        {
-            initInterface();
+      public void stop()
+      {
+         mTimer.Stop();
+      }
 
-            object lresult = null;
+      #endregion
 
-            do
-            {
-                if (aMediaTypeXmlNode == null)
-                    break;
+      #region Private methods
 
-                var lNode = aMediaTypeXmlNode.SelectSingleNode("@Index");
+      private static BitmapSource FromArray(byte[] data, uint w, uint h, int ch)
+      {
+         var format = PixelFormats.Default;
 
-                if (lNode == null)
-                    break;
+         if (ch == 1) {
+            format = PixelFormats.Gray8; //grey scale image 0-255
+         }
 
-                uint lMediaTypeIndex = 0;
+         if (ch == 3) {
+            format = PixelFormats.Bgr24; //RGB
+         }
 
-                if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-                {
-                    break;
-                }
+         if (ch == 4) {
+            format = PixelFormats.Bgr32; //RGB + alpha
+         }
 
-                lNode = aMediaTypeXmlNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[1]/@Value");
+         var wbm = new WriteableBitmap((int) w, (int) h, 96, 96, format, null);
+         wbm.WritePixels(new Int32Rect(0, 0, (int) w, (int) h), data, ch * (int) w, 0);
 
-                if (lNode == null)
-                    break;
+         return wbm;
+      }
 
-                if (!uint.TryParse(lNode.Value, out mVideoWidth))
-                {
-                    break;
-                }
+      private void initInterface()
+      {
+         mSinkControl = MainWindow.mCaptureManager.createSinkControl();
 
-                lNode = aMediaTypeXmlNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[2]/@Value");
+         if (mSinkControl == null) {
+            return;
+         }
 
-                if (lNode == null)
-                    break;
+         var lxmldoc = "";
 
-                if (!uint.TryParse(lNode.Value, out mVideoHeight))
-                {
-                    break;
-                }
+         MainWindow.mCaptureManager.getCollectionOfSinks(ref lxmldoc);
 
-                Guid MFMediaType_Video = new Guid(
-         0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+         var doc = new XmlDocument();
 
-                Guid MFVideoFormat_RGB24 = new Guid(
-         20, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+         doc = new XmlDocument();
 
-                Guid MFVideoFormat_RGB32 = new Guid(
-         22, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+         doc.LoadXml(lxmldoc);
 
-                int lWidthInBytes;
+         var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{759D24FF-C5D6-4B65-8DDF-8A2B2BECDE39}']");
 
-                MainWindow.mCaptureManager.getStrideForBitmapInfoHeader(
-                    MFVideoFormat_RGB32,
-                    mVideoWidth,
-                    out lWidthInBytes);
+         if (lSinkNode == null) {
+            return;
+         }
 
-                uint lsampleByteSize = (uint)Math.Abs(lWidthInBytes) * mVideoHeight;
+         var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[3]");
 
-                ISampleGrabberCall lSampleGrabberCall;
+         if (lContainerNode == null) {
+            return;
+         }
 
-                mChannels = 4;
+         setContainerFormat(lContainerNode);
 
-                mSampleGrabberSinkFactory.createOutputNode(
-                    MFMediaType_Video,
-                    MFVideoFormat_RGB32,
-                    lsampleByteSize,
-                    out lSampleGrabberCall);
+         mSinkControl.createSinkFactory(mReadMode, out mSampleGrabberSinkFactory);
+      }
 
-                if (lSampleGrabberCall == null)
-                    break;
+      private void setContainerFormat(XmlNode aXmlNode)
+      {
+         do {
+            if (aXmlNode == null) {
+               break;
+            }
 
-                mData = new byte[lsampleByteSize];
+            var lAttrNode = aXmlNode.SelectSingleNode("@Value");
 
-                lresult = lSampleGrabberCall.getTopologyNode();
+            if (lAttrNode == null) {
+               break;
+            }
 
-                mTimer.Tick += delegate(object sender, EventArgs e)
-                {
-                    uint lByteSize = (uint)mData.Length;
+            lAttrNode = aXmlNode.SelectSingleNode("@GUID");
 
-                    try
-                    {
+            if (lAttrNode == null) {
+               break;
+            }
 
-                        lSampleGrabberCall.readData(mData, out lByteSize);
+            Guid lContainerFormatGuid;
 
-                        if (mEnableTrigger && mChangeState != null)
-                        {
-                            float lvalue = 0;
+            if (Guid.TryParse(lAttrNode.Value, out lContainerFormatGuid)) {
+               mReadMode = lContainerFormatGuid;
+            }
+         } while (false);
+      }
 
-                            for (int i = 0; i < lByteSize; i++)
-                            {
-                                lvalue += mData[i];
-                            }
+      private void updateDisplayImage()
+      {
+         if (mData != null) {
+            mDisplayImage.Source = FromArray(mData, mVideoWidth, mVideoHeight, mChannels);
+         }
+      }
 
-                            lvalue = ((lvalue / (float)lByteSize) * 100) / 255.0f;
-
-                            if (lvalue >= mThreshold)
-                                mChangeState(true);
-                            else
-                                mChangeState(false);
-                        }
-                    }
-                    finally
-                    {
-
-                        updateDisplayImage();
-                    }
-                };
-
-            } while (false);
-
-            return lresult;
-        }
-
-        private void updateDisplayImage()
-        {
-            if (mData != null)
-                mDisplayImage.Source = FromArray(mData, mVideoWidth, mVideoHeight, mChannels);
-        }
-
-        private static BitmapSource FromArray(byte[] data, uint w, uint h, int ch)
-        {
-            PixelFormat format = PixelFormats.Default;
-
-            if (ch == 1) format = PixelFormats.Gray8; //grey scale image 0-255
-            if (ch == 3) format = PixelFormats.Bgr24; //RGB
-            if (ch == 4) format = PixelFormats.Bgr32; //RGB + alpha
-
-            WriteableBitmap wbm = new WriteableBitmap((int)w, (int)h, 96, 96, format, null);
-            wbm.WritePixels(new Int32Rect(0, 0, (int)w, (int)h), data, ch * (int)w, 0);
-
-            return wbm;
-        }
-    }
+      #endregion
+   }
 }

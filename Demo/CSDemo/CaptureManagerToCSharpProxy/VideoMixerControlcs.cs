@@ -22,177 +22,155 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class VideoMixerControl : IVideoMixerControl
-    {
-        private CaptureManagerLibrary.IVideoMixerControl mIVideoMixerControl = null;
+   internal class VideoMixerControl : IVideoMixerControl
+   {
+      #region Constructors and destructors
 
-        public VideoMixerControl(
-            CaptureManagerLibrary.IVideoMixerControl aIVideoMixerControl)
-        {
-            mIVideoMixerControl = aIVideoMixerControl;
-        }
+      public VideoMixerControl(CaptureManagerLibrary.IVideoMixerControl aIVideoMixerControl)
+      {
+         mIVideoMixerControl = aIVideoMixerControl;
+      }
 
-        public bool flush(object aPtrVideoMixerNode)
-        {
-            bool lresult = false;
+      #endregion
 
-            do
-            {
-                if (mIVideoMixerControl == null)
-                    break;
+      #region  Fields
 
-                if (aPtrVideoMixerNode == null)
-                    break;
+      private readonly CaptureManagerLibrary.IVideoMixerControl mIVideoMixerControl;
 
-                try
-                {
-                    mIVideoMixerControl.flush(
-                        aPtrVideoMixerNode);
+      #endregion
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      #region Interface methods
 
-            } while (false);
+      public bool flush(object aPtrVideoMixerNode)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         do {
+            if (mIVideoMixerControl == null) {
+               break;
+            }
 
-        public bool setOpacity(object aPtrVideoMixerNode, float aOpacity)
-        {
-            bool lresult = false;
+            if (aPtrVideoMixerNode == null) {
+               break;
+            }
 
-            do
-            {
-                if (mIVideoMixerControl == null)
-                    break;
+            try {
+               mIVideoMixerControl.flush(aPtrVideoMixerNode);
 
-                if (aPtrVideoMixerNode == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                try
-                {
-                    mIVideoMixerControl.setOpacity(
-                        aPtrVideoMixerNode,
-                        aOpacity);
+         return lresult;
+      }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      public bool setOpacity(object aPtrVideoMixerNode, float aOpacity)
+      {
+         var lresult = false;
 
-            } while (false);
+         do {
+            if (mIVideoMixerControl == null) {
+               break;
+            }
 
-            return lresult;
-        }
+            if (aPtrVideoMixerNode == null) {
+               break;
+            }
 
-        public bool setPosition(object aPtrVideoMixerNode, float aLeft, float aRight, float aTop, float aBottom)
-        {
-            bool lresult = false;
+            try {
+               mIVideoMixerControl.setOpacity(aPtrVideoMixerNode, aOpacity);
 
-            do
-            {
-                if (mIVideoMixerControl == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                if (aPtrVideoMixerNode == null)
-                    break;
+         return lresult;
+      }
 
-                try
-                {
-                    mIVideoMixerControl.setPosition(
-                        aPtrVideoMixerNode,
-                        aLeft,
-                        aRight,
-                        aTop,
-                        aBottom);
+      public bool setPosition(object aPtrVideoMixerNode, float aLeft, float aRight, float aTop, float aBottom)
+      {
+         var lresult = false;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         do {
+            if (mIVideoMixerControl == null) {
+               break;
+            }
 
-            } while (false);
+            if (aPtrVideoMixerNode == null) {
+               break;
+            }
 
-            return lresult;
-        }
+            try {
+               mIVideoMixerControl.setPosition(aPtrVideoMixerNode, aLeft, aRight, aTop, aBottom);
 
-        public bool setSrcPosition(object aPtrVideoMixerNode, float aLeft, float aRight, float aTop, float aBottom)
-        {
-            bool lresult = false;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            do
-            {
-                if (mIVideoMixerControl == null)
-                    break;
+         return lresult;
+      }
 
-                if (aPtrVideoMixerNode == null)
-                    break;
+      public bool setSrcPosition(object aPtrVideoMixerNode, float aLeft, float aRight, float aTop, float aBottom)
+      {
+         var lresult = false;
 
-                try
-                {
-                    mIVideoMixerControl.setSrcPosition(
-                        aPtrVideoMixerNode,
-                        aLeft,
-                        aRight,
-                        aTop,
-                        aBottom);
+         do {
+            if (mIVideoMixerControl == null) {
+               break;
+            }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+            if (aPtrVideoMixerNode == null) {
+               break;
+            }
 
-            } while (false);
+            try {
+               mIVideoMixerControl.setSrcPosition(aPtrVideoMixerNode, aLeft, aRight, aTop, aBottom);
 
-            return lresult;
-        }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-        public bool setZOrder(object aPtrVideoMixerNode, uint aZOrder)
-        {
-            bool lresult = false;
+         return lresult;
+      }
 
-            do
-            {
-                if (mIVideoMixerControl == null)
-                    break;
+      public bool setZOrder(object aPtrVideoMixerNode, uint aZOrder)
+      {
+         var lresult = false;
 
-                if (aPtrVideoMixerNode == null)
-                    break;
+         do {
+            if (mIVideoMixerControl == null) {
+               break;
+            }
 
-                try
-                {
-                    mIVideoMixerControl.setZOrder(
-                        aPtrVideoMixerNode,
-                        aZOrder);
+            if (aPtrVideoMixerNode == null) {
+               break;
+            }
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+            try {
+               mIVideoMixerControl.setZOrder(aPtrVideoMixerNode, aZOrder);
 
-            } while (false);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            return lresult;
-        }
-    }
+         return lresult;
+      }
+
+      #endregion
+   }
 }

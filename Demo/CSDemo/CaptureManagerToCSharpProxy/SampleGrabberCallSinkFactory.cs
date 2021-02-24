@@ -23,72 +23,68 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SampleGrabberCallSinkFactory : ISampleGrabberCallSinkFactory
-    {
-        private CaptureManagerLibrary.ISampleGrabberCallSinkFactory mISampleGrabberCallSinkFactory;
+   internal class SampleGrabberCallSinkFactory : ISampleGrabberCallSinkFactory
+   {
+      #region Constructors and destructors
 
-        public SampleGrabberCallSinkFactory(CaptureManagerLibrary.ISampleGrabberCallSinkFactory aISampleGrabberCallSinkFactory)
-        {
-            mISampleGrabberCallSinkFactory = aISampleGrabberCallSinkFactory;
-        }
+      public SampleGrabberCallSinkFactory(CaptureManagerLibrary.ISampleGrabberCallSinkFactory aISampleGrabberCallSinkFactory)
+      {
+         mISampleGrabberCallSinkFactory = aISampleGrabberCallSinkFactory;
+      }
 
-        public bool createOutputNode(
-            Guid aRefMajorType, 
-            Guid aRefSubType, 
-            uint aSampleByteSize, 
-            out ISampleGrabberCall aISampleGrabberCall)
-        {
-            bool lresult = false;
+      #endregion
 
-            aISampleGrabberCall = null;
-            
-            do
-            {
-                if (mISampleGrabberCallSinkFactory == null)
-                    break;
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.ISampleGrabberCallSinkFactory mISampleGrabberCallSinkFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNode(Guid aRefMajorType, Guid aRefSubType, uint aSampleByteSize, out ISampleGrabberCall aISampleGrabberCall)
+      {
+         var lresult = false;
+
+         aISampleGrabberCall = null;
+
+         do {
+            if (mISampleGrabberCallSinkFactory == null) {
+               break;
+            }
 
 
-                try
-                {
-                    object lIUnknown;
+            try {
+               object lIUnknown;
 
-                    mISampleGrabberCallSinkFactory.createOutputNode(
-                        aRefMajorType, 
-                        aRefSubType,  
-                        aSampleByteSize,
-                        typeof(CaptureManagerLibrary.ISampleGrabberCall).GUID,
-                        out lIUnknown);
-                        
-                        
-                    if (lIUnknown == null)
-                        break;
+               mISampleGrabberCallSinkFactory.createOutputNode(aRefMajorType, aRefSubType, aSampleByteSize, typeof(CaptureManagerLibrary.ISampleGrabberCall).GUID, out lIUnknown);
 
-                    var lSampleGrabberCall = lIUnknown as CaptureManagerLibrary.ISampleGrabberCall;
 
-                    if (lSampleGrabberCall == null)
-                        break;
+               if (lIUnknown == null) {
+                  break;
+               }
 
-                    aISampleGrabberCall = new SampleGrabberCall(
-                        lSampleGrabberCall, 
-                        aSampleByteSize);
+               var lSampleGrabberCall = lIUnknown as CaptureManagerLibrary.ISampleGrabberCall;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lSampleGrabberCall == null) {
+                  break;
+               }
 
-            } while (false);
+               aISampleGrabberCall = new SampleGrabberCall(lSampleGrabberCall, aSampleByteSize);
 
-            return lresult;
-        }
-    }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

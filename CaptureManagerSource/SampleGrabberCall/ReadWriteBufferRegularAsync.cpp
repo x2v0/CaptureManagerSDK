@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "ReadWriteBufferRegularAsync.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../MemoryManager/MemoryManager.h"
@@ -30,68 +29,44 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberCall
-		{
-			namespace RegularSampleGrabberCall
-			{
-				ReadWriteBufferRegularAsync::ReadWriteBufferRegularAsync(DWORD aImageByteSize)
-				{
-					init(aImageByteSize);
-				}
+   namespace Sinks
+   {
+      namespace SampleGrabberCall
+      {
+         namespace RegularSampleGrabberCall
+         {
+            ReadWriteBufferRegularAsync::ReadWriteBufferRegularAsync(DWORD aImageByteSize)
+            {
+               init(aImageByteSize);
+            }
 
+            ReadWriteBufferRegularAsync::~ReadWriteBufferRegularAsync() { }
 
-				ReadWriteBufferRegularAsync::~ReadWriteBufferRegularAsync()
-				{
-				}
+            HRESULT ReadWriteBufferRegularAsync::readData(unsigned char* aPtrData, DWORD* aPtrSampleSize)
+            {
+               HRESULT lresult(S_FALSE);
+               do {
+                  LOG_CHECK_PTR_MEMORY(aPtrSampleSize);
+                  if (mReadyToRead) {
+                     std::lock_guard<std::mutex> llock(mMutex);
+                     *aPtrSampleSize = mImageByteSize;
+                     copy(mData.get(), aPtrData, mImageByteSize, false);
+                     lresult = S_OK;
+                  } else {
+                     *aPtrSampleSize = 0;
+                  }
+               } while (false);
+               return lresult;
+            }
 
-				HRESULT ReadWriteBufferRegularAsync::readData(
-					unsigned char* aPtrData,
-					DWORD* aPtrSampleSize)
-				{
-					HRESULT lresult(S_FALSE);
-					
-					do
-					{
-						LOG_CHECK_PTR_MEMORY(aPtrSampleSize);
-						
-						if (mReadyToRead)
-						{
-							std::lock_guard<std::mutex> llock(mMutex);
-
-							*aPtrSampleSize = mImageByteSize;
-
-							copy(mData.get(), 
-								aPtrData, 
-								mImageByteSize,
-								false);
-
-							lresult = S_OK;
-						}
-						else
-						{
-							*aPtrSampleSize = 0;
-						}
-
-					} while (false);
-
-					return lresult;
-				}
-
-				void ReadWriteBufferRegularAsync::copy(
-					const unsigned char* aPtrSource,
-					unsigned char *aPtrDestination,
-					DWORD aSampleSize,
-					bool aState)
-				{
-					Core::MemoryManager::memcpy(aPtrDestination, aPtrSource, aSampleSize);
-
-					mImageByteSize = aSampleSize;
-
-					mReadyToRead = aState;
-				}
-			}
-		}
-	}
+            void ReadWriteBufferRegularAsync::copy(const unsigned char* aPtrSource, unsigned char* aPtrDestination,
+                                                   DWORD aSampleSize, bool aState)
+            {
+               Core::MemoryManager::memcpy(aPtrDestination, aPtrSource, aSampleSize);
+               mImageByteSize = aSampleSize;
+               mReadyToRead = aState;
+            }
+         }
+      }
+   }
 }

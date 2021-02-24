@@ -1,62 +1,37 @@
 #pragma once
-
 #include <windows.h>
 #include <string>
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		class RegisterManager
-		{
-		public:
+   namespace COMServer
+   {
+      class RegisterManager
+      {
+      public:
+         HRESULT registerServer(HINSTANCE aModuleInstance);
 
-			HRESULT registerServer(
-				HINSTANCE aModuleInstance);
+         HRESULT unregisterServer(HINSTANCE aModuleInstance);
 
-			HRESULT unregisterServer(
-				HINSTANCE aModuleInstance);
+      protected:
+         RegisterManager() {};
+         virtual ~RegisterManager() {};
+      private:
+         HRESULT getModuleFilePath(HINSTANCE aModuleInstance, LPWSTR lpFilename, DWORD nSize);
 
-		protected:
-			RegisterManager(){};
-			virtual ~RegisterManager(){};
+         HRESULT registerInprocServer(PCWSTR aFilePath, PCWSTR aFriendlyName, PCWSTR aThreadModel, PCWSTR aProgID,
+                                      PCWSTR aVerIndProgID, REFCLSID aRefCLSID, REFIID aRefLibID);
 
-		private:
+         HRESULT unregisterInprocServer(PCWSTR aProgID, PCWSTR aVerIndProgID, REFCLSID aRefCLSID);
 
-			HRESULT getModuleFilePath(
-				HINSTANCE aModuleInstance,
-				LPWSTR lpFilename,
-				DWORD nSize);
+         HRESULT setRegistryKeyAndValue(PCWSTR aSubkeyString, PCWSTR aData, PCWSTR aName = nullptr);
 
-			HRESULT registerInprocServer(
-				PCWSTR aFilePath,
-				PCWSTR aFriendlyName,
-				PCWSTR aThreadModel,
-				PCWSTR aProgID,
-				PCWSTR aVerIndProgID,
-				REFCLSID aRefCLSID,
-				REFIID aRefLibID);
+         HRESULT registerTypeLib(PCWSTR aFilePath);
 
-			HRESULT unregisterInprocServer(
-				PCWSTR aProgID,
-				PCWSTR aVerIndProgID,
-				REFCLSID aRefCLSID);
-
-			HRESULT setRegistryKeyAndValue(
-				PCWSTR aSubkeyString,
-				PCWSTR aData,
-				PCWSTR aName = nullptr);
-
-			HRESULT registerTypeLib(
-				PCWSTR aFilePath);
-
-			HRESULT unregisterTypeLib(
-				PCWSTR aFilePath);
-		};
-	}
-}
-
-//
+         HRESULT unregisterTypeLib(PCWSTR aFilePath);
+      };
+   }
+} //
 //   FUNCTION: RegisterInprocServer
 //
 //   PURPOSE: Register the in-process component in the registry.
@@ -99,16 +74,8 @@ namespace CaptureManager
 //      }
 //   }
 //
-HRESULT RegisterInprocServer(PCWSTR pszModule, 
-                             const CLSID& clsid, 
-                             PCWSTR pszFriendlyName,
-                             PCWSTR pszThreadModel,
-                             const IID& libid,
-                             PCWSTR pszProgID, 
-                             PCWSTR pszVerIndProgID);
-
-
-//
+HRESULT RegisterInprocServer(PCWSTR pszModule, const CLSID& clsid, PCWSTR pszFriendlyName, PCWSTR pszThreadModel,
+                             const IID& libid, PCWSTR pszProgID, PCWSTR pszVerIndProgID); //
 //   FUNCTION: UnregisterInprocServer(void)
 //
 //   PURPOSE: Unegister the in-process component in the registry.
@@ -121,12 +88,7 @@ HRESULT RegisterInprocServer(PCWSTR pszModule,
 //   NOTE: The function deletes the HKCR\CLSID\{<CLSID>} key and the 
 //   HKCR\<ProgID> key in the registry.
 //
-HRESULT UnregisterInprocServer(const CLSID& clsid, 
-                               PCWSTR pszProgID, 
-                               PCWSTR pszVerIndProgID);
-
-
-//
+HRESULT UnregisterInprocServer(const CLSID& clsid, PCWSTR pszProgID, PCWSTR pszVerIndProgID); //
 //   FUNCTION: RegisterTypeLib
 //
 //   PURPOSE: Register the type library.
@@ -168,10 +130,7 @@ HRESULT UnregisterInprocServer(const CLSID& clsid,
 //      }
 //   }
 //
-HRESULT RegisterTypeLib(PCWSTR pszTypeLib);
-
-
-//
+HRESULT RegisterTypeLib(PCWSTR pszTypeLib); //
 //   FUNCTION: UnregisterTypeLib
 //
 //   PURPOSE: Unregister the type library.

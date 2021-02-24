@@ -3,63 +3,52 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include "../CaptureManagerBroker/SinkCommon.h"
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		class IMaker;
-	}
-	namespace COMServer
-	{
+   namespace Core
+   {
+      class IMaker;
+   }
 
-		struct GUIDComparer
-		{
-			bool operator()(const GUIDToNamePair & Left, const GUIDToNamePair & Right) const
-			{
-				return memcmp(&(Left.mGUID), &(Right.mGUID), sizeof(Right.mGUID)) < 0;
-			}
+   namespace COMServer
+   {
+      struct GUIDComparer
+      {
+         bool operator()(const GUIDToNamePair& Left, const GUIDToNamePair& Right) const
+         {
+            return memcmp(&(Left.mGUID), &(Right.mGUID), sizeof(Right.mGUID)) < 0;
+         }
 
-			bool operator()(const GUID & Left, const GUID & Right) const
-			{
-				return memcmp(&Left, &Right, sizeof(Right)) < 0;
-			}
-		};
+         bool operator()(const GUID& Left, const GUID& Right) const
+         {
+            return memcmp(&Left, &Right, sizeof(Right)) < 0;
+         }
+      };
 
-		typedef GUIDToNamePair(*GetGUIDToNamePair)();
-		
-		class SinkCollection
-		{
-		public:
-									
-			HRESULT registerInstanceMaker(
-				GetGUIDToNamePair aGetGUIDToNamePair,
-				const CaptureManager::Core::IMaker* aPtrMaker);
+      typedef GUIDToNamePair (*GetGUIDToNamePair)();
 
-			HRESULT createSink(
-				REFGUID aRefSinkTypeGUID,
-				IUnknown** aPtrPtrIUnknown);
+      class SinkCollection
+      {
+      public:
+         HRESULT registerInstanceMaker(GetGUIDToNamePair aGetGUIDToNamePair, const Core::IMaker* aPtrMaker);
 
-			HRESULT getGUIDToNamePairs(
-				std::vector<GUIDToNamePair> & aRefGUIDToNamePairs);
+         HRESULT createSink(REFGUID aRefSinkTypeGUID, IUnknown** aPtrPtrIUnknown);
 
-			HRESULT getXMLDocumentStringListOfSinkFactories(
-				std::wstringstream &aRefwstringstream);
+         HRESULT getGUIDToNamePairs(std::vector<GUIDToNamePair>& aRefGUIDToNamePairs);
 
-		protected:
+         HRESULT getXMLDocumentStringListOfSinkFactories(std::wstringstream& aRefwstringstream);
 
-			SinkCollection();
+      protected:
+         SinkCollection();
 
-		private:
+      private:
+         std::map<GetGUIDToNamePair, const Core::IMaker*> mSinkMakers;
 
-			std::map<GetGUIDToNamePair, const CaptureManager::Core::IMaker*> mSinkMakers;
+         SinkCollection(const SinkCollection&) = delete;
 
-			
-			SinkCollection(const SinkCollection&) = delete;
-			
-			SinkCollection& operator=(const SinkCollection&) = delete;
-		};
-	}
+         SinkCollection& operator=(const SinkCollection&) = delete;
+      };
+   }
 }

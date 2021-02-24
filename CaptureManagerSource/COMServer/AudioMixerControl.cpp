@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "AudioMixerControl.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/Singleton.h"
@@ -29,48 +28,26 @@ SOFTWARE.
 #include "../CaptureManagerBroker/CaptureManagerBroker.h"
 #include "../LogPrintOut/LogPrintOut.h"
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-
-		AudioMixerControl::AudioMixerControl()
-		{
-		}
-
-
-		AudioMixerControl::~AudioMixerControl()
-		{
-		}
-
-		//	IAudioMixerControl implements
-
-		HRESULT STDMETHODCALLTYPE AudioMixerControl::setRelativeVolume(
-			/* [in] */ IUnknown *aPtrAudioMixerNode,
-			/* [in] */ FLOAT aRelativeVolume)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrAudioMixerNode);
-
-				if (aRelativeVolume > 1.0f)
-					aRelativeVolume = 1.0f;
-
-				if (aRelativeVolume <= 0.0f)
-					aRelativeVolume = 0.0f;
-
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setAudioMixerRelativeVolume,
-					aPtrAudioMixerNode,
-					aRelativeVolume);
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+   namespace COMServer
+   {
+      AudioMixerControl::AudioMixerControl() { }
+      AudioMixerControl::~AudioMixerControl() { } //	IAudioMixerControl implements
+      HRESULT STDMETHODCALLTYPE AudioMixerControl::setRelativeVolume(
+         /* [in] */ IUnknown* aPtrAudioMixerNode, /* [in] */ FLOAT aRelativeVolume)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrAudioMixerNode);
+            if (aRelativeVolume > 1.0f)
+               aRelativeVolume = 1.0f;
+            if (aRelativeVolume <= 0.0f)
+               aRelativeVolume = 0.0f;
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setAudioMixerRelativeVolume,
+                                aPtrAudioMixerNode, aRelativeVolume);
+         } while (false);
+         return lresult;
+      }
+   }
 }

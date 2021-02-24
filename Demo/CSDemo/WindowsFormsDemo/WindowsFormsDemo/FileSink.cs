@@ -22,48 +22,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFRecording
 {
-    class FileSink : AbstractSink
-    {
-        string mFilePath = null;
+   internal class FileSink : AbstractSink
+   {
+      #region Constructors and destructors
 
-        IFileSinkFactory mSinkFactory = null;
+      public FileSink(IFileSinkFactory aSinkFactory)
+      {
+         mSinkFactory = aSinkFactory;
+      }
 
-        public FileSink(IFileSinkFactory aSinkFactory)
-        {
-            mSinkFactory = aSinkFactory;
-        }
+      #endregion
 
-        public override void setOptions(string aOptions)
-        {
-            mFilePath = aOptions;
-        }
+      #region  Fields
 
-        public override object getOutputNode(object aUpStreamMediaType)
-        {
+      private readonly IFileSinkFactory mSinkFactory;
 
-            List<object> lCompressedMediaTypeList = new List<object>();
+      private string mFilePath;
 
-            lCompressedMediaTypeList.Add(aUpStreamMediaType);
+      #endregion
 
-            List<object> lTopologyOutputNodesList;
+      #region Public methods
 
-            mSinkFactory.createOutputNodes(
-                lCompressedMediaTypeList,
-                mFilePath,
-                out lTopologyOutputNodesList);
+      public override object getOutputNode(object aUpStreamMediaType)
+      {
+         var lCompressedMediaTypeList = new List<object>();
 
-            if (lTopologyOutputNodesList.Count == 0)
-                return null;
+         lCompressedMediaTypeList.Add(aUpStreamMediaType);
 
-            return lTopologyOutputNodesList[0];
-        }
-    }
+         List<object> lTopologyOutputNodesList;
+
+         mSinkFactory.createOutputNodes(lCompressedMediaTypeList, mFilePath, out lTopologyOutputNodesList);
+
+         if (lTopologyOutputNodesList.Count == 0) {
+            return null;
+         }
+
+         return lTopologyOutputNodesList[0];
+      }
+
+      public override void setOptions(string aOptions)
+      {
+         mFilePath = aOptions;
+      }
+
+      #endregion
+   }
 }

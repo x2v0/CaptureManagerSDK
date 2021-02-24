@@ -23,58 +23,63 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1049:TypesThatOwnNativeResourcesShouldBeDisposable")]
-    class SampleGrabberCall : ISampleGrabberCall
-    {
-        private CaptureManagerLibrary.ISampleGrabberCall mISampleGrabberCall;
+   [SuppressMessage("Microsoft.Design", "CA1049:TypesThatOwnNativeResourcesShouldBeDisposable")]
+   internal class SampleGrabberCall : ISampleGrabberCall
+   {
+      #region Constructors and destructors
 
-        private IntPtr mPtrSampleBuffer;
+      public SampleGrabberCall(CaptureManagerLibrary.ISampleGrabberCall aISampleGrabberCall, uint aSampleByteSize)
+      {
+         mISampleGrabberCall = aISampleGrabberCall;
+      }
 
-        private int mAllocatedSize = 0;
+      ~SampleGrabberCall()
+      {
+         Marshal.ReleaseComObject(mISampleGrabberCall);
 
-        public SampleGrabberCall(
-            CaptureManagerLibrary.ISampleGrabberCall aISampleGrabberCall,
-            uint aSampleByteSize)
-        {
-            mISampleGrabberCall = aISampleGrabberCall;
-        }
+         Marshal.FreeHGlobal(mPtrSampleBuffer);
+      }
 
-        ~SampleGrabberCall()
-        {
-            Marshal.ReleaseComObject(mISampleGrabberCall);
+      #endregion
 
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.ISampleGrabberCall mISampleGrabberCall;
+
+      private int mAllocatedSize;
+
+      private IntPtr mPtrSampleBuffer;
+
+      #endregion
+
+      #region Interface methods
+
+      public object getTopologyNode()
+      {
+         return mISampleGrabberCall;
+      }
+
+      public void readData(byte[] aData, out uint aByteSize)
+      {
+         if (mAllocatedSize != aData.Length) {
             Marshal.FreeHGlobal(mPtrSampleBuffer);
-        }
 
-        public void readData(byte[] aData, out uint aByteSize)
-        {
-            if (mAllocatedSize != aData.Length)
-            {
-                Marshal.FreeHGlobal(mPtrSampleBuffer);
+            mPtrSampleBuffer = Marshal.AllocHGlobal(aData.Length);
 
-                mPtrSampleBuffer = Marshal.AllocHGlobal(aData.Length);
+            mAllocatedSize = aData.Length;
+         }
 
-                mAllocatedSize = aData.Length;
-            }
+         mISampleGrabberCall.readData(mPtrSampleBuffer, out aByteSize);
 
-            mISampleGrabberCall.readData(
-                mPtrSampleBuffer,
-                out aByteSize);
+         Marshal.Copy(mPtrSampleBuffer, aData, 0, (int) aByteSize);
+      }
 
-            Marshal.Copy(mPtrSampleBuffer, aData, 0, (int)aByteSize);
-        }
-
-        public object getTopologyNode()
-        {
-            return mISampleGrabberCall;
-        }
-    }
+      #endregion
+   }
 }

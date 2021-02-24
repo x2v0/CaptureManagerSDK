@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SwitcherNodeFactory.h"
 #include "Switcher.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
@@ -29,65 +28,35 @@ SOFTWARE.
 #include "../Common/Common.h"
 #include "../Common/GUIDs.h"
 
-
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		SwitcherNodeFactory::SwitcherNodeFactory()
-		{
-		}
+   namespace Transform
+   {
+      SwitcherNodeFactory::SwitcherNodeFactory() { }
+      SwitcherNodeFactory::~SwitcherNodeFactory() { }
 
-
-		SwitcherNodeFactory::~SwitcherNodeFactory()
-		{
-		}
-
-		HRESULT STDMETHODCALLTYPE SwitcherNodeFactory::createSwitcherNode(
-			IUnknown *aPtrDownStreamTopologyNode,
-			IUnknown **aPtrPtrTopologySwitcherNode)
-		{
-			using namespace Core;
-			
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrPtrTopologySwitcherNode);
-				
-				CComPtrCustom<IMFTransform> lIMFTransform = new (std::nothrow) Switcher();
-				
-				LOG_CHECK_PTR_MEMORY(lIMFTransform);
-				
-				CComPtrCustom<IMFTopologyNode> lSwitcherNode;
-
-				LOG_INVOKE_MF_FUNCTION(MFCreateTopologyNode, MF_TOPOLOGY_TRANSFORM_NODE, &lSwitcherNode);
-
-				LOG_INVOKE_MF_METHOD(SetObject, lSwitcherNode, lIMFTransform);
-
-				LOG_INVOKE_MF_METHOD(SetUINT32, lSwitcherNode, CM_SwitcherNode, TRUE);		
-
-				if (aPtrDownStreamTopologyNode != nullptr)
-				{
-					CComQIPtrCustom<IMFTopologyNode> lDownStreamTopologyNode;
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrDownStreamTopologyNode, &lDownStreamTopologyNode);
-
-					LOG_CHECK_PTR_MEMORY(lDownStreamTopologyNode);
-
-					LOG_INVOKE_MF_METHOD(ConnectOutput,
-						lSwitcherNode,
-						0,
-						lDownStreamTopologyNode,
-						0);
-				}						
-
-				*aPtrPtrTopologySwitcherNode = lSwitcherNode.Detach();
-
-			} while (false);
-
-			return lresult;
-
-		}
-	}
+      HRESULT STDMETHODCALLTYPE SwitcherNodeFactory::createSwitcherNode(IUnknown* aPtrDownStreamTopologyNode,
+                                                                        IUnknown** aPtrPtrTopologySwitcherNode)
+      {
+         using namespace Core;
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrPtrTopologySwitcherNode);
+            CComPtrCustom<IMFTransform> lIMFTransform = new(std::nothrow) Switcher();
+            LOG_CHECK_PTR_MEMORY(lIMFTransform);
+            CComPtrCustom<IMFTopologyNode> lSwitcherNode;
+            LOG_INVOKE_MF_FUNCTION(MFCreateTopologyNode, MF_TOPOLOGY_TRANSFORM_NODE, &lSwitcherNode);
+            LOG_INVOKE_MF_METHOD(SetObject, lSwitcherNode, lIMFTransform);
+            LOG_INVOKE_MF_METHOD(SetUINT32, lSwitcherNode, CM_SwitcherNode, TRUE);
+            if (aPtrDownStreamTopologyNode != nullptr) {
+               CComQIPtrCustom<IMFTopologyNode> lDownStreamTopologyNode;
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrDownStreamTopologyNode, &lDownStreamTopologyNode);
+               LOG_CHECK_PTR_MEMORY(lDownStreamTopologyNode);
+               LOG_INVOKE_MF_METHOD(ConnectOutput, lSwitcherNode, 0, lDownStreamTopologyNode, 0);
+            }
+            *aPtrPtrTopologySwitcherNode = lSwitcherNode.Detach();
+         } while (false);
+         return lresult;
+      }
+   }
 }

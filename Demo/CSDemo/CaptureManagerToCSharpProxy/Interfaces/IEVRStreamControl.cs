@@ -22,35 +22,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
-{ 
-    public interface IEVRStreamControl
-    {
-        bool flush(object aPtrEVROutputNode);
+{
+   public interface IEVRStreamControl
+   {
+      #region Public methods
 
-        bool getPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
+      bool flush(object aPtrEVROutputNode);
 
-        bool getSrcPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
+      void getCollectionOfFilters(object aPtrEVROutputNode, out string aPtrPtrXMLstring);
 
-        bool getZOrder(object aPtrEVROutputNode, out uint aPtrZOrder);
+      void getCollectionOfOutputFeatures(object aPtrEVROutputNode, out string aPtrPtrXMLstring);
 
-        bool setPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+      bool getPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
 
-        bool setSrcPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+      bool getSrcPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
 
-        bool setZOrder(object aPtrEVROutputNode, uint aZOrder);
+      bool getZOrder(object aPtrEVROutputNode, out uint aPtrZOrder);
 
-        void getCollectionOfFilters(object aPtrEVROutputNode, out string aPtrPtrXMLstring);
-       
-        void getCollectionOfOutputFeatures(object aPtrEVROutputNode, out string aPtrPtrXMLstring);
+      void setFilterParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue, bool aIsEnabled);
 
-        void setFilterParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue, bool aIsEnabled);
+      void setOutputFeatureParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue);
 
-        void setOutputFeatureParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue);
-    }
+      bool setPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+
+      bool setSrcPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+
+      bool setZOrder(object aPtrEVROutputNode, uint aZOrder);
+
+      #endregion
+   }
 }

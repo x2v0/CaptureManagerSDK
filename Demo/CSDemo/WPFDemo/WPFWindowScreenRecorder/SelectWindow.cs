@@ -23,109 +23,134 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
+using gma.System.Windows;
 
 namespace WPFWindowScreenRecorder
 {
-    delegate void updateWindow(string a_Name, IntPtr a_HWND);
+   internal delegate void updateWindow(string a_Name, IntPtr a_HWND);
 
-    delegate void pressedKey(char a_KeyChar);
+   internal delegate void pressedKey(char a_KeyChar);
 
-    delegate int HookProc(int nCode, IntPtr wParam, IntPtr lParam);
+   internal delegate int HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-    class SelectWindow
-    {
-        gma.System.Windows.UserActivityHook actHook;
+   internal class SelectWindow
+   {
+      #region Constants
 
-        private const int WH_MOUSE = 7;
-        private const int WM_LBUTTONDOWN = 0x0201;
+      private const int WH_MOUSE = 7;
+      private const int WM_LBUTTONDOWN = 0x0201;
 
+      #endregion
 
+      #region Static fields
 
-        private SelectWindow() { }
+      private static SelectWindow m_Instance;
 
-        private static SelectWindow m_Instance = null;
-     
-        public static event updateWindow m_updateWindowNameEvent;
+      #endregion
 
-        public static event pressedKey m_pressedKey;
+      #region Constructors and destructors
 
-        public static SelectWindow getInstance()
-        {
-            if (m_Instance == null)
-                m_Instance = new SelectWindow();
+      private SelectWindow()
+      {
+      }
 
-            return m_Instance;
-        }
+      #endregion
 
-        public void setupMouseHook()
-        {
-            actHook = new gma.System.Windows.UserActivityHook();
+      #region  Fields
 
-            actHook.OnMouseActivity += actHook_OnMouseActivity;
+      private UserActivityHook actHook;
 
-            actHook.KeyPress += actHook_KeyPress;
-        }
+      #endregion
 
-        void actHook_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
-        {
-            if (m_pressedKey != null)
-                m_pressedKey(e.KeyChar);
-        }
+      #region Public events
 
-        public void uninstallMouseHook()
-        {
-            actHook.Stop();
-        }
+      public static event pressedKey m_pressedKey;
 
+      public static event updateWindow m_updateWindowNameEvent;
 
-        void actHook_OnMouseActivity(object sender, System.Windows.Forms.MouseEventArgs e)
-        {           
-            if (m_updateWindowNameEvent != null)
-            {
-                NativeMethods.POINT pt = new NativeMethods.POINT();
+      #endregion
 
-                IntPtr buf = Marshal.AllocHGlobal(
-                Marshal.SizeOf(typeof(NativeMethods.POINT)));
+      #region Public methods
 
-                var h = NativeMethods.GetCursorPos(buf);
+      public static SelectWindow getInstance()
+      {
+         if (m_Instance == null) {
+            m_Instance = new SelectWindow();
+         }
 
-                pt = (NativeMethods.POINT)Marshal.PtrToStructure(buf, typeof(NativeMethods.POINT));
-                
-                Marshal.FreeHGlobal(buf);
+         return m_Instance;
+      }
 
-                IntPtr hwnd = NativeMethods.WindowFromPhysicalPoint(pt);
+      public void setupMouseHook()
+      {
+         actHook = new UserActivityHook();
 
-                m_updateWindowNameEvent(GetCaptionOfWindow(hwnd), hwnd);                                
+         actHook.OnMouseActivity += actHook_OnMouseActivity;
+
+         actHook.KeyPress += actHook_KeyPress;
+      }
+
+      public void uninstallMouseHook()
+      {
+         actHook.Stop();
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private static string GetCaptionOfWindow(IntPtr hwnd)
+      {
+         var caption = "";
+         StringBuilder windowText = null;
+         try {
+            var max_length = NativeMethods.GetWindowTextLength(hwnd);
+            windowText = new StringBuilder("", max_length + 5);
+            NativeMethods.GetWindowText(hwnd, windowText, max_length + 2);
+
+            if (!string.IsNullOrEmpty(windowText.ToString()) &&
+                !string.IsNullOrWhiteSpace(windowText.ToString())) {
+               caption = windowText.ToString();
             }
-        }
-        
-        static string GetCaptionOfWindow(IntPtr hwnd)
-        {
-            string caption = "";
-            StringBuilder windowText = null;
-            try
-            {
-                int max_length = NativeMethods.GetWindowTextLength(hwnd);
-                windowText = new StringBuilder("", max_length + 5);
-                NativeMethods.GetWindowText(hwnd, windowText, max_length + 2);
+         } catch (Exception ex) {
+            caption = ex.Message;
+         } finally {
+            windowText = null;
+         }
 
-                if (!String.IsNullOrEmpty(windowText.ToString()) && !String.IsNullOrWhiteSpace(windowText.ToString()))
-                    caption = windowText.ToString();
-            }
-            catch (Exception ex)
-            {
-                caption = ex.Message;
-            }
-            finally
-            {
-                windowText = null;
-            }
-            return caption;
-        } 
+         return caption;
+      }
 
-    }
+      private void actHook_KeyPress(object sender, KeyPressEventArgs e)
+      {
+         if (m_pressedKey != null) {
+            m_pressedKey(e.KeyChar);
+         }
+      }
+
+
+      private void actHook_OnMouseActivity(object sender, MouseEventArgs e)
+      {
+         if (m_updateWindowNameEvent != null) {
+            var pt = new NativeMethods.POINT();
+
+            var buf = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NativeMethods.POINT)));
+
+            var h = NativeMethods.GetCursorPos(buf);
+
+            pt = (NativeMethods.POINT) Marshal.PtrToStructure(buf, typeof(NativeMethods.POINT));
+
+            Marshal.FreeHGlobal(buf);
+
+            var hwnd = NativeMethods.WindowFromPhysicalPoint(pt);
+
+            m_updateWindowNameEvent(GetCaptionOfWindow(hwnd), hwnd);
+         }
+      }
+
+      #endregion
+   }
 }

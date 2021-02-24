@@ -1,73 +1,94 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WPFRtspServer.Interop
 {
-    class Direct3DTexture9 : IDisposable
-    {
-        private ComInterface.IDirect3DTexture9 comObject;
-        private IntPtr native;
-        private ComInterface.GetLevelCount      getLevelCount;
-        private ComInterface.GetSurfaceLevel    getSurfaceLevel;
-        private IntPtr m_sharedhandle;
+   internal class Direct3DTexture9 : IDisposable
+   {
+      #region Constructors and destructors
 
-        public IntPtr                           SharedHandle { get { return m_sharedhandle; } }
+      internal Direct3DTexture9(ComInterface.IDirect3DTexture9 obj, IntPtr sharedhandle)
+      {
+         comObject = obj;
+         NativeInterface = Marshal.GetIUnknownForObject(comObject);
+         SharedHandle = sharedhandle;
+         ComInterface.GetComMethod(comObject, 13, out getLevelCount);
+         ComInterface.GetComMethod(comObject, 18, out getSurfaceLevel);
+      }
 
-        internal Direct3DTexture9(ComInterface.IDirect3DTexture9 obj, IntPtr sharedhandle)
-        {
-            this.comObject = obj;
-            this.native = Marshal.GetIUnknownForObject(this.comObject);
-            this.m_sharedhandle = sharedhandle;
-            ComInterface.GetComMethod(this.comObject, 13, out this.getLevelCount);
-            ComInterface.GetComMethod(this.comObject, 18, out this.getSurfaceLevel);
-        }
+      ~Direct3DTexture9()
+      {
+         Release();
+      }
 
-        ~Direct3DTexture9()
-        {
-            this.Release();
-        }
+      #endregion
 
-        public uint GetLevelCount()
-        {
-            ComInterface.IDirect3DTexture9 obj = null;
-            uint result = this.getLevelCount(this.comObject);
-            return result;
-        }
+      #region  Fields
 
-        public Direct3DSurface9 GetSurfaceLevel(uint level)
-        {
-            ComInterface.IDirect3DSurface9 obj = null;
-            int result = this.getSurfaceLevel(this.comObject, level, out obj);
-            Marshal.ThrowExceptionForHR(result);
+      private ComInterface.IDirect3DTexture9 comObject;
+      private readonly ComInterface.GetLevelCount getLevelCount;
+      private readonly ComInterface.GetSurfaceLevel getSurfaceLevel;
 
-            return new Direct3DSurface9(obj, IntPtr.Zero);
-        }
+      #endregion
 
-        public IntPtr NativeInterface
-        {
-            get { return this.native; }
-        }
+      #region Public properties
 
-        public void Dispose()
-        {
-            this.Release();
-            GC.SuppressFinalize(this);
-        }
+      public IntPtr NativeInterface
+      {
+         get;
+         private set;
+      }
 
-        private void Release()
-        {
-            if (this.comObject != null)
-            {
-                Marshal.Release(this.native);
-                this.native = IntPtr.Zero;
+      public IntPtr SharedHandle
+      {
+         get;
+      }
 
-                Marshal.ReleaseComObject(this.comObject);
-                this.comObject = null;
-            }
-        }
-    }
+      #endregion
+
+      #region Interface methods
+
+      public void Dispose()
+      {
+         Release();
+         GC.SuppressFinalize(this);
+      }
+
+      #endregion
+
+      #region Public methods
+
+      public uint GetLevelCount()
+      {
+         ComInterface.IDirect3DTexture9 obj = null;
+         var result = getLevelCount(comObject);
+         return result;
+      }
+
+      public Direct3DSurface9 GetSurfaceLevel(uint level)
+      {
+         ComInterface.IDirect3DSurface9 obj = null;
+         var result = getSurfaceLevel(comObject, level, out obj);
+         Marshal.ThrowExceptionForHR(result);
+
+         return new Direct3DSurface9(obj, IntPtr.Zero);
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void Release()
+      {
+         if (comObject != null) {
+            Marshal.Release(NativeInterface);
+            NativeInterface = IntPtr.Zero;
+
+            Marshal.ReleaseComObject(comObject);
+            comObject = null;
+         }
+      }
+
+      #endregion
+   }
 }

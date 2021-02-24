@@ -22,30 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IWebCamControl
-    {
-        void getCamParametr(
-            uint aParametrIndex, 
-            out int aCurrentValue, 
-            out int aMin, 
-            out int aMax, 
-            out int aStep, 
-            out int aDefault, 
-            out int aFlag);
-        
-        void getCamParametrs(
-            out string aXMLstring);
-        
-        void setCamParametr(
-            uint aParametrIndex,
-            int aNewValue,
-            int aFlag);
-    }
+   public interface IWebCamControl
+   {
+      #region Public methods
+
+      void getCamParametr(uint aParametrIndex, out int aCurrentValue, out int aMin, out int aMax, out int aStep, out int aDefault, out int aFlag);
+
+      void getCamParametrs(out string aXMLstring);
+
+      void setCamParametr(uint aParametrIndex, int aNewValue, int aFlag);
+
+      #endregion
+   }
 }

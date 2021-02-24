@@ -21,9 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include <memory>
-
 #include "ClassFactory.h"
 #include "CaptureManagerTypeInfo_i.c"
 #include "CoLogPrintOutClassFactory.h"
@@ -32,88 +30,54 @@ SOFTWARE.
 #include "../Common/ComPtrCustom.h"
 #include "../Common/Common.h"
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		ClassFactory::ClassFactory()
-		{
-		}
+   namespace COMServer
+   {
+      ClassFactory::ClassFactory() { }
+      ClassFactory::~ClassFactory() { }
 
-		ClassFactory::~ClassFactory()
-		{
-		}
+      HRESULT ClassFactory::getClassObject(REFCLSID aRefCLSID, REFIID aRefIID, void** aPtrPtrVoidObject)
+      {
+         HRESULT lresult;
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrPtrVoidObject);
+            lresult = CLASS_E_CLASSNOTAVAILABLE;
+            if (aRefCLSID == CLSID_CoLogPrintOut) {
+               CComPtrCustom<CoLogPrintOutClassFactory> lClassFactory(new(std::nothrow) CoLogPrintOutClassFactory());
+               LOG_CHECK_PTR_MEMORY(lClassFactory);
+               LOG_INVOKE_POINTER_METHOD(lClassFactory, QueryInterface, aRefIID, aPtrPtrVoidObject);
+            } else if (aRefCLSID == CLSID_CoCaptureManager) {
+               CComPtrCustom<CoCaptureManagerClassFactory> lClassFactory(
+                  new(std::nothrow) CoCaptureManagerClassFactory());
+               LOG_CHECK_PTR_MEMORY(lClassFactory);
+               LOG_INVOKE_POINTER_METHOD(lClassFactory, QueryInterface, aRefIID, aPtrPtrVoidObject);
+            }
+         } while (false);
+         return lresult;
+      }
 
-		HRESULT ClassFactory::getClassObject(
-			REFCLSID aRefCLSID,
-			REFIID aRefIID,
-			void** aPtrPtrVoidObject)
-		{
-			HRESULT lresult;
+      HRESULT ClassFactory::checkLock()
+      {
+         HRESULT lresult = E_FAIL;
+         do {
+            if (mLockCount == 0) {
+               lresult = S_OK;
+            } else {
+               lresult = S_FALSE;
+            }
+         } while (false);
+         return lresult;
+      }
 
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrPtrVoidObject);
-				
-				lresult = CLASS_E_CLASSNOTAVAILABLE;
-				
-				if (aRefCLSID == CLSID_CoLogPrintOut)
-				{
-					CComPtrCustom<CoLogPrintOutClassFactory> lClassFactory(
-						new (std::nothrow) CoLogPrintOutClassFactory());
+      ULONG ClassFactory::lock()
+      {
+         return ++mLockCount;
+      }
 
-					LOG_CHECK_PTR_MEMORY(lClassFactory);
-										
-					LOG_INVOKE_POINTER_METHOD(lClassFactory, QueryInterface,
-						aRefIID,
-						aPtrPtrVoidObject);
-				}
-				else if (aRefCLSID == CLSID_CoCaptureManager)
-				{
-					CComPtrCustom<CoCaptureManagerClassFactory> lClassFactory(
-						new (std::nothrow) CoCaptureManagerClassFactory());
-
-					LOG_CHECK_PTR_MEMORY(lClassFactory);
-
-					LOG_INVOKE_POINTER_METHOD(lClassFactory, QueryInterface,
-						aRefIID,
-						aPtrPtrVoidObject);
-				}
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT ClassFactory::checkLock()
-		{
-			HRESULT lresult = E_FAIL;
-
-			do
-			{
-				if (mLockCount == 0)
-				{
-					lresult = S_OK;
-				}
-				else
-				{
-					lresult = S_FALSE;
-				}
-
-			} while (false);
-
-			return lresult;
-		}
-
-		ULONG ClassFactory::lock()
-		{
-			return ++mLockCount;
-		}
-
-		ULONG ClassFactory::unlock()
-		{
-			return --mLockCount;
-		}
-	}
+      ULONG ClassFactory::unlock()
+      {
+         return --mLockCount;
+      }
+   }
 }

@@ -23,39 +23,40 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public enum SessionCallbackEventCode:int
-	{
-		Unknown = 0,
-		Error = Unknown + 1,
-		Status_Error = Error + 1,
-		Execution_Error = Status_Error + 1,
-		ItIsReadyToStart = Execution_Error + 1,
-		ItIsStarted = ItIsReadyToStart + 1,
-		ItIsPaused = ItIsStarted + 1,
-		ItIsStopped = ItIsPaused + 1,
-		ItIsEnded = ItIsStopped + 1,
-		ItIsClosed = ItIsEnded + 1,
-		VideoCaptureDeviceRemoved = ItIsClosed + 1
-	};
+   public enum SessionCallbackEventCode
+   {
+      Unknown = 0,
+      Error = Unknown + 1,
+      Status_Error = Error + 1,
+      Execution_Error = Status_Error + 1,
+      ItIsReadyToStart = Execution_Error + 1,
+      ItIsStarted = ItIsReadyToStart + 1,
+      ItIsPaused = ItIsStarted + 1,
+      ItIsStopped = ItIsPaused + 1,
+      ItIsEnded = ItIsStopped + 1,
+      ItIsClosed = ItIsEnded + 1,
+      VideoCaptureDeviceRemoved = ItIsClosed + 1
+   }
 
-    public delegate void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor);
+   public delegate void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor);
 
-    public interface ISession
-    {
-        bool startSession(
-            long aStartPositionInHundredNanosecondUnits,
-            Guid aGUIDTimeFormat);
-        bool pauseSession();
-        bool stopSession();
-        bool closeSession();
-        bool getSessionDescriptor(out uint aSessionDescriptor);
-        bool registerUpdateStateDelegate(
-            UpdateStateDelegate aUpdateStateDelegate);
-    }
+   public interface ISession
+   {
+      #region Public methods
+
+      bool closeSession();
+      bool getSessionDescriptor(out uint aSessionDescriptor);
+      bool pauseSession();
+
+      bool registerUpdateStateDelegate(UpdateStateDelegate aUpdateStateDelegate);
+
+      bool startSession(long aStartPositionInHundredNanosecondUnits, Guid aGUIDTimeFormat);
+
+      bool stopSession();
+
+      #endregion
+   }
 }

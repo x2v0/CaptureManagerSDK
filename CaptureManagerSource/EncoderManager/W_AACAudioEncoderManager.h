@@ -1,58 +1,35 @@
 #pragma once
-
 #include <vector>
-
-
 #include "../Common/BaseUnknown.h"
 #include "IEncoderManager.h"
 
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		namespace Encoder
-		{
-			class W_AACAudioEncoderManager :
-				public BaseUnknown<IEncoderManager>
-			{
-			public:
+   namespace Transform
+   {
+      namespace Encoder
+      {
+         class W_AACAudioEncoderManager : public BaseUnknown<IEncoderManager>
+         {
+         public: // IEncoderManager interface
+            HRESULT enumEncoderMediaTypes(IMFMediaType* aPtrInputMediaType, EncodingSettings aEncodingSettings,
+                                          REFGUID aRefEncoderCLSID,
+                                          std::vector<CComPtrCustom<IUnknown>>& aRefListOfMediaTypes) override;
 
-				// IEncoderManager interface
+            HRESULT getCompressedMediaType(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                                           REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                                           IMFMediaType** aPtrPtrCompressedMediaType) override;
 
-				virtual HRESULT enumEncoderMediaTypes(
-					IMFMediaType* aPtrInputMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					std::vector<CComPtrCustom<IUnknown>> &aRefListOfMediaTypes);
+            HRESULT getEncoder(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                               REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                               IMFTransform** aPtrPtrEncoderTransform) override; // W_H264VideoEncoderManager interface
+            static GUID getMediaSubType();
 
-				virtual HRESULT getCompressedMediaType(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFMediaType** aPtrPtrCompressedMediaType);
+         private:
+            HRESULT checkAndFixInputMediatype(IMFMediaType** aPtrPtrInputMediaType);
 
-				virtual HRESULT getEncoder(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFTransform** aPtrPtrEncoderTransform);
-
-				// W_H264VideoEncoderManager interface
-
-				static GUID getMediaSubType();
-
-			private:
-
-				HRESULT checkAndFixInputMediatype(
-					IMFMediaType** aPtrPtrInputMediaType);
-
-				HRESULT createOutputMediaType(
-					IMFMediaType* aPtrOriginalInputMediaType,
-					IMFMediaType* aPtrOutputMediaType);
-
-			};
-		}
-	}
+            HRESULT createOutputMediaType(IMFMediaType* aPtrOriginalInputMediaType, IMFMediaType* aPtrOutputMediaType);
+         };
+      }
+   }
 }

@@ -22,44 +22,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public struct VersionStruct
-    {
-        public uint mMAJOR;
-        
-        public uint mMINOR;
-        
-        public uint mPATCH;
+   public struct VersionStruct
+   {
+      #region  Fields
 
-        public string mAdditionalLabel;
+      public string mAdditionalLabel;
+      public uint mMAJOR;
 
-        public override string ToString()
-        {
-            string lversionBase = mMAJOR.ToString() + "." +
-                mMINOR.ToString() + "." +
-                mPATCH.ToString();
+      public uint mMINOR;
 
-            if(!string.IsNullOrEmpty(mAdditionalLabel))
-            {
-                lversionBase += "-" + mAdditionalLabel;
-            }
+      public uint mPATCH;
 
-            return lversionBase;
-        }
-    }
+      #endregion
 
-    public interface IVersionControl
-    {
-        bool getVersion(ref VersionStruct aVersionStruct);
+      #region Public methods
 
-        bool checkVersion(VersionStruct aVersionStruct);
+      public override string ToString()
+      {
+         var lversionBase = mMAJOR + "." + mMINOR + "." + mPATCH;
 
-        bool getXMLStringVersion(out string aPtrPtrXMLstring);
-    }
+         if (!string.IsNullOrEmpty(mAdditionalLabel)) {
+            lversionBase += "-" + mAdditionalLabel;
+         }
+
+         return lversionBase;
+      }
+
+      #endregion
+   }
+
+   public interface IVersionControl
+   {
+      #region Public methods
+
+      bool checkVersion(VersionStruct aVersionStruct);
+      bool getVersion(ref VersionStruct aVersionStruct);
+
+      bool getXMLStringVersion(out string aPtrPtrXMLstring);
+
+      #endregion
+   }
 }

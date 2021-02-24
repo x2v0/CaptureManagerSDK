@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "VideoMixerControl.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/Singleton.h"
@@ -29,131 +28,70 @@ SOFTWARE.
 #include "../CaptureManagerBroker/CaptureManagerBroker.h"
 #include "../LogPrintOut/LogPrintOut.h"
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
+   namespace COMServer
+   {
+      VideoMixerControl::VideoMixerControl() { }
+      VideoMixerControl::~VideoMixerControl() { } // IVideoMixerControl methods
+      HRESULT STDMETHODCALLTYPE VideoMixerControl::setPosition(
+         /* [in] */ IUnknown* aPtrVideoMixerNode, /* [in] */ FLOAT aLeft, /* [in] */ FLOAT aRight, /* [in] */
+                    FLOAT aTop, /* [in] */ FLOAT aBottom)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerPosition,
+                                aPtrVideoMixerNode, aLeft, aRight, aTop, aBottom);
+         } while (false);
+         return lresult;
+      }
 
-		VideoMixerControl::VideoMixerControl()
-		{
-		}
+      HRESULT STDMETHODCALLTYPE VideoMixerControl::setSrcPosition(
+         /* [in] */ IUnknown* aPtrVideoMixerNode, /* [in] */ FLOAT aLeft, /* [in] */ FLOAT aRight, /* [in] */
+                    FLOAT aTop, /* [in] */ FLOAT aBottom)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerSrcPosition,
+                                aPtrVideoMixerNode, aLeft, aRight, aTop, aBottom);
+         } while (false);
+         return lresult;
+      }
 
+      HRESULT STDMETHODCALLTYPE VideoMixerControl::setZOrder(/* [in] */ IUnknown* aPtrVideoMixerNode, /* [in] */
+                                                                        DWORD aZOrder)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerZOrder, aPtrVideoMixerNode,
+                                aZOrder);
+         } while (false);
+         return lresult;
+      }
 
-		VideoMixerControl::~VideoMixerControl()
-		{
-		}
+      HRESULT STDMETHODCALLTYPE VideoMixerControl::setOpacity(
+         /* [in] */ IUnknown* aPtrVideoMixerNode, /* [in] */ FLOAT aOpacity)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerOpacity, aPtrVideoMixerNode,
+                                aOpacity);
+         } while (false);
+         return lresult;
+      }
 
-		// IVideoMixerControl methods
-
-		HRESULT STDMETHODCALLTYPE VideoMixerControl::setPosition(
-			/* [in] */ IUnknown *aPtrVideoMixerNode,
-			/* [in] */ FLOAT aLeft,
-			/* [in] */ FLOAT aRight,
-			/* [in] */ FLOAT aTop,
-			/* [in] */ FLOAT aBottom)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerPosition,
-					aPtrVideoMixerNode,
-					aLeft,
-					aRight,
-					aTop,
-					aBottom);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE VideoMixerControl::setSrcPosition(
-			/* [in] */ IUnknown *aPtrVideoMixerNode,
-			/* [in] */ FLOAT aLeft,
-			/* [in] */ FLOAT aRight,
-			/* [in] */ FLOAT aTop,
-			/* [in] */ FLOAT aBottom)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerSrcPosition,
-					aPtrVideoMixerNode,
-					aLeft,
-					aRight,
-					aTop,
-					aBottom);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE VideoMixerControl::setZOrder(
-			/* [in] */ IUnknown *aPtrVideoMixerNode,
-			/* [in] */ DWORD aZOrder)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerZOrder,
-					aPtrVideoMixerNode,
-					aZOrder);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE VideoMixerControl::setOpacity(
-			/* [in] */ IUnknown *aPtrVideoMixerNode,
-			/* [in] */ FLOAT aOpacity)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerOpacity,
-					aPtrVideoMixerNode,
-					aOpacity);
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT STDMETHODCALLTYPE VideoMixerControl::flush(
-			/* [in] */ IUnknown *aPtrVideoMixerNode)
-		{
-
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
-
-				LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerFlush,
-					aPtrVideoMixerNode);
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT STDMETHODCALLTYPE VideoMixerControl::flush(/* [in] */ IUnknown* aPtrVideoMixerNode)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrVideoMixerNode);
+            LOG_INVOKE_FUNCTION(Singleton<CaptureManagerBroker>::getInstance().setVideoMixerFlush, aPtrVideoMixerNode);
+         } while (false);
+         return lresult;
+      }
+   }
 }

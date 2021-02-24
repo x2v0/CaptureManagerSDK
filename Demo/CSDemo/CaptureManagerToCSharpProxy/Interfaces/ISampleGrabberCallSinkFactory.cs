@@ -23,18 +23,15 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISampleGrabberCallSinkFactory
-    {
-        bool createOutputNode(
-            Guid aRefMajorType,
-            Guid aRefSubType,
-            uint aSampleByteSize,
-            out ISampleGrabberCall aISampleGrabberCall);
-    }
+   public interface ISampleGrabberCallSinkFactory
+   {
+      #region Public methods
+
+      bool createOutputNode(Guid aRefMajorType, Guid aRefSubType, uint aSampleByteSize, out ISampleGrabberCall aISampleGrabberCall);
+
+      #endregion
+   }
 }

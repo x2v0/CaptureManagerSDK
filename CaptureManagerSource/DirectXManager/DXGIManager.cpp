@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "DXGIManager.h"
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Common.h"
@@ -29,11 +28,10 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		namespace DXGI
-		{
-
+   namespace Core
+   {
+      namespace DXGI
+      {
 #ifndef CASTFUNCTION
 #define CASTFUNCTION(Function){\
 		auto lPtrFunc = GetProcAddress(aModule, #Function);\
@@ -50,100 +48,57 @@ if (lFunc != nullptr)\
 			lresult = E_FAIL;\
 			break;\
 		}\
-									}\
-
+									}
 #endif
-
-
-
 #ifndef BINDFUNCTION
 #define BINDFUNCTION(Function)Function DXGIManager::Function = DXGIManager::stub##Function
 #endif
+         BINDFUNCTION(CreateDXGIFactory1);
 
-			BINDFUNCTION(CreateDXGIFactory1);
+         DXGIManager::DXGIManager()
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               auto lModule = LoadLibrary(L"Dxgi.dll");
+               if (lModule == nullptr) {
+                  lresult = E_HANDLE;
+                  break;
+               }
+               lresult = initFunctions(lModule);
+            } while (false);
+            mState = lresult;
+         }
 
-			DXGIManager::DXGIManager()
-			{
-				HRESULT lresult = E_FAIL;
+         DXGIManager::~DXGIManager() { }
 
-				do
-				{
+         HRESULT DXGIManager::getState()
+         {
+            return mState;
+         }
 
-					auto lModule = LoadLibrary(L"Dxgi.dll");
-
-					if (lModule == nullptr)
-					{
-						lresult = E_HANDLE;
-
-						break;
-					}
-
-					lresult = initFunctions(lModule);
-
-				} while (false);
-
-				mState = lresult;
-			}
-
-
-			DXGIManager::~DXGIManager()
-			{
-			}
-
-
-			HRESULT DXGIManager::getState()
-			{
-				return mState;
-			}
-
-			HRESULT DXGIManager::GetResource(
-				IMFDXGIBuffer* aPtrIMFDXGIBuffer,
-				/* [annotation][in] */
-				REFIID riid,
-				/* [annotation][out] */
-				LPVOID *ppvObject)
-			{
-
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrIMFDXGIBuffer);
-
-					LOG_CHECK_PTR_MEMORY(ppvObject);
-
-					lresult = aPtrIMFDXGIBuffer->GetResource(
-						riid,
-						ppvObject);
-
-				} while (false);
-
-				if (FAILED(lresult))
-				{
-					LogPrintOut::getInstance().printOutln(
-						LogPrintOut::ERROR_LEVEL,
-						__FUNCTIONW__,
-						L" Error code: ",
-						lresult);
-				}
-
-				return lresult;
-			}
-
-			// init collection of pointers on Direct3D11 functions
-			HRESULT DXGIManager::initFunctions(HMODULE aModule)
-			{
-
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-					CASTFUNCTION(CreateDXGIFactory1);
-					
-				} while (false);
-
-				return lresult;
-			}
-		}
-	}
+         HRESULT DXGIManager::GetResource(IMFDXGIBuffer* aPtrIMFDXGIBuffer, /* [annotation][in] */ REFIID riid,
+                                          /* [annotation][out] */ LPVOID* ppvObject)
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrIMFDXGIBuffer);
+               LOG_CHECK_PTR_MEMORY(ppvObject);
+               lresult = aPtrIMFDXGIBuffer->GetResource(riid, ppvObject);
+            } while (false);
+            if (FAILED(lresult)) {
+               LogPrintOut::getInstance().printOutln(
+                  LogPrintOut::ERROR_LEVEL, __FUNCTIONW__, L" Error code: ", lresult);
+            }
+            return lresult;
+         } // init collection of pointers on Direct3D11 functions
+         HRESULT DXGIManager::initFunctions(HMODULE aModule)
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               CASTFUNCTION(CreateDXGIFactory1);
+            } while (false);
+            return lresult;
+         }
+      }
+   }
 }

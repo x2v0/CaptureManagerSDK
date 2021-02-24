@@ -22,28 +22,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISARVolumeControl
-    {
+   public interface ISARVolumeControl
+   {
+      #region Public methods
 
-        bool getChannelCount(
-            /* [in] */ object aPtrSARNode,
-            /* [out] */ out uint aPtrCount);
+      bool getChannelCount(
+         /* [in] */ object aPtrSARNode,
+                    /* [out] */
+                    out uint aPtrCount);
 
-		bool setChannelVolume(
-            /* [in] */ object aPtrSARNode,
-                /* [in] */ uint aIndex,
-                /* [in] */ float aLevel);
+      bool getChannelVolume(
+         /* [in] */ object aPtrSARNode,
+                    /* [in] */
+                    uint aIndex,
+                    /* [out] */
+                    out float aPtrLevel);
 
-		bool getChannelVolume(
-            /* [in] */ object aPtrSARNode,
-                /* [in] */ uint aIndex,
-                /* [out] */ out float aPtrLevel);
-    }
+      bool setChannelVolume(
+         /* [in] */ object aPtrSARNode,
+                    /* [in] */
+                    uint aIndex,
+                    /* [in] */
+                    float aLevel);
+
+      #endregion
+   }
 }

@@ -23,20 +23,21 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ICaptureProcessor
-    {
-        void initilaize(IInitilaizeCaptureSource IInitilaizeCaptureSource);
-        void pause();
-        void setCurrentMediaType(ICurrentMediaType aICurrentMediaType);
-        void shutdown();
-        void sourceRequest(ISourceRequestResult aISourceRequestResult);
-        void start(long aStartPositionInHundredNanosecondUnits, ref Guid aGUIDTimeFormat);
-        void stop();
-    }
+   public interface ICaptureProcessor
+   {
+      #region Public methods
+
+      void initilaize(IInitilaizeCaptureSource IInitilaizeCaptureSource);
+      void pause();
+      void setCurrentMediaType(ICurrentMediaType aICurrentMediaType);
+      void shutdown();
+      void sourceRequest(ISourceRequestResult aISourceRequestResult);
+      void start(long aStartPositionInHundredNanosecondUnits, ref Guid aGUIDTimeFormat);
+      void stop();
+
+      #endregion
+   }
 }

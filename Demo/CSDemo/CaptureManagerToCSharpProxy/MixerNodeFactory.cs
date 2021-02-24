@@ -22,67 +22,68 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class MixerNodeFactory : IMixerNodeFactory
-    {
-        private CaptureManagerLibrary.IMixerNodeFactory mIMixerNodeFactory;
+   internal class MixerNodeFactory : IMixerNodeFactory
+   {
+      #region Constructors and destructors
 
-        public MixerNodeFactory(
-            CaptureManagerLibrary.IMixerNodeFactory aIMixerNodeFactory)
-        {
-            mIMixerNodeFactory = aIMixerNodeFactory;
-        }
+      public MixerNodeFactory(CaptureManagerLibrary.IMixerNodeFactory aIMixerNodeFactory)
+      {
+         mIMixerNodeFactory = aIMixerNodeFactory;
+      }
 
-        public bool createMixerNodes(
-            object aPtrDownStreamTopologyNode, 
-            uint aInputNodeAmount, 
-            out List<object> aTopologyInputNodesList)
-        {
-            bool lresult = false;
+      #endregion
 
-            aTopologyInputNodesList = new List<object>();
+      #region  Fields
 
-            do
-            {
-                if (mIMixerNodeFactory == null)
-                    break;
+      private readonly CaptureManagerLibrary.IMixerNodeFactory mIMixerNodeFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createMixerNodes(object aPtrDownStreamTopologyNode, uint aInputNodeAmount, out List<object> aTopologyInputNodesList)
+      {
+         var lresult = false;
+
+         aTopologyInputNodesList = new List<object>();
+
+         do {
+            if (mIMixerNodeFactory == null) {
+               break;
+            }
 
 
-                try
-                {
-                    object lArrayMediaNodes = new Object();
+            try {
+               var lArrayMediaNodes = new object();
 
-                    mIMixerNodeFactory.createMixerNodes(
-                        aPtrDownStreamTopologyNode,
-                        aInputNodeAmount,
-                        out lArrayMediaNodes);
+               mIMixerNodeFactory.createMixerNodes(aPtrDownStreamTopologyNode, aInputNodeAmount, out lArrayMediaNodes);
 
-                    if (lArrayMediaNodes == null)
-                        break;
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
 
-                    object[] lArray = lArrayMediaNodes as object[];
+               var lArray = lArrayMediaNodes as object[];
 
-                    if (lArray == null)
-                        break;
+               if (lArray == null) {
+                  break;
+               }
 
-                    aTopologyInputNodesList.AddRange(lArray);
+               aTopologyInputNodesList.AddRange(lArray);
 
-                    lresult = true;
-                }
-                catch (Exception)
-                {
-                }
+               lresult = true;
+            } catch (Exception) {
+            }
+         } while (false);
 
-            } while (false);
+         return lresult;
+      }
 
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

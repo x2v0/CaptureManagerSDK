@@ -21,39 +21,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SchedulerFactory.h"
-
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Common.h"
 #include "ScheduleWorkImpl.h"
 
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		HRESULT SchedulerFactory::createScheduler(
-			ISchedulerCallback* aPtrCallback,
-			INT64 aFrameDuration100nseconds,
-			IScheduler** aPtrPtrIScheduler)
-		{
-			HRESULT lresult(E_FAIL);
-
-			do
-			{
-				LOG_CHECK_PTR_MEMORY(aPtrPtrIScheduler);
-
-				CComPtrCustom<Scheduler::ScheduleWorkImpl> lScheduleWorkImpl = new (std::nothrow) Scheduler::ScheduleWorkImpl(aPtrCallback);
-
-				LOG_INVOKE_POINTER_METHOD(lScheduleWorkImpl, init,
-					aFrameDuration100nseconds);
-
-				*aPtrPtrIScheduler = lScheduleWorkImpl.detach();
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+   namespace Core
+   {
+      HRESULT SchedulerFactory::createScheduler(ISchedulerCallback* aPtrCallback, INT64 aFrameDuration100nseconds,
+                                                IScheduler** aPtrPtrIScheduler)
+      {
+         HRESULT lresult(E_FAIL);
+         do {
+            LOG_CHECK_PTR_MEMORY(aPtrPtrIScheduler);
+            CComPtrCustom<Scheduler::ScheduleWorkImpl> lScheduleWorkImpl = new(std::nothrow) Scheduler::ScheduleWorkImpl
+               (aPtrCallback);
+            LOG_INVOKE_POINTER_METHOD(lScheduleWorkImpl, init, aFrameDuration100nseconds);
+            *aPtrPtrIScheduler = lScheduleWorkImpl.detach();
+         } while (false);
+         return lresult;
+      }
+   }
 }

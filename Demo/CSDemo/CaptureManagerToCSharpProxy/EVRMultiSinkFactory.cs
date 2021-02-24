@@ -24,199 +24,188 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
-using DISPPARAMS = System.Runtime.InteropServices.ComTypes.DISPPARAMS;
-using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace CaptureManagerToCSharpProxy
 {
+   internal class EVRMultiSinkFactory : IEVRMultiSinkFactory
+   {
+      #region Constructors and destructors
 
-    class EVRMultiSinkFactory: IEVRMultiSinkFactory
-    {
-        public static bool GetComMethod<T, U>(T comObj, int slot, out U method) where U : class
-        {
-            IntPtr objectAddress = Marshal.GetComInterfaceForObject(comObj, typeof(T));
-            if (objectAddress == IntPtr.Zero)
-            {
-                method = null;
-                return false;
+      public EVRMultiSinkFactory(object aIUnknown)
+      {
+         mIEVRMultiSinkFactory = aIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;
+
+         mIUnknown = aIUnknown;
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.IEVRMultiSinkFactory mIEVRMultiSinkFactory;
+
+      private readonly object mIUnknown;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNodes(IntPtr aHandle, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
+
+         aTopologyOutputNodesList = new List<object>();
+
+         do {
+            if (mIEVRMultiSinkFactory == null) {
+               break;
             }
 
-            try
-            {
-                IntPtr vTable = Marshal.ReadIntPtr(objectAddress, 0);
-                IntPtr methodAddress = Marshal.ReadIntPtr(vTable, slot * IntPtr.Size);
 
-                // We can't have a Delegate constraint, so we have to cast to
-                // object then to our desired delegate
-                method = (U)((object)Marshal.GetDelegateForFunctionPointer(methodAddress, typeof(U)));
-                return true;
+            try {
+               var lArrayMediaNodes = new object();
+
+               mIEVRMultiSinkFactory.createOutputNodes(aHandle, null, aOutputNodeAmount, out lArrayMediaNodes);
+
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
+
+               var lArray = lArrayMediaNodes as object[];
+
+               if (lArray == null) {
+                  break;
+               }
+
+               aTopologyOutputNodesList.AddRange(lArray);
+
+               lresult = true;
+            } catch (Exception exc) {
+               if (mIUnknown != null) {
+                  try {
+                     object[] largs = {
+                        aHandle.ToInt64(), null, aOutputNodeAmount
+                     };
+
+                     var lArrayMediaNodes = Win32NativeMethods.Invoke<object>(mIUnknown, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNodes", largs);
+
+                     if (lArrayMediaNodes == null) {
+                        break;
+                     }
+
+                     var lArray = lArrayMediaNodes as object[];
+
+                     if (lArray == null) {
+                        break;
+                     }
+
+                     aTopologyOutputNodesList.AddRange(lArray);
+
+                     lresult = true;
+                  } catch (Exception exc1) {
+                     LogManager.getInstance().write(exc1.Message);
+                  }
+               } else {
+                  LogManager.getInstance().write(exc.Message);
+               }
             }
-            finally
-            {
-                Marshal.Release(objectAddress); // Prevent memory leak
+         } while (false);
+
+         return lresult;
+      }
+
+
+      public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
+
+         aTopologyOutputNodesList = new List<object>();
+
+         do {
+            if (mIEVRMultiSinkFactory == null) {
+               break;
             }
-        }
-
-        private CaptureManagerLibrary.IEVRMultiSinkFactory mIEVRMultiSinkFactory;
-
-        private object mIUnknown;
-
-        public EVRMultiSinkFactory(object aIUnknown)
-        {
-            mIEVRMultiSinkFactory = aIUnknown as CaptureManagerLibrary.IEVRMultiSinkFactory;
-
-            mIUnknown = aIUnknown;
-        }
-        
-        public bool createOutputNodes(
-            IntPtr aHandle, 
-            uint aOutputNodeAmount, 
-            out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
-            
-            aTopologyOutputNodesList = new List<object>();
-
-            do
-            {
-                if (mIEVRMultiSinkFactory == null)
-                    break;
 
 
-                try
-                {
-                    object lArrayMediaNodes = new Object();
+            try {
+               var lArrayMediaNodes = new object();
 
-                    mIEVRMultiSinkFactory.createOutputNodes(
-                        aHandle,
-                        null,
-                        aOutputNodeAmount,
-                        out lArrayMediaNodes);
+               mIEVRMultiSinkFactory.createOutputNodes(aHandle, aPtrUnkSharedResource, aOutputNodeAmount, out lArrayMediaNodes);
 
-                    if (lArrayMediaNodes == null)
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
+
+               var lArray = lArrayMediaNodes as object[];
+
+               if (lArray == null) {
+                  break;
+               }
+
+               aTopologyOutputNodesList.AddRange(lArray);
+
+               lresult = true;
+            } catch (Exception exc) {
+               if (mIUnknown != null) {
+                  try {
+                     object[] largs = {
+                        aHandle.ToInt64(), aPtrUnkSharedResource, aOutputNodeAmount
+                     };
+
+                     var lArrayMediaNodes = Win32NativeMethods.Invoke<object>(mIUnknown, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNodes", largs);
+
+                     if (lArrayMediaNodes == null) {
                         break;
+                     }
 
-                    object[] lArray = lArrayMediaNodes as object[];
+                     var lArray = lArrayMediaNodes as object[];
 
-                    if (lArray == null)
+                     if (lArray == null) {
                         break;
+                     }
 
-                    aTopologyOutputNodesList.AddRange(lArray);
+                     aTopologyOutputNodesList.AddRange(lArray);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    if (mIUnknown != null)
-                    {                        
-                        try
-                        {
-                            object[] largs = new object[] { aHandle.ToInt64(), null, aOutputNodeAmount };
+                     lresult = true;
+                  } catch (Exception exc1) {
+                     LogManager.getInstance().write(exc1.Message);
+                  }
+               } else {
+                  LogManager.getInstance().write(exc.Message);
+               }
+            }
+         } while (false);
 
-                            object lArrayMediaNodes = Win32NativeMethods.Invoke<object>(mIUnknown, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNodes", largs);
+         return lresult;
+      }
 
-                            if (lArrayMediaNodes == null)
-                                break;
+      #endregion
 
-                            object[] lArray = lArrayMediaNodes as object[];
+      #region Public methods
 
-                            if (lArray == null)
-                                break;
+      public static bool GetComMethod<T, U>(T comObj, int slot, out U method) where U : class
+      {
+         var objectAddress = Marshal.GetComInterfaceForObject(comObj, typeof(T));
+         if (objectAddress == IntPtr.Zero) {
+            method = null;
+            return false;
+         }
 
-                            aTopologyOutputNodesList.AddRange(lArray);
+         try {
+            var vTable = Marshal.ReadIntPtr(objectAddress, 0);
+            var methodAddress = Marshal.ReadIntPtr(vTable, slot * IntPtr.Size);
 
-                            lresult = true;
-                        }
-                        catch (Exception exc1)
-                        {
-                            LogManager.getInstance().write(exc1.Message);
-                        }
-                    }
-                    else
-                        LogManager.getInstance().write(exc.Message);
-                }
+            // We can't have a Delegate constraint, so we have to cast to
+            // object then to our desired delegate
+            method = (U) (object) Marshal.GetDelegateForFunctionPointer(methodAddress, typeof(U));
+            return true;
+         } finally {
+            Marshal.Release(objectAddress); // Prevent memory leak
+         }
+      }
 
-            } while (false);
-
-            return lresult;
-        }
-
-
-        public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
-
-            aTopologyOutputNodesList = new List<object>();
-
-            do
-            {
-                if (mIEVRMultiSinkFactory == null)
-                    break;
-
-
-                try
-                {
-                    object lArrayMediaNodes = new Object();
-
-                    mIEVRMultiSinkFactory.createOutputNodes(
-                        aHandle,
-                        aPtrUnkSharedResource,
-                        aOutputNodeAmount,
-                        out lArrayMediaNodes);
-
-                    if (lArrayMediaNodes == null)
-                        break;
-
-                    object[] lArray = lArrayMediaNodes as object[];
-
-                    if (lArray == null)
-                        break;
-
-                    aTopologyOutputNodesList.AddRange(lArray);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    if (mIUnknown != null)
-                    {
-
-
-                        try
-                        {
-                            object[] largs = new object[] { aHandle.ToInt64(), aPtrUnkSharedResource, aOutputNodeAmount};
-
-                            object lArrayMediaNodes = Win32NativeMethods.Invoke<object>(mIUnknown, Win32NativeMethods.InvokeFlags.DISPATCH_METHOD, "createOutputNodes", largs);
-                            
-                            if (lArrayMediaNodes == null)
-                                break;
-
-                            object[] lArray = lArrayMediaNodes as object[];
-
-                            if (lArray == null)
-                                break;
-
-                            aTopologyOutputNodesList.AddRange(lArray);
-
-                            lresult = true;
-                        }
-                        catch (Exception exc1)
-                        {
-                            LogManager.getInstance().write(exc1.Message);
-                        }
-                    }
-                    else
-                        LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-    }
+      #endregion
+   }
 }

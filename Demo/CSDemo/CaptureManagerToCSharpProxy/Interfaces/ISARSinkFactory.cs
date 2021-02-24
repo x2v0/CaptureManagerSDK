@@ -22,16 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISARSinkFactory
-    {
-        bool createOutputNode(
-            out object aTopologyOutputNode);
-    }
+   public interface ISARSinkFactory
+   {
+      #region Public methods
+
+      bool createOutputNode(out object aTopologyOutputNode);
+
+      #endregion
+   }
 }

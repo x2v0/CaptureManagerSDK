@@ -23,16 +23,15 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IEVRSinkFactory
-    {
-        bool createOutputNode(
-            IntPtr aHWND,
-            out object aTopologyNode);
-    }
+   public interface IEVRSinkFactory
+   {
+      #region Public methods
+
+      bool createOutputNode(IntPtr aHWND, out object aTopologyNode);
+
+      #endregion
+   }
 }

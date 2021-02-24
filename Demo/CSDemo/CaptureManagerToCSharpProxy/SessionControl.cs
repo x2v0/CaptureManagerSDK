@@ -23,68 +23,70 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
-
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SessionControl : ISessionControl
-    {
-        CaptureManagerLibrary.ISessionControl mISessionControl = null;
+   internal class SessionControl : ISessionControl
+   {
+      #region Constructors and destructors
 
-        public SessionControl(CaptureManagerLibrary.ISessionControl aISessionControl)
-        {
-            mISessionControl = aISessionControl;
-        }
+      public SessionControl(CaptureManagerLibrary.ISessionControl aISessionControl)
+      {
+         mISessionControl = aISessionControl;
+      }
 
-        public ISession createSession(
-            object[] aArrayOfSourceNodesOfTopology)
-        {
-            ISession lresult = null;
-            
-            do
-            {
-                if (aArrayOfSourceNodesOfTopology == null)
-                    break;
+      #endregion
 
-                if (aArrayOfSourceNodesOfTopology.Length == 0)
-                    break;
+      #region  Fields
 
-                if (mISessionControl == null)
-                    break;
+      private readonly CaptureManagerLibrary.ISessionControl mISessionControl;
 
-                try
-                {
+      #endregion
 
-                    object lUnknown;
+      #region Interface methods
 
-                    mISessionControl.createSession(
-                        aArrayOfSourceNodesOfTopology,
-                        typeof(CaptureManagerLibrary.ISession).GUID,
-                        out lUnknown);
+      public ISession createSession(object[] aArrayOfSourceNodesOfTopology)
+      {
+         ISession lresult = null;
 
-                    if (lUnknown == null)
-                        break;
+         do {
+            if (aArrayOfSourceNodesOfTopology == null) {
+               break;
+            }
 
-                    var lSession = lUnknown as CaptureManagerLibrary.ISession;
+            if (aArrayOfSourceNodesOfTopology.Length == 0) {
+               break;
+            }
 
-                    if (lSession == null)
-                        break;                   
+            if (mISessionControl == null) {
+               break;
+            }
 
-                    lresult = new Session(lSession);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+            try {
+               object lUnknown;
 
-            } while (false);
+               mISessionControl.createSession(aArrayOfSourceNodesOfTopology, typeof(CaptureManagerLibrary.ISession).GUID, out lUnknown);
 
-            return lresult;
+               if (lUnknown == null) {
+                  break;
+               }
 
-        }
-    }
+               var lSession = lUnknown as CaptureManagerLibrary.ISession;
+
+               if (lSession == null) {
+                  break;
+               }
+
+               lresult = new Session(lSession);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

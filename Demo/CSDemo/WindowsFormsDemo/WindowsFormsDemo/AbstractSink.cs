@@ -22,17 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace WPFRecording
 {
-    abstract class AbstractSink
-    {
-        public abstract void setOptions(string aOptions);
+   internal abstract class AbstractSink
+   {
+      #region Public methods
 
-        public abstract object getOutputNode(object aUpStreamMediaType);
-    }
+      public abstract object getOutputNode(object aUpStreamMediaType);
+      public abstract void setOptions(string aOptions);
+
+      #endregion
+   }
 }

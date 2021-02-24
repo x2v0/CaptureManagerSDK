@@ -22,15 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IAudioMixerControl
-    {
-        bool setRelativeVolume(object aPtrAudioMixerNode, float aRelativeVolume);
-    }
+   public interface IAudioMixerControl
+   {
+      #region Public methods
+
+      bool setRelativeVolume(object aPtrAudioMixerNode, float aRelativeVolume);
+
+      #endregion
+   }
 }

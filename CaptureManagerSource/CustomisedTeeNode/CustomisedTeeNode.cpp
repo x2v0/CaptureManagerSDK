@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include <algorithm>
 #include "CustomisedTeeNode.h"
 #include "../LogPrintOut/LogPrintOut.h"
@@ -29,81 +28,48 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         CustomisedTeeNode::CustomisedTeeNode(DWORD aOutputNodeCount): mIsReady(false) { }
+         CustomisedTeeNode::~CustomisedTeeNode() { } // ITeeNode interface
+         HRESULT CustomisedTeeNode::registerOutputNodeRequest(DWORD aOutputNodeIndex)
+         {
+            HRESULT lresult;
+            std::lock_guard<std::mutex> lLock(mLockMutex);
+            do {
+               if (!mIsReady) {
+                  mIsReady = true;
+                  lresult = S_OK;
+                  break;
+               }
+               lresult = S_FALSE;
+            } while (false);
+            return lresult;
+         }
 
+         HRESULT CustomisedTeeNode::processInput(IMFSample* aPtrSample,
+                                                 std::vector<DWORD>& aRefVectorOfOutputNodesIndexes)
+         {
+            HRESULT lresult;
+            std::lock_guard<std::mutex> lLock(mLockMutex);
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrSample);
+               if (mIsReady) {
+                  mIsReady = false;
+               }
+               lresult = S_OK;
+            } while (false);
+            return lresult;
+         }
 
-			CustomisedTeeNode::CustomisedTeeNode(
-				DWORD aOutputNodeCount):
-				mIsReady(false)
-			{
-			}
-			
-			CustomisedTeeNode::~CustomisedTeeNode()
-			{
-			}
-
-			// ITeeNode interface
-
-			HRESULT CustomisedTeeNode::registerOutputNodeRequest(
-				DWORD aOutputNodeIndex)
-			{				
-				HRESULT lresult;
-				
-				std::lock_guard<std::mutex> lLock(mLockMutex);
-
-				do
-				{
-					if (!mIsReady)
-					{
-						mIsReady = true;
-
-						lresult = S_OK;
-
-						break;
-					}
-					
-					lresult = S_FALSE;									
-
-				} while (false);
-
-				return lresult;
-			}
-
-			HRESULT CustomisedTeeNode::processInput(
-				IMFSample* aPtrSample,
-				std::vector<DWORD>& aRefVectorOfOutputNodesIndexes)
-			{
-				HRESULT lresult;
-
-				std::lock_guard<std::mutex> lLock(mLockMutex);
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrSample);
-					
-					if (mIsReady)
-					{
-						mIsReady = false;
-					}
-					
-					lresult = S_OK;
-
-				} while (false);
-
-				return lresult;
-			}
-
-			HRESULT CustomisedTeeNode::reset()
-			{
-				std::lock_guard<std::mutex> lLock(mLockMutex);
-
-				mIsReady = false;
-
-				return S_OK;
-			}
-		}
-	}
+         HRESULT CustomisedTeeNode::reset()
+         {
+            std::lock_guard<std::mutex> lLock(mLockMutex);
+            mIsReady = false;
+            return S_OK;
+         }
+      }
+   }
 }

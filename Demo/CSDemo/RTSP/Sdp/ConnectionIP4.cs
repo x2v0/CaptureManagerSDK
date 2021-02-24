@@ -1,42 +1,55 @@
-﻿namespace Rtsp.Sdp
+﻿using System;
+using System.Globalization;
+
+namespace Rtsp.Sdp
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Globalization;
-    using System.Net;
+   public class ConnectionIP4 : Connection
+   {
+      #region Public properties
 
-    public class ConnectionIP4 : Connection
-    {
+      public int Ttl
+      {
+         get;
+         set;
+      }
 
-        public int Ttl { get; set; }
+      #endregion
 
-        internal new static ConnectionIP4 Parse(string ipAddress)
-        {
-            string[] parts = ipAddress.Split('/');
+      #region Internal methods
 
-            if (parts.Length > 3)
-                throw new FormatException("Too much address subpart in " + ipAddress);
+      internal new static ConnectionIP4 Parse(string ipAddress)
+      {
+         var parts = ipAddress.Split('/');
 
-            ConnectionIP4 result = new ConnectionIP4();
+         if (parts.Length > 3) {
+            throw new FormatException("Too much address subpart in " + ipAddress);
+         }
 
-            result.Host = parts[0];
+         var result = new ConnectionIP4();
 
-            int ttl;
-            if (parts.Length > 1)
-            {
-                if (!int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out ttl))
-                    throw new FormatException("Invalid TTL format : " + parts[1]);
-                result.Ttl = ttl;
-            }
-            int numberOfAddress;
-            if (parts.Length > 2)
-            {
-                if (!int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out numberOfAddress))
-                    throw new FormatException("Invalid number of address : " + parts[2]);
-                result.NumberOfAddress = numberOfAddress;
+         result.Host = parts[0];
+
+         int ttl;
+         if (parts.Length > 1) {
+            if (!int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out ttl)) {
+               throw new FormatException("Invalid TTL format : " + parts[1]);
             }
 
-            return result;
-        }
-    }
+            result.Ttl = ttl;
+         }
+
+         int numberOfAddress;
+         if (parts.Length > 2) {
+            if (!int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out numberOfAddress)) {
+               throw new FormatException("Invalid number of address : " + parts[2]);
+            }
+
+            result.NumberOfAddress = numberOfAddress;
+         }
+
+         return result;
+      }
+
+      #endregion
+   }
 }

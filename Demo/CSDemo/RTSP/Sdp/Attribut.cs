@@ -1,51 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Rtsp.Sdp
 {
     public class Attribut
     {
-        private static readonly Dictionary<string, Type> attributMap = new Dictionary<string, Type>()
-        {
+       #region Static fields
+
+       private static readonly Dictionary<string, Type> attributMap = new Dictionary<string, Type> {
             {AttributRtpMap.NAME,typeof(AttributRtpMap)},
-            {AttributFmtp.NAME,typeof(AttributFmtp)},
+            {AttributFmtp.NAME,typeof(AttributFmtp)}
         };
 
+       #endregion
 
-        public virtual string Key { get; private set; }
-        public virtual string Value { get; protected set; }
+       #region Constructors and destructors
 
-        public static void RegisterNewAttributeType(string key, Type attributType)
-        {
-            if(!attributType.IsSubclassOf(typeof(Attribut)))
-                throw new ArgumentException("Type must be subclass of Rtsp.Sdp.Attribut","attributType");
-
-            attributMap[key] = attributType;
-        }
-
-        
-
-        public Attribut()
+       public Attribut()
         {
         }
 
-        public Attribut(string key)
+       public Attribut(string key)
         {
             Key = key;
         }
 
+       #endregion
 
-        public static Attribut ParseInvariant(string value)
+       #region Public properties
+
+       public virtual string Key { get;
+       }
+       public virtual string Value { get; protected set; }
+
+       #endregion
+
+       #region Public methods
+
+       public static Attribut ParseInvariant(string value)
         {
-            if(value == null)
-                throw new ArgumentNullException("value");
+            if(value == null) {
+               throw new ArgumentNullException("value");
+            }
 
             Contract.EndContractBlock();
 
-            var listValues = value.Split(new char[] {':'}, 2);
+            var listValues = value.Split(new[] {':'}, 2);
             
 
             Attribut returnValue;
@@ -63,16 +65,31 @@ namespace Rtsp.Sdp
                 returnValue = new Attribut(listValues[0]);
             }
             // Parse the value. Note most attributes have a value but recvonly does not have a value
-            if (listValues.Count() > 1) returnValue.ParseValue(listValues[1]);
+            if (listValues.Count() > 1) {
+               returnValue.ParseValue(listValues[1]);
+            }
 
             return returnValue;
         }
 
-        protected virtual void ParseValue(string value)
+       public static void RegisterNewAttributeType(string key, Type attributType)
+        {
+            if(!attributType.IsSubclassOf(typeof(Attribut))) {
+               throw new ArgumentException("Type must be subclass of Rtsp.Sdp.Attribut","attributType");
+            }
+
+            attributMap[key] = attributType;
+        }
+
+       #endregion
+
+       #region Protected methods
+
+       protected virtual void ParseValue(string value)
         {
             Value = value;
         }
 
-        
+       #endregion
     }
 }

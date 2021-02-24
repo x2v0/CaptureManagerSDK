@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CaptureSourceManager.h"
 #include "CaptureSourceFactory.h"
 #include "../Common/MFHeaders.h"
@@ -34,78 +33,46 @@ SOFTWARE.
 #include "../Common/Singleton.h"
 #include "../CaptureDeviceManager/CaptureDeviceManager.h"
 
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		HRESULT CaptureSourceManager::getXMLDocOfSources(
-			std::vector<std::wstring>& aUsedSymbolicLinks,
-			pugi::xml_node& aRefRoolXML_Node)
-		{
-			using namespace pugi;
+   namespace Core
+   {
+      HRESULT CaptureSourceManager::getXMLDocOfSources(std::vector<std::wstring>& aUsedSymbolicLinks,
+                                                       pugi::xml_node& aRefRoolXML_Node)
+      {
+         using namespace pugi;
+         HRESULT lresult;
+         do {
+            CComMassivPtr<IMFMediaSource> lCaptureSources;
+            LOG_INVOKE_FUNCTION(Singleton<Sources::CaptureSourceFactory>::getInstance().getCaptureSources,
+                                aUsedSymbolicLinks, lCaptureSources.getPtrMassivPtr(),
+                                lCaptureSources.getRefSizeMassiv());
+            for (UINT32 lsourceIndex = 0; lsourceIndex < lCaptureSources.getSizeMassiv(); lsourceIndex++) {
+               auto lSource = aRefRoolXML_Node.append_child(L"Source");
+               CComPtrCustom<IMFMediaSource> lMediaSource;
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lCaptureSources[lsourceIndex], &lMediaSource);
+               CComPtrCustom<IMFPresentationDescriptor> lPD;
+               LOG_INVOKE_MF_METHOD(CreatePresentationDescriptor, lMediaSource, &lPD);
+               LOG_INVOKE_FUNCTION(DataParser::readSourceActivate, lPD, lSource.append_child(L"Source.Attributes"));
+               CaptureDeviceManager::addDeviceInstanceLink(lSource);
+               LOG_INVOKE_FUNCTION(parse, lMediaSource, lSource);
+               if (lMediaSource)
+               LOG_INVOKE_MF_METHOD(Shutdown, lMediaSource);
+            }
+         } while (false);
+         return lresult;
+      }
 
-			HRESULT lresult;
+      HRESULT CaptureSourceManager::getSource(std::wstring& aSymbolicLink, IMFMediaSource** aPtrPtrMediaSource)
+      {
+         return Singleton<Sources::CaptureSourceFactory>::getInstance().getSource(aSymbolicLink, aPtrPtrMediaSource);
+      }
 
-			do
-			{
-
-				CComMassivPtr<IMFMediaSource> lCaptureSources;
-
-				LOG_INVOKE_FUNCTION(Singleton<Sources::CaptureSourceFactory>::getInstance().getCaptureSources,
-					aUsedSymbolicLinks,
-					lCaptureSources.getPtrMassivPtr(),
-					lCaptureSources.getRefSizeMassiv());
-				
-				for (UINT32 lsourceIndex = 0; lsourceIndex < lCaptureSources.getSizeMassiv(); lsourceIndex++)
-				{
-
-					auto lSource = aRefRoolXML_Node.append_child(L"Source");	
-					
-					CComPtrCustom<IMFMediaSource> lMediaSource;
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lCaptureSources[lsourceIndex],
-						&lMediaSource);									
-					
-					CComPtrCustom<IMFPresentationDescriptor> lPD;
-
-					LOG_INVOKE_MF_METHOD(CreatePresentationDescriptor,
-						lMediaSource,
-						&lPD);
-
-					LOG_INVOKE_FUNCTION(DataParser::readSourceActivate,
-						lPD,
-						lSource.append_child(L"Source.Attributes"));
-
-					CaptureDeviceManager::addDeviceInstanceLink(lSource);
-										
-					LOG_INVOKE_FUNCTION(parse, lMediaSource,
-						lSource);
-					
-					if (lMediaSource)
-						LOG_INVOKE_MF_METHOD(Shutdown,
-						lMediaSource);
-				}
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT CaptureSourceManager::getSource(std::wstring& aSymbolicLink, IMFMediaSource** aPtrPtrMediaSource)
-		{
-			return Singleton<Sources::CaptureSourceFactory>::getInstance().getSource(
-				aSymbolicLink,
-				aPtrPtrMediaSource);
-		}
-
-		HRESULT CaptureSourceManager::createSource(
-			IInnerCaptureProcessor* aPtrCaptureProcessor,
-			IMFMediaSource** aPtrPtrMediaSource)
-		{
-			return Singleton<Sources::CaptureSourceFactory>::getInstance().createSource(
-				aPtrCaptureProcessor,
-				aPtrPtrMediaSource);
-		}
-	}
+      HRESULT CaptureSourceManager::createSource(IInnerCaptureProcessor* aPtrCaptureProcessor,
+                                                 IMFMediaSource** aPtrPtrMediaSource)
+      {
+         return Singleton<Sources::CaptureSourceFactory>::getInstance().createSource(
+            aPtrCaptureProcessor, aPtrPtrMediaSource);
+      }
+   }
 }

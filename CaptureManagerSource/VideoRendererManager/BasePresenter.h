@@ -1,11 +1,9 @@
 #pragma once
-
 #include <mutex>
 #include <condition_variable>
 #include <memory>
 #include <thread>
 #include <map>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/ComPtrCustom.h"
@@ -13,97 +11,60 @@
 #include "IPresenterInit.h"
 #include "IRenderingControl.h"
 
-
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace EVR
-		{
-			class CBasePresenter : 
-				public BaseUnknown<
-				IPresenter,
-				IMFGetService,
-				IPresenterInit,
-				IRenderingControl
-				>
-			{
-			public:
-				CBasePresenter();
+   namespace Sinks
+   {
+      namespace EVR
+      {
+         class CBasePresenter : public BaseUnknown<IPresenter, IMFGetService, IPresenterInit, IRenderingControl>
+         {
+         public:
+            CBasePresenter();
 
-				virtual void refresh();
-				
-			protected:
+            virtual void refresh();
 
-				std::mutex mAccessMutex;
+         protected:
+            std::mutex mAccessMutex;
+            MFRatio mFrameRate;
+            MFRatio mPixelRate;
+            LONG mImageWidth;
+            LONG mImageHeight;
+            UINT mDeviceResetToken;
+            HWND mHWNDVideo;
+            INT64 mVideoFrameDuration;
 
-				MFRatio mFrameRate;
+            HRESULT init(UINT32 aImageWidth, UINT32 aImageHeight, MFRatio aFrameRate);
 
-				MFRatio mPixelRate;
+            HRESULT createUncompressedVideoType(DWORD fccFormat, // FOURCC or D3DFORMAT value.     
+                                                UINT32 width, UINT32 height, MFVideoInterlaceMode interlaceMode,
+                                                const MFRatio& frameRate, const MFRatio& par,
+                                                IMFMediaType** ppType); // IPresenter implements
+            HRESULT ProcessFrame() override;                            // IRenderingControl implements
+            /* [id][helpstring] */
+            HRESULT STDMETHODCALLTYPE enableInnerRendering(BOOL aMTProtect) override;
 
-				LONG mImageWidth;
-				LONG mImageHeight;
-				UINT mDeviceResetToken;
+            virtual ~CBasePresenter();
 
-				HWND mHWNDVideo;
+         protected:
+            virtual HRESULT processFrameInner() =0;
 
-				INT64 mVideoFrameDuration;
+            void InitializeHook(HWND handler);
 
+            void ShutdownHook();
 
+         private:
+            INT64 mLastTime;
+            bool mIsShutdown;
+            bool mIsStarted;
+            bool isMultithreadProtected;
+            HHOOK mHook;
+            HWND mHandler;
 
-				HRESULT init(
-					UINT32 aImageWidth,
-					UINT32 aImageHeight,
-					MFRatio aFrameRate);
-				
-				HRESULT createUncompressedVideoType(
-					DWORD                fccFormat,  // FOURCC or D3DFORMAT value.     
-					UINT32               width,
-					UINT32               height,
-					MFVideoInterlaceMode interlaceMode,
-					const MFRatio&       frameRate,
-					const MFRatio&       par,
-					IMFMediaType         **ppType
-					);
+            static LRESULT WINAPI CallWndProc(int uMsg, WPARAM wParam, LPARAM lParam);
 
-			// IPresenter implements
-
-				virtual HRESULT ProcessFrame() override;
-
-			// IRenderingControl implements
-
-				virtual /* [id][helpstring] */ HRESULT STDMETHODCALLTYPE enableInnerRendering(
-					BOOL aMTProtect) override;
-
-				virtual ~CBasePresenter();
-
-			protected:
-
-				virtual HRESULT processFrameInner()=0;
-
-				void InitializeHook(HWND handler);
-
-				void ShutdownHook();
-
-			private:
-
-				INT64 mLastTime;
-
-				bool mIsShutdown;
-
-				bool mIsStarted;
-
-				bool isMultithreadProtected;
-
-				HHOOK mHook;
-
-				HWND mHandler;
-
-
-				static LRESULT WINAPI CallWndProc(int uMsg, WPARAM wParam, LPARAM lParam);
-
-				static std::map<HWND, CBasePresenter*> mPresenters;
-			};
-		}
-	}
+            static std::map<HWND, CBasePresenter*> mPresenters;
+         };
+      }
+   }
 }

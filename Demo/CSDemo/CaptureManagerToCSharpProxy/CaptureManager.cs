@@ -23,890 +23,770 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using CaptureManagerToCSharpProxy.Interfaces;
-
+using CaptureManagerLibrary;
+using IAudioMixerControl = CaptureManagerToCSharpProxy.Interfaces.IAudioMixerControl;
+using IEncoderControl = CaptureManagerToCSharpProxy.Interfaces.IEncoderControl;
+using IEVRStreamControl = CaptureManagerToCSharpProxy.Interfaces.IEVRStreamControl;
+using IRenderingControl = CaptureManagerToCSharpProxy.Interfaces.IRenderingControl;
+using ISARVolumeControl = CaptureManagerToCSharpProxy.Interfaces.ISARVolumeControl;
+using ISessionControl = CaptureManagerToCSharpProxy.Interfaces.ISessionControl;
+using ISinkControl = CaptureManagerToCSharpProxy.Interfaces.ISinkControl;
+using ISourceControl = CaptureManagerToCSharpProxy.Interfaces.ISourceControl;
+using IStreamControl = CaptureManagerToCSharpProxy.Interfaces.IStreamControl;
+using ISwitcherControl = CaptureManagerToCSharpProxy.Interfaces.ISwitcherControl;
+using IVersionControl = CaptureManagerToCSharpProxy.Interfaces.IVersionControl;
+using IVideoMixerControl = CaptureManagerToCSharpProxy.Interfaces.IVideoMixerControl;
 
 namespace CaptureManagerToCSharpProxy
 {
-    public class CaptureManager
-    {
+   public class CaptureManager
+   {
+      #region Constructors and destructors
+
+      public CaptureManager()
+      {
+         try {
+            do {
 #if DEBUG
-        CaptureManagerLibrary.ILogPrintOutControl mILogPrintOutControl;
+               mILogPrintOutControl = new CoLogPrintOut();
+
+               if (mILogPrintOutControl == null) {
+                  break;
+               }
+
+               mILogPrintOutControl.addPrintOutDestination(
+                                                           //(int)CaptureManagerLibrary.LogLevel.INFO_LEVEL,
+                                                           (int) LogLevel.ERROR_LEVEL, getFullFilePath("Log.txt"));
+
+               mILogPrintOutControl.addPrintOutDestination((int) LogLevel.INFO_LEVEL, getFullFilePath("Log.txt"));
+#endif
+               mICaptureManagerControl = new CoCaptureManager();
+
+               if (mICaptureManagerControl == null) {
+                  break;
+               }
+            } while (false);
+         } catch (Exception exc) {
+            LogManager.getInstance().write(exc.Message);
+
+            throw exc;
+         }
+      }
+
+      public CaptureManager(string aFileName)
+      {
+         try {
+            var lFullFilePath = aFileName;
+
+            if (!File.Exists(lFullFilePath)) {
+               lFullFilePath = getFullFilePath(aFileName);
+
+               if (!File.Exists(lFullFilePath)) {
+                  throw new Exception("File " + aFileName + " is not accessseble!!!");
+               }
+            }
+
+            do {
+               var lDLLModuleAddr = Win32NativeMethods.LoadLibrary(lFullFilePath);
+
+               if (lDLLModuleAddr == null) {
+                  break;
+               }
+
+               var lEnterProcAddr = Win32NativeMethods.GetProcAddress(lDLLModuleAddr, "DllGetClassObject");
+
+               if (lEnterProcAddr == null) {
+                  break;
+               }
+
+               var lGetClassObject = Marshal.GetDelegateForFunctionPointer(lEnterProcAddr, typeof(Win32NativeMethods.DllGetClassObjectDelegate)) as Win32NativeMethods.DllGetClassObjectDelegate;
+
+               if (lGetClassObject == null) {
+                  break;
+               }
+
+               var CLSID_CoLogPrintOut = new Guid("4563EE3E-DA1E-4911-9F40-88A284E2DD69");
+
+               var CLSID_CoCaptureManager = new Guid("D5F07FB8-CE60-4017-B215-95C8A0DDF42A");
+
+               object lUnknown;
+
+               IClassFactory lFactory;
+
+               lGetClassObject(CLSID_CoLogPrintOut, typeof(IClassFactory).GUID, out lUnknown);
+
+               lFactory = lUnknown as IClassFactory;
+
+               if (lFactory == null) {
+                  break;
+               }
+
+               lFactory.CreateInstance(null, typeof(ILogPrintOutControl).GUID, out lUnknown);
+
+               lFactory.LockServer(true);
+
+#if DEBUG
+               mILogPrintOutControl = lUnknown as ILogPrintOutControl;
+
+               if (mILogPrintOutControl == null) {
+                  break;
+               }
+
+               mILogPrintOutControl.addPrintOutDestination((int) LogLevel.INFO_LEVEL,
+                                                           //(int)CaptureManagerLibrary.LogLevel.ERROR_LEVEL,
+                                                           getFullFilePath("Log.txt"));
+
+               mILogPrintOutControl.addPrintOutDestination((int) LogLevel.ERROR_LEVEL, getFullFilePath("Log.txt"));
+#endif
+               lGetClassObject(CLSID_CoCaptureManager, typeof(IClassFactory).GUID, out lUnknown);
+
+               lFactory = lUnknown as IClassFactory;
+
+               if (lFactory == null) {
+                  break;
+               }
+
+               lFactory.CreateInstance(null, typeof(ICaptureManagerControl).GUID, out lUnknown);
+
+               lFactory.LockServer(true);
+
+               mICaptureManagerControl = lUnknown as ICaptureManagerControl;
+
+               if (mICaptureManagerControl == null) {
+                  break;
+               }
+            } while (false);
+         } catch (Exception exc) {
+            LogManager.getInstance().write(exc.Message);
+
+            throw exc;
+         }
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private readonly ICaptureManagerControl mICaptureManagerControl;
+#if DEBUG
+      private readonly ILogPrintOutControl mILogPrintOutControl;
 #endif
 
-        CaptureManagerLibrary.ICaptureManagerControl mICaptureManagerControl;
+      #endregion
 
-        private string getFullFilePath(string aFileName)
-        {
-            return System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase).Replace("file:\\", "") + "\\" + aFileName;
-        }
+      #region Public methods
 
-        public CaptureManager()
-        {
-            try
-            {
-                do
-                {
-                    
-#if DEBUG
-                    mILogPrintOutControl = new CaptureManagerLibrary.CoLogPrintOut() as CaptureManagerLibrary.ILogPrintOutControl;
+      public IAudioMixerControl createAudioMixerControl()
+      {
+         IAudioMixerControl lresult = null;
 
-                    if (mILogPrintOutControl == null)
-                        break;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    mILogPrintOutControl.addPrintOutDestination(
-                        //(int)CaptureManagerLibrary.LogLevel.INFO_LEVEL,
-                        (int)CaptureManagerLibrary.LogLevel.ERROR_LEVEL,
-                        getFullFilePath("Log.txt"));
+               object lUnknown;
 
-                    mILogPrintOutControl.addPrintOutDestination(
-                        (int)CaptureManagerLibrary.LogLevel.INFO_LEVEL,
-                        getFullFilePath("Log.txt"));
-#endif
-                    mICaptureManagerControl = new CaptureManagerLibrary.CoCaptureManager();
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.IAudioMixerControl).GUID, out lUnknown);
 
-                    if (mICaptureManagerControl == null)
-                        break;
-                    
-                } while (false);
+               if (lUnknown == null) {
+                  break;
+               }
 
+               var lAudioMixerControl = lUnknown as CaptureManagerLibrary.IAudioMixerControl;
+
+               if (lAudioMixerControl == null) {
+                  break;
+               }
+
+               lresult = new AudioMixerControl(lAudioMixerControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
             }
-            catch (Exception exc)
-            {
-                LogManager.getInstance().write(exc.Message);
+         } while (false);
 
-                throw exc;
+         return lresult;
+      }
+
+      public IEncoderControl createEncoderControl()
+      {
+         IEncoderControl lresult = null;
+
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
+
+               object lUnknown;
+
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.IEncoderControl).GUID, out lUnknown);
+
+               if (lUnknown == null) {
+                  break;
+               }
+
+               var lEncoderControl = lUnknown as CaptureManagerLibrary.IEncoderControl;
+
+               if (lEncoderControl == null) {
+                  break;
+               }
+
+               lresult = new EncoderControl(lEncoderControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
             }
-        }
+         } while (false);
 
-        public CaptureManager(string aFileName)
-        {
-            try
-            {
-                string lFullFilePath = aFileName;
+         return lresult;
+      }
 
-                if (!File.Exists(lFullFilePath))
-                {
-                    lFullFilePath = getFullFilePath(aFileName);
+      public IEVRStreamControl createEVRStreamControl()
+      {
+         IEVRStreamControl lresult = null;
 
-                    if (!File.Exists(lFullFilePath))
-                    {
-                        throw new Exception("File " + aFileName + " is not accessseble!!!");
-                    }
-                }
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                do
-                {
-                    var lDLLModuleAddr = Win32NativeMethods.LoadLibrary(lFullFilePath);
+               object lUnknown;
 
-                    if (lDLLModuleAddr == null)
-                        break;
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.IEVRStreamControl).GUID, out lUnknown);
 
-                    var lEnterProcAddr = Win32NativeMethods.GetProcAddress(lDLLModuleAddr, "DllGetClassObject");
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    if (lEnterProcAddr == null)
-                        break;
+               var lEVRStreamControl = lUnknown as CaptureManagerLibrary.IEVRStreamControl;
 
-                    var lGetClassObject = Marshal.GetDelegateForFunctionPointer(lEnterProcAddr,
-                        typeof(Win32NativeMethods.DllGetClassObjectDelegate))
-                        as Win32NativeMethods.DllGetClassObjectDelegate;
+               if (lEVRStreamControl == null) {
+                  break;
+               }
 
-                    if (lGetClassObject == null)
-                        break;
-
-                    var CLSID_CoLogPrintOut = new Guid("4563EE3E-DA1E-4911-9F40-88A284E2DD69");
-
-                    var CLSID_CoCaptureManager = new Guid("D5F07FB8-CE60-4017-B215-95C8A0DDF42A");
-
-                    object lUnknown;
-
-                    IClassFactory lFactory;
-
-                    lGetClassObject(
-                        CLSID_CoLogPrintOut,
-                        typeof(IClassFactory).GUID,
-                        out lUnknown);
-
-                    lFactory = lUnknown as IClassFactory;
-
-                    if (lFactory == null)
-                        break;
-
-                    lFactory.CreateInstance(
-                        null,
-                        typeof(CaptureManagerLibrary.ILogPrintOutControl).GUID,
-                        out lUnknown);
-
-                    lFactory.LockServer(true);
-                    
-#if DEBUG
-                    mILogPrintOutControl = lUnknown as CaptureManagerLibrary.ILogPrintOutControl;
-
-                    if (mILogPrintOutControl == null)
-                        break;
-
-                    mILogPrintOutControl.addPrintOutDestination(
-                        (int)CaptureManagerLibrary.LogLevel.INFO_LEVEL,
-                        //(int)CaptureManagerLibrary.LogLevel.ERROR_LEVEL,
-                        getFullFilePath("Log.txt"));
-
-                    mILogPrintOutControl.addPrintOutDestination(
-                        (int)CaptureManagerLibrary.LogLevel.ERROR_LEVEL,
-                        getFullFilePath("Log.txt"));
-#endif
-                    lGetClassObject(
-                        CLSID_CoCaptureManager,
-                        typeof(IClassFactory).GUID,
-                        out lUnknown);
-
-                    lFactory = lUnknown as IClassFactory;
-
-                    if (lFactory == null)
-                        break;
-
-                    lFactory.CreateInstance(
-                        null,
-                        typeof(CaptureManagerLibrary.ICaptureManagerControl).GUID,
-                        out lUnknown);
-
-                    lFactory.LockServer(true);
-
-                    mICaptureManagerControl = lUnknown as CaptureManagerLibrary.ICaptureManagerControl;
-
-                    if (mICaptureManagerControl == null)
-                        break;
-
-                } while (false);
+               lresult = new EVRStreamControl(lEVRStreamControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
             }
-            catch (Exception exc)
-            {
-                LogManager.getInstance().write(exc.Message);
+         } while (false);
 
-                throw exc;
+         return lresult;
+      }
+
+      public IRenderingControl createRenderingControl()
+      {
+         IRenderingControl lresult = null;
+
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
+
+               object lUnknown;
+
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.IRenderingControl).GUID, out lUnknown);
+
+               if (lUnknown == null) {
+                  break;
+               }
+
+               var lRenderingControl = lUnknown as CaptureManagerLibrary.IRenderingControl;
+
+               if (lRenderingControl == null) {
+                  break;
+               }
+
+               lresult = new RenderingControl(lRenderingControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
             }
+         } while (false);
 
-        }
-        
-        private bool checkICaptureManagerControl()
-        {
-            return mICaptureManagerControl == null;
-        }
-
-        public bool getCollectionOfSources(ref string aInfoString)
-        {
-            bool lresult = false;
-
-            IntPtr lPtrXMLstring = IntPtr.Zero;
-            
-            do
-            {
-                try
-                {
-                    
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.ISourceControl).GUID,
-                        out lUnknown);
+         return lresult;
+      }
 
-                    if (lUnknown == null)
-                        break;
-                    
-                    (lUnknown as ISourceControlInner).getCollectionOfSources(out lPtrXMLstring);
-                    
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+      public ISARVolumeControl createSARVolumeControl()
+      {
+         ISARVolumeControl lresult = null;
 
-                    lresult = true;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-                
-            } while (false);
+               object lUnknown;
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.ISARVolumeControl).GUID, out lUnknown);
 
-            return lresult;
-        }
-        
-        public bool getCollectionOfSinks(ref string aInfoString)
-        {
-            bool lresult = false;
+               if (lUnknown == null) {
+                  break;
+               }
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+               var lSARVolumeControl = lUnknown as CaptureManagerLibrary.ISARVolumeControl;
 
-            do
-            {
-                try
-                {
+               if (lSARVolumeControl == null) {
+                  break;
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               lresult = new SARVolumeControl(lSARVolumeControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    object lUnknown;
+         return lresult;
+      }
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.ISinkControl).GUID,
-                        out lUnknown);
+      public ISessionControl createSessionControl()
+      {
+         ISessionControl lresult = null;
 
-                    if (lUnknown == null)
-                        break;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    (lUnknown as ISinkControlInner).getCollectionOfSinks(out lPtrXMLstring);
-                    
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               object lUnknown;
 
-                    lresult = true;
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.ISessionControl).GUID, out lUnknown);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lUnknown == null) {
+                  break;
+               }
 
-            } while (false);
+               var lSessionControl = lUnknown as CaptureManagerLibrary.ISessionControl;
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               if (lSessionControl == null) {
+                  break;
+               }
 
-            return lresult;
-        }
+               lresult = new SessionControl(lSessionControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-        public bool getCollectionOfEncoders(ref string aInfoString)
-        {
-            bool lresult = false;
+         return lresult;
+      }
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+      public ISinkControl createSinkControl()
+      {
+         ISinkControl lresult = null;
 
-            do
-            {
-                try
-                {
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               object lUnknown;
 
-                    object lUnknown;
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.ISinkControl).GUID, out lUnknown);
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.IEncoderControl).GUID,
-                        out lUnknown);
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    if (lUnknown == null)
-                        break;
+               var lSinkControl = lUnknown as CaptureManagerLibrary.ISinkControl;
 
-                    (lUnknown as IEncoderControlInner).getCollectionOfEncoders(out lPtrXMLstring);
-                                        
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               if (lSinkControl == null) {
+                  break;
+               }
 
-                    lresult = true;
+               lresult = new SinkControl(lSinkControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public ISourceControl createSourceControl()
+      {
+         ISourceControl lresult = null;
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-            return lresult;
-        }
+               object lUnknown;
 
-        public ISinkControl createSinkControl()
-        {
-            ISinkControl lresult = null;
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.ISourceControl).GUID, out lUnknown);
 
-            do
-            {
-                try
-                {
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               var lSourceControl = lUnknown as CaptureManagerLibrary.ISourceControl;
 
-                    object lUnknown;
+               if (lSourceControl == null) {
+                  break;
+               }
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.ISinkControl).GUID,
-                        out lUnknown);
+               lresult = new SourceControl(lSourceControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lUnknown == null)
-                        break;
+         return lresult;
+      }
 
-                    var lSinkControl = lUnknown as CaptureManagerLibrary.ISinkControl;
+      public IStreamControl createStreamControl()
+      {
+         IStreamControl lresult = null;
 
-                    if (lSinkControl == null)
-                        break;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    lresult = new SinkControl(lSinkControl);  
+               object lUnknown;
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-  
-            } while (false);
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.IStreamControl).GUID, out lUnknown);
 
-            return lresult;
-        }
+               if (lUnknown == null) {
+                  break;
+               }
 
-        public ISourceControl createSourceControl()
-        {
-            ISourceControl lresult = null;
+               var lSessionControl = lUnknown as CaptureManagerLibrary.IStreamControl;
 
-            do
-            {
-                try
-                {
+               if (lSessionControl == null) {
+                  break;
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               lresult = new StreamControl(lSessionControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    object lUnknown;
+         return lresult;
+      }
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.ISourceControl).GUID,
-                        out lUnknown);
+      public ISwitcherControl createSwitcherControl()
+      {
+         ISwitcherControl lresult = null;
 
-                    if (lUnknown == null)
-                        break;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    var lSourceControl = lUnknown as CaptureManagerLibrary.ISourceControl;
+               object lUnknown;
 
-                    if (lSourceControl == null)
-                        break;
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.ISwitcherControl).GUID, out lUnknown);
 
-                    lresult = new SourceControl(lSourceControl);
+               if (lUnknown == null) {
+                  break;
+               }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               var lSwitcherControl = lUnknown as CaptureManagerLibrary.ISwitcherControl;
 
-            } while (false);
+               if (lSwitcherControl == null) {
+                  break;
+               }
 
-            return lresult;
-        }
+               lresult = new SwitcherControl(lSwitcherControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-        public ISessionControl createSessionControl()
-        {
-            ISessionControl lresult = null;
+         return lresult;
+      }
 
-            do
-            {
+      public IVideoMixerControl createVideoMixerControl()
+      {
+         IVideoMixerControl lresult = null;
 
-                try
-                {
-                    if (checkICaptureManagerControl())
-                        break;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    object lUnknown;
+               object lUnknown;
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.ISessionControl).GUID,
-                        out lUnknown);
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.IVideoMixerControl).GUID, out lUnknown);
 
-                    if (lUnknown == null)
-                        break;
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    var lSessionControl = lUnknown as CaptureManagerLibrary.ISessionControl;
+               var lVideoMixerControl = lUnknown as CaptureManagerLibrary.IVideoMixerControl;
 
-                    if (lSessionControl == null)
-                        break;
+               if (lVideoMixerControl == null) {
+                  break;
+               }
 
-                    lresult = new SessionControl(lSessionControl);
+               lresult = new VideoMixerControl(lVideoMixerControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool getCollectionOfEncoders(ref string aInfoString)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         var lPtrXMLstring = IntPtr.Zero;
 
-        public IStreamControl createStreamControl()
-        {
-            IStreamControl lresult = null;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-            do
-            {
+               object lUnknown;
 
-                try
-                {
-                    if (checkICaptureManagerControl())
-                        break;
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.IEncoderControl).GUID, out lUnknown);
 
-                    object lUnknown;
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.IStreamControl).GUID,
-                        out lUnknown);
+               (lUnknown as IEncoderControlInner).getCollectionOfEncoders(out lPtrXMLstring);
 
-                    if (lUnknown == null)
-                        break;
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                    var lSessionControl = lUnknown as CaptureManagerLibrary.IStreamControl;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lSessionControl == null)
-                        break;
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    lresult = new StreamControl(lSessionControl);
+         return lresult;
+      }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      public bool getCollectionOfSinks(ref string aInfoString)
+      {
+         var lresult = false;
 
-            } while (false);
+         var lPtrXMLstring = IntPtr.Zero;
 
-            return lresult;
-        }
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-        public IEncoderControl createEncoderControl()
-        {
-            IEncoderControl lresult = null;
+               object lUnknown;
 
-            do
-            {
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.ISinkControl).GUID, out lUnknown);
 
-                try
-                {
-                    if (checkICaptureManagerControl())
-                        break;
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    object lUnknown;
+               (lUnknown as ISinkControlInner).getCollectionOfSinks(out lPtrXMLstring);
 
-                    mICaptureManagerControl.createControl(
-                        typeof(CaptureManagerLibrary.IEncoderControl).GUID,
-                        out lUnknown);
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                    if (lUnknown == null)
-                        break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    var lEncoderControl = lUnknown as CaptureManagerLibrary.IEncoderControl;
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    if (lEncoderControl == null)
-                        break;
+         return lresult;
+      }
 
-                    lresult = new EncoderControl(lEncoderControl);
+      public bool getCollectionOfSources(ref string aInfoString)
+      {
+         var lresult = false;
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         var lPtrXMLstring = IntPtr.Zero;
 
-            } while (false);
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-            return lresult;
-        }
-        
-        public bool parseMediaType(
-            object aMediaType,
-            out string aInfoString)
-        {
-            bool lresult = false;
+               object lUnknown;
 
-            aInfoString = "";
+               mICaptureManagerControl.createControl(typeof(CaptureManagerLibrary.ISourceControl).GUID, out lUnknown);
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
+               if (lUnknown == null) {
+                  break;
+               }
 
-            do
-            {
-                try
-                {
+               (lUnknown as ISourceControlInner).getCollectionOfSources(out lPtrXMLstring);
 
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (aMediaType == null)
-                        break;
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                    object lUnknown;
+         return lresult;
+      }
 
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IMediaTypeParser).GUID,
-                        out lUnknown);
+      public bool getStrideForBitmapInfoHeader(Guid aMFVideoFormat, uint aWidthInPixels, out int aPtrStride)
+      {
+         var lresult = false;
 
-                    if (lUnknown == null)
-                        break;
+         aPtrStride = 0;
 
-                    (lUnknown as IMediaTypeParserInner).parse(Marshal.GetIUnknownForObject(aMediaType), out lPtrXMLstring);
-                                        
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    lresult = true;
+               object lUnknown;
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               mICaptureManagerControl.createMisc(typeof(IStrideForBitmap).GUID, out lUnknown);
 
-            } while (false);
+               if (lUnknown == null) {
+                  break;
+               }
 
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
+               var lStrideForBitmap = lUnknown as IStrideForBitmap;
 
-            return lresult;
-        }
+               if (lStrideForBitmap == null) {
+                  break;
+               }
 
-        public bool getStrideForBitmapInfoHeader(
-                    Guid aMFVideoFormat,
-                    uint aWidthInPixels,
-                    out int aPtrStride)
-        {
-            bool lresult = false;
+               lStrideForBitmap.getStrideForBitmap(aMFVideoFormat, aWidthInPixels, out aPtrStride);
 
-            aPtrStride = 0;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            do
-            {
-                try
-                {
+         return lresult;
+      }
 
+      public IVersionControl getVersionControl()
+      {
+         IVersionControl lresult = null;
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-                    if (checkICaptureManagerControl())
-                        break;
+               object lUnknown;
 
-                    object lUnknown;
+               mICaptureManagerControl.createMisc(typeof(CaptureManagerLibrary.IVersionControl).GUID, out lUnknown);
 
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IStrideForBitmap).GUID,
-                        out lUnknown);
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    if (lUnknown == null)
-                        break;
+               var lVersionControl = lUnknown as CaptureManagerLibrary.IVersionControl;
 
-                    var lStrideForBitmap = lUnknown as CaptureManagerLibrary.IStrideForBitmap;
+               if (lVersionControl == null) {
+                  break;
+               }
 
-                    if (lStrideForBitmap == null)
-                        break;
+               lresult = new VersionControl(lVersionControl);
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    lStrideForBitmap.getStrideForBitmap(
-                                    aMFVideoFormat,
-                                    aWidthInPixels,
-                                    out aPtrStride);
+         return lresult;
+      }
 
-                    lresult = true;
+      public bool parseMediaType(object aMediaType, out string aInfoString)
+      {
+         var lresult = false;
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         aInfoString = "";
 
-            } while (false);
+         var lPtrXMLstring = IntPtr.Zero;
 
-            return lresult;
-        }
+         do {
+            try {
+               if (checkICaptureManagerControl()) {
+                  break;
+               }
 
-        public IVersionControl getVersionControl()
-        {
-            IVersionControl lresult = null;
-            do
-            {
-                try
-                {
+               if (aMediaType == null) {
+                  break;
+               }
 
+               object lUnknown;
 
-                    if (checkICaptureManagerControl())
-                        break;
+               mICaptureManagerControl.createMisc(typeof(IMediaTypeParser).GUID, out lUnknown);
 
-                    object lUnknown;
+               if (lUnknown == null) {
+                  break;
+               }
 
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IVersionControl).GUID,
-                        out lUnknown);
+               (lUnknown as IMediaTypeParserInner).parse(Marshal.GetIUnknownForObject(aMediaType), out lPtrXMLstring);
 
-                    if (lUnknown == null)
-                        break;
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aInfoString = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
 
-                    var lVersionControl = lUnknown as CaptureManagerLibrary.IVersionControl;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                    if (lVersionControl == null)
-                        break;
-                    
-                    lresult = new VersionControl(lVersionControl);
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      #endregion
 
-            return lresult;
-        }
+      #region Private methods
 
-        public IEVRStreamControl createEVRStreamControl()
-        {
-            IEVRStreamControl lresult = null;
-            
-            do
-            {
-                try
-                {
+      private bool checkICaptureManagerControl()
+      {
+         return mICaptureManagerControl == null;
+      }
 
+      private string getFullFilePath(string aFileName)
+      {
+         return Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase).Replace("file:\\", "") + "\\" + aFileName;
+      }
 
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IEVRStreamControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lEVRStreamControl = lUnknown as CaptureManagerLibrary.IEVRStreamControl;
-
-                    if (lEVRStreamControl == null)
-                        break;
-
-                    lresult = new EVRStreamControl(lEVRStreamControl);
-                    
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public IRenderingControl createRenderingControl()
-        {
-            IRenderingControl lresult = null;
-            
-            do
-            {
-                try
-                {
-
-
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IRenderingControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lRenderingControl = lUnknown as CaptureManagerLibrary.IRenderingControl;
-
-                    if (lRenderingControl == null)
-                        break;
-
-                    lresult = new RenderingControl(lRenderingControl);
-                    
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public ISwitcherControl createSwitcherControl()
-        {
-            ISwitcherControl lresult = null;
-
-            do
-            {
-                try
-                {
-
-
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.ISwitcherControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lSwitcherControl = lUnknown as CaptureManagerLibrary.ISwitcherControl;
-
-                    if (lSwitcherControl == null)
-                        break;
-
-                    lresult = new SwitcherControl(lSwitcherControl);
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public IVideoMixerControl createVideoMixerControl()
-        {
-            IVideoMixerControl lresult = null;
-
-            do
-            {
-                try
-                {
-
-
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IVideoMixerControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lVideoMixerControl = lUnknown as CaptureManagerLibrary.IVideoMixerControl;
-
-                    if (lVideoMixerControl == null)
-                        break;
-
-                    lresult = new VideoMixerControl(lVideoMixerControl);
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public IAudioMixerControl createAudioMixerControl()
-        {
-            IAudioMixerControl lresult = null;
-
-            do
-            {
-                try
-                {
-
-
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.IAudioMixerControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lAudioMixerControl = lUnknown as CaptureManagerLibrary.IAudioMixerControl;
-
-                    if (lAudioMixerControl == null)
-                        break;
-
-                    lresult = new AudioMixerControl(lAudioMixerControl);
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public ISARVolumeControl createSARVolumeControl()
-        {
-            ISARVolumeControl lresult = null;
-
-            do
-            {
-                try
-                {
-
-
-                    if (checkICaptureManagerControl())
-                        break;
-
-                    object lUnknown;
-
-                    mICaptureManagerControl.createMisc(
-                        typeof(CaptureManagerLibrary.ISARVolumeControl).GUID,
-                        out lUnknown);
-
-                    if (lUnknown == null)
-                        break;
-
-                    var lSARVolumeControl = lUnknown as CaptureManagerLibrary.ISARVolumeControl;
-
-                    if (lSARVolumeControl == null)
-                        break;
-
-                    lresult = new SARVolumeControl(lSARVolumeControl);
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-
-    }
+      #endregion
+   }
 }

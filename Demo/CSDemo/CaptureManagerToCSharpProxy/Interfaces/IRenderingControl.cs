@@ -22,17 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IRenderingControl
-    {
-        bool enableInnerRendering(object aPtrEVROutputNode, bool aIsInnerRendering);
+   public interface IRenderingControl
+   {
+      #region Public methods
 
-        bool renderToTarget(object aPtrEVROutputNode, object aPtrRenderTarget, bool aCopyMode);
-    }
+      bool enableInnerRendering(object aPtrEVROutputNode, bool aIsInnerRendering);
+
+      bool renderToTarget(object aPtrEVROutputNode, object aPtrRenderTarget, bool aCopyMode);
+
+      #endregion
+   }
 }

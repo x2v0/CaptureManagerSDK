@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "ReadWriteBufferRegularSync.h"
 #include "../MemoryManager/MemoryManager.h"
 #include "../LogPrintOut/LogPrintOut.h"
@@ -29,89 +28,54 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberCall
-		{
-			namespace RegularSampleGrabberCall
-			{
-				ReadWriteBufferRegularSync::ReadWriteBufferRegularSync()
-				{
-				}
+   namespace Sinks
+   {
+      namespace SampleGrabberCall
+      {
+         namespace RegularSampleGrabberCall
+         {
+            ReadWriteBufferRegularSync::ReadWriteBufferRegularSync() { }
+            ReadWriteBufferRegularSync::~ReadWriteBufferRegularSync() { }
 
-				ReadWriteBufferRegularSync::~ReadWriteBufferRegularSync()
-				{
-				}
+            HRESULT ReadWriteBufferRegularSync::init(ULONG aImageByteSize)
+            {
+               return ReadWriteBuffer::init(aImageByteSize);
+            }
 
+            HRESULT ReadWriteBufferRegularSync::readData(unsigned char* aPtrData, DWORD* aPtrSampleSize)
+            {
+               HRESULT lresult;
+               do {
+                  LOG_CHECK_PTR_MEMORY(aPtrSampleSize);
+                  *aPtrSampleSize = 0;
+                  if (mReadyToRead) {
+                     std::lock_guard<std::mutex> llock(mMutex);
+                     copy(mData.get(), aPtrData, mImageByteSize, false);
+                     *aPtrSampleSize = mImageByteSize;
+                  } else {
+                     std::unique_lock<std::mutex> llock(mMutex);
+                     auto lconditionResult = mConditionVariable.wait_for(llock, std::chrono::milliseconds(1000), [this]
+                     {
+                        return mReadyToRead;
+                     });
+                     LOG_CHECK_STATE_DESCR(lconditionResult == false, CONTEXT_E_SYNCH_TIMEOUT)
+                     *aPtrSampleSize = mImageByteSize;
+                     copy(mData.get(), aPtrData, mImageByteSize, false);
+                  }
+                  lresult = S_OK;
+               } while (false);
+               return lresult;
+            }
 
-
-				HRESULT ReadWriteBufferRegularSync::init(ULONG aImageByteSize)
-				{
-					return ReadWriteBuffer::init(aImageByteSize);
-				}
-
-				HRESULT ReadWriteBufferRegularSync::readData(
-					unsigned char* aPtrData,
-					DWORD* aPtrSampleSize)
-				{
-					HRESULT lresult;
-					
-					do
-					{
-						LOG_CHECK_PTR_MEMORY(aPtrSampleSize);
-
-						*aPtrSampleSize = 0;
-
-						if (mReadyToRead)
-						{
-
-							std::lock_guard<std::mutex> llock(mMutex);
-
-							copy(mData.get(), aPtrData, mImageByteSize, false);
-
-							*aPtrSampleSize = mImageByteSize;
-						}
-						else
-						{
-
-							std::unique_lock<std::mutex> llock(mMutex);
-
-							auto lconditionResult = mConditionVariable.wait_for(
-								llock,
-								std::chrono::milliseconds(1000),
-								[this]{return mReadyToRead; });
-
-							LOG_CHECK_STATE_DESCR(lconditionResult == false, CONTEXT_E_SYNCH_TIMEOUT)
-
-								*aPtrSampleSize = mImageByteSize;
-
-							copy(mData.get(), aPtrData, mImageByteSize, false);
-
-						}
-
-						lresult = S_OK;
-						
-
-					} while (false);
-
-					return lresult;
-				}
-
-				void ReadWriteBufferRegularSync::copy(
-					const unsigned char* aPtrSource,
-					unsigned char *aPtrDestination,
-					DWORD aSampleSize,
-					bool aState)
-				{
-					Core::MemoryManager::memcpy(aPtrDestination, aPtrSource, aSampleSize);
-
-					mReadyToRead = aState;
-
-					mImageByteSize = aSampleSize;
-
-					mConditionVariable.notify_all();
-				}
-			}
-		}
-	}
+            void ReadWriteBufferRegularSync::copy(const unsigned char* aPtrSource, unsigned char* aPtrDestination,
+                                                  DWORD aSampleSize, bool aState)
+            {
+               Core::MemoryManager::memcpy(aPtrDestination, aPtrSource, aSampleSize);
+               mReadyToRead = aState;
+               mImageByteSize = aSampleSize;
+               mConditionVariable.notify_all();
+            }
+         }
+      }
+   }
 }

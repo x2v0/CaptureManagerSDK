@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Messages
+﻿namespace Rtsp.Messages
 {
-    public class RtspRequestGetParameter : RtspRequest
-    {
+   public class RtspRequestGetParameter : RtspRequest
+   {
+      #region Constructors and destructors
 
-        // Constructor
-        public RtspRequestGetParameter()
-        {
-            Command = "GET_PARAMETER * RTSP/1.0";
-        }
-    }
+      // Constructor
+      public RtspRequestGetParameter()
+      {
+         Command = "GET_PARAMETER * RTSP/1.0";
+      }
+
+      #endregion
+   }
 }

@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include <memory>
 #include "CoLogPrintOutClassFactory.h"
 #include "../Common/Singleton.h"
@@ -31,76 +30,50 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		CoLogPrintOutClassFactory::CoLogPrintOutClassFactory()
-		{
-			Singleton<ClassFactory>::getInstance().lock();
-		}
+   namespace COMServer
+   {
+      CoLogPrintOutClassFactory::CoLogPrintOutClassFactory()
+      {
+         Singleton<ClassFactory>::getInstance().lock();
+      }
 
-		CoLogPrintOutClassFactory::~CoLogPrintOutClassFactory()
-		{
-			Singleton<ClassFactory>::getInstance().unlock();
-		}
+      CoLogPrintOutClassFactory::~CoLogPrintOutClassFactory()
+      {
+         Singleton<ClassFactory>::getInstance().unlock();
+      } // IClassFactory interface implementation
+      STDMETHODIMP CoLogPrintOutClassFactory::LockServer(BOOL aLock)
+      {
+         if (aLock)
+            Singleton<ClassFactory>::getInstance().lock();
+         else
+            Singleton<ClassFactory>::getInstance().unlock();
+         return S_OK;
+      }
 
-
-		// IClassFactory interface implementation
-		STDMETHODIMP CoLogPrintOutClassFactory::LockServer(BOOL aLock)
-		{
-			if (aLock)
-				Singleton<ClassFactory>::getInstance().lock();
-			else
-				Singleton<ClassFactory>::getInstance().unlock();
-
-			return S_OK;
-		}
-
-		STDMETHODIMP CoLogPrintOutClassFactory::CreateInstance(
-			LPUNKNOWN aPtrUnkOuter,
-			REFIID aRefIID,
-			void** aPtrPtrVoidObject)
-		{
-			HRESULT lresult = E_NOINTERFACE;
-
-			do
-			{
-				if (aPtrUnkOuter != nullptr)
-				{
-					lresult = CLASS_E_NOAGGREGATION;
-
-					break;
-				}
-
-				if (aPtrPtrVoidObject == nullptr)
-				{
-					lresult = E_POINTER;
-
-					break;
-				}
-
-				CComPtrCustom<IUnknown> lCoLogPrintOutControl(new (std::nothrow) CoLogPrintOut());
-
-				if (!lCoLogPrintOutControl)
-				{
-					lresult = E_OUTOFMEMORY;
-
-					break;
-				}
-
-				lresult = lCoLogPrintOutControl->QueryInterface(
-					aRefIID,
-					aPtrPtrVoidObject);
-
-				if (FAILED(lresult))
-				{
-					break;
-				}
-
-			} while (false);
-
-			return lresult;
-
-		}
-
-	}
+      STDMETHODIMP CoLogPrintOutClassFactory::CreateInstance(LPUNKNOWN aPtrUnkOuter, REFIID aRefIID,
+                                                             void** aPtrPtrVoidObject)
+      {
+         HRESULT lresult = E_NOINTERFACE;
+         do {
+            if (aPtrUnkOuter != nullptr) {
+               lresult = CLASS_E_NOAGGREGATION;
+               break;
+            }
+            if (aPtrPtrVoidObject == nullptr) {
+               lresult = E_POINTER;
+               break;
+            }
+            CComPtrCustom<IUnknown> lCoLogPrintOutControl(new(std::nothrow) CoLogPrintOut());
+            if (!lCoLogPrintOutControl) {
+               lresult = E_OUTOFMEMORY;
+               break;
+            }
+            lresult = lCoLogPrintOutControl->QueryInterface(aRefIID, aPtrPtrVoidObject);
+            if (FAILED(lresult)) {
+               break;
+            }
+         } while (false);
+         return lresult;
+      }
+   }
 }

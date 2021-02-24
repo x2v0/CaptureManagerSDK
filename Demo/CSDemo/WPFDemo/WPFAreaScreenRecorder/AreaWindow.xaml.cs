@@ -23,197 +23,202 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace WPFAreaScreenRecorder
 {
-    /// <summary>
-    /// Interaction logic for AreaWindow.xaml
-    /// </summary>
-    public partial class AreaWindow : Window
-    {
-        private Point startDrag;
-        
-        private Point startDragRect;
+   /// <summary>
+   ///    Interaction logic for AreaWindow.xaml
+   /// </summary>
+   public partial class AreaWindow : Window
+   {
+      #region Static fields
 
-        public static Rect mSelectedRegion = Rect.Empty;
+      public static Rect mSelectedRegion = Rect.Empty;
 
-        public AreaWindow()
-        {
-            InitializeComponent();
+      #endregion
 
-            canvas.MouseDown += new MouseButtonEventHandler(canvas_MouseDown);
-            canvas.MouseUp += new MouseButtonEventHandler(canvas_MouseUp);
-            canvas.MouseMove += new MouseEventHandler(canvas_MouseMove);
-            this.Loaded += Window_Loaded;
-        }
+      #region Constructors and destructors
 
-        /*You can use this event for all the Windows*/
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            var senderWindow = sender as Window;
-            senderWindow.WindowState = WindowState.Maximized;
-        }
+      public AreaWindow()
+      {
+         InitializeComponent();
 
-        private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (mMoveRectangle)
-                return;
+         canvas.MouseDown += canvas_MouseDown;
+         canvas.MouseUp += canvas_MouseUp;
+         canvas.MouseMove += canvas_MouseMove;
+         Loaded += Window_Loaded;
+      }
 
-            if (e.RightButton == MouseButtonState.Pressed)
-                return;
+      #endregion
 
-            //Set the start point
-            startDrag = e.GetPosition(canvas);
-            //Move the selection marquee on top of all other objects in canvas
-            Canvas.SetZIndex(rectangle, canvas.Children.Count);
-            //Capture the mouse
-            if (!canvas.IsMouseCaptured)
-                canvas.CaptureMouse();
-            canvas.Cursor = Cursors.Cross;
-        }
+      #region  Fields
 
-        private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            if (mMoveRectangle)
-                return;
-            //Release the mouse
-            if (canvas.IsMouseCaptured)
-                canvas.ReleaseMouseCapture();
-            canvas.Cursor = Cursors.Arrow;
-        }
+      private bool mMoveRectangle;
+      private Point startDrag;
 
-        private void canvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (mMoveRectangle)
-                return;
+      private Point startDragRect;
 
-            if (canvas.IsMouseCaptured)
-            {
-                Point currentPoint = e.GetPosition(canvas);
+      #endregion
 
-                //Calculate the top left corner of the rectangle regardless of drag direction
-                double x = startDrag.X < currentPoint.X ? startDrag.X : currentPoint.X;
-                double y = startDrag.Y < currentPoint.Y ? startDrag.Y : currentPoint.Y;
+      #region Private methods
 
-                if (rectangle.Visibility == Visibility.Hidden)
-                    rectangle.Visibility = Visibility.Visible;
+      private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
+      {
+         if (mMoveRectangle) {
+            return;
+         }
 
-                //Move the rectangle to proper place
-                rectangle.RenderTransform = new TranslateTransform(x, y);
-                //Set its size
-                rectangle.Width = Math.Abs(e.GetPosition(canvas).X - startDrag.X);
-                rectangle.Height = Math.Abs(e.GetPosition(canvas).Y - startDrag.Y);
-            }
-        }
+         if (e.RightButton == MouseButtonState.Pressed) {
+            return;
+         }
 
-        bool mMoveRectangle = false;
+         //Set the start point
+         startDrag = e.GetPosition(canvas);
+         //Move the selection marquee on top of all other objects in canvas
+         Panel.SetZIndex(rectangle, canvas.Children.Count);
+         //Capture the mouse
+         if (!canvas.IsMouseCaptured) {
+            canvas.CaptureMouse();
+         }
 
-        private void rectangle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            mMoveRectangle = false;
-        }
+         canvas.Cursor = Cursors.Cross;
+      }
 
-        private void rectangle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            mMoveRectangle = true;
+      private void canvas_MouseMove(object sender, MouseEventArgs e)
+      {
+         if (mMoveRectangle) {
+            return;
+         }
 
-            //Set the start point
-            startDragRect = e.GetPosition(canvas);
-        }
+         if (canvas.IsMouseCaptured) {
+            var currentPoint = e.GetPosition(canvas);
 
-        private void rectangle_MouseMove(object sender, MouseEventArgs e)
-        {
-            if(mMoveRectangle)
-            {
-                var lTranslateTransform = rectangle.RenderTransform as TranslateTransform;
+            //Calculate the top left corner of the rectangle regardless of drag direction
+            var x = startDrag.X < currentPoint.X ? startDrag.X : currentPoint.X;
+            var y = startDrag.Y < currentPoint.Y ? startDrag.Y : currentPoint.Y;
 
-                if (lTranslateTransform == null)
-                    return;
-
-                Point currentPoint = e.GetPosition(canvas);
-
-                lTranslateTransform.X += (currentPoint.X - startDragRect.X);
-
-                lTranslateTransform.Y += (currentPoint.Y - startDragRect.Y);
-
-
-                var lRightBotder = lTranslateTransform.X + rectangle.Width;
-
-                if (lRightBotder > canvas.ActualWidth)
-                    lTranslateTransform.X = canvas.ActualWidth - rectangle.Width;
-                else
-                    if (lTranslateTransform.X < 0)
-                        lTranslateTransform.X = 0;
-
-
-
-
-                var lBottonBotder = lTranslateTransform.Y + rectangle.Height;
-
-                if (lBottonBotder > canvas.ActualHeight)
-                    lTranslateTransform.Y = canvas.ActualHeight - rectangle.Height;
-                else
-                    if (lTranslateTransform.Y < 0)
-                        lTranslateTransform.Y = 0;
-
-
-                startDragRect = currentPoint;
-
-            }
-        }
-
-        private void rectangle_MouseLeave(object sender, MouseEventArgs e)
-        {
-            mMoveRectangle = false;
-        }
-        
-
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
-        {
-
-            PresentationSource source = PresentationSource.FromVisual(this);
-
-            double ScaleX = 1.0, ScaleY = 1.0;
-            if (source != null)
-            {
-                ScaleX = source.CompositionTarget.TransformToDevice.M11;
-                ScaleY = source.CompositionTarget.TransformToDevice.M22;
+            if (rectangle.Visibility == Visibility.Hidden) {
+               rectangle.Visibility = Visibility.Visible;
             }
 
-            mSelectedRegion = Rect.Empty;
+            //Move the rectangle to proper place
+            rectangle.RenderTransform = new TranslateTransform(x, y);
+            //Set its size
+            rectangle.Width = Math.Abs(e.GetPosition(canvas).X - startDrag.X);
+            rectangle.Height = Math.Abs(e.GetPosition(canvas).Y - startDrag.Y);
+         }
+      }
 
+      private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
+      {
+         if (mMoveRectangle) {
+            return;
+         }
+
+         //Release the mouse
+         if (canvas.IsMouseCaptured) {
+            canvas.ReleaseMouseCapture();
+         }
+
+         canvas.Cursor = Cursors.Arrow;
+      }
+
+
+      private void MenuItem_Click(object sender, RoutedEventArgs e)
+      {
+         var source = PresentationSource.FromVisual(this);
+
+         double ScaleX = 1.0, ScaleY = 1.0;
+         if (source != null) {
+            ScaleX = source.CompositionTarget.TransformToDevice.M11;
+            ScaleY = source.CompositionTarget.TransformToDevice.M22;
+         }
+
+         mSelectedRegion = Rect.Empty;
+
+         var lTranslateTransform = rectangle.RenderTransform as TranslateTransform;
+
+         if (lTranslateTransform != null) {
+            mSelectedRegion = new Rect(lTranslateTransform.X * ScaleX, lTranslateTransform.Y * ScaleY, rectangle.Width * ScaleX, rectangle.Height * ScaleY);
+         }
+
+         Close();
+      }
+
+      private void MenuItem_Click_1(object sender, RoutedEventArgs e)
+      {
+         mSelectedRegion = Rect.Empty;
+
+         Close();
+      }
+
+      private void rectangle_MouseLeave(object sender, MouseEventArgs e)
+      {
+         mMoveRectangle = false;
+      }
+
+      private void rectangle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+      {
+         mMoveRectangle = true;
+
+         //Set the start point
+         startDragRect = e.GetPosition(canvas);
+      }
+
+      private void rectangle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+      {
+         mMoveRectangle = false;
+      }
+
+      private void rectangle_MouseMove(object sender, MouseEventArgs e)
+      {
+         if (mMoveRectangle) {
             var lTranslateTransform = rectangle.RenderTransform as TranslateTransform;
 
-            if (lTranslateTransform != null)
-            {
-                mSelectedRegion = new Rect(
-                    lTranslateTransform.X * ScaleX,
-                    lTranslateTransform.Y * ScaleY,
-                    rectangle.Width * ScaleX, 
-                    rectangle.Height * ScaleY);
+            if (lTranslateTransform == null) {
+               return;
             }
 
-            Close();
-        }
+            var currentPoint = e.GetPosition(canvas);
 
-        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
-        {
-            mSelectedRegion = Rect.Empty;
+            lTranslateTransform.X += currentPoint.X - startDragRect.X;
 
-            Close();
-        }
-    }
+            lTranslateTransform.Y += currentPoint.Y - startDragRect.Y;
+
+
+            var lRightBotder = lTranslateTransform.X + rectangle.Width;
+
+            if (lRightBotder > canvas.ActualWidth) {
+               lTranslateTransform.X = canvas.ActualWidth - rectangle.Width;
+            } else if (lTranslateTransform.X < 0) {
+               lTranslateTransform.X = 0;
+            }
+
+
+            var lBottonBotder = lTranslateTransform.Y + rectangle.Height;
+
+            if (lBottonBotder > canvas.ActualHeight) {
+               lTranslateTransform.Y = canvas.ActualHeight - rectangle.Height;
+            } else if (lTranslateTransform.Y < 0) {
+               lTranslateTransform.Y = 0;
+            }
+
+
+            startDragRect = currentPoint;
+         }
+      }
+
+      /*You can use this event for all the Windows*/
+      private void Window_Loaded(object sender, RoutedEventArgs e)
+      {
+         var senderWindow = sender as Window;
+         senderWindow.WindowState = WindowState.Maximized;
+      }
+
+      #endregion
+   }
 }

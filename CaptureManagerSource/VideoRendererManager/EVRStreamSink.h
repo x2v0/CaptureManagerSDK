@@ -1,196 +1,132 @@
 #pragma once
-
 #include <mutex>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/IStreamSink.h"
 #include "IPresenter.h"
 
-
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace EVR
-		{
-			class EVRStreamSink:
-				public BaseUnknown<
-				IMFStreamSink,
-				IStreamSink,
-				IMFMediaTypeHandler,
-				IMFGetService,
-				IMFAsyncCallback,
-				IMFClockStateSink
-				>
-			{
+   namespace Sinks
+   {
+      namespace EVR
+      {
+         class EVRStreamSink : public BaseUnknown<IMFStreamSink, IStreamSink, IMFMediaTypeHandler, IMFGetService,
+                                                  IMFAsyncCallback, IMFClockStateSink>
+         {
+            enum StreamEnum
+            {
+               Uninitialized,
+               Ready,
+               Started,
+               Paused,
+               Stoped
+            };
 
-				enum StreamEnum
-				{
-					Uninitialized,
-					Ready,
-					Started,
-					Paused,
-					Stoped
-				};
+         public:
+            static HRESULT createEVRStreamSink(DWORD aStreamID, IMFMediaSink* aPtrMediaSink, IPresenter* aPtrPresenter,
+                                               DWORD aMixerStreamID, bool aIsSingleStream,
+                                               IStreamSink** aPtrPtrStreamSink);
 
-			public:
-				static HRESULT createEVRStreamSink(
-					DWORD aStreamID,
-					IMFMediaSink* aPtrMediaSink,
-					IPresenter* aPtrPresenter,
-					DWORD aMixerStreamID,
-					bool aIsSingleStream,
-					IStreamSink** aPtrPtrStreamSink);
+            HRESULT initialize(IMFMediaSink* aPtrMediaSink, bool aIsSingleStream, IPresenter* aPtrPresenter);
 
-				HRESULT initialize(
-					IMFMediaSink* aPtrMediaSink,
-					bool aIsSingleStream,
-					IPresenter* aPtrPresenter);
+            // IMFClockStateSink methods
+            HRESULT STDMETHODCALLTYPE OnClockStart(MFTIME aHNSSystemTime, LONGLONG aClockStartOffset) override;
 
+            HRESULT STDMETHODCALLTYPE OnClockStop(MFTIME aHNSSystemTime) override;
 
+            HRESULT STDMETHODCALLTYPE OnClockPause(MFTIME aHNSSystemTime) override;
 
-				// IMFClockStateSink methods
-				virtual HRESULT STDMETHODCALLTYPE OnClockStart(
-					MFTIME aHNSSystemTime,
-					LONGLONG aClockStartOffset);
-				virtual HRESULT STDMETHODCALLTYPE OnClockStop(
-					MFTIME aHNSSystemTime);
-				virtual HRESULT STDMETHODCALLTYPE OnClockPause(
-					MFTIME aHNSSystemTime);
-				virtual HRESULT STDMETHODCALLTYPE OnClockRestart(
-					MFTIME aHNSSystemTime);
-				virtual HRESULT STDMETHODCALLTYPE OnClockSetRate(
-					MFTIME aHNSSystemTime,
-					float aRate);
+            HRESULT STDMETHODCALLTYPE OnClockRestart(MFTIME aHNSSystemTime) override;
 
+            HRESULT STDMETHODCALLTYPE OnClockSetRate(MFTIME aHNSSystemTime, float aRate) override;
 
+            // IMFMediaTypeHandler implementation
+            HRESULT STDMETHODCALLTYPE IsMediaTypeSupported(IMFMediaType* aPtrMediaType, IMFMediaType** aPtrPtrMediaType)
+            override;
 
-				// IMFMediaTypeHandler implementation
-				virtual HRESULT STDMETHODCALLTYPE IsMediaTypeSupported(
-					IMFMediaType* aPtrMediaType,
-					IMFMediaType** aPtrPtrMediaType);
-				virtual HRESULT STDMETHODCALLTYPE GetMediaTypeCount(
-					DWORD* aPtrTypeCount);
-				virtual HRESULT STDMETHODCALLTYPE GetMediaTypeByIndex(
-					DWORD aIndex,
-					IMFMediaType** aPtrPtrType);
-				virtual HRESULT STDMETHODCALLTYPE SetCurrentMediaType(
-					IMFMediaType* aPtrMediaType);
-				virtual HRESULT STDMETHODCALLTYPE GetCurrentMediaType(
-					IMFMediaType** aPtrPtrMediaType);
-				virtual HRESULT STDMETHODCALLTYPE GetMajorType(
-					GUID* PtrGUIDMajorType);
+            HRESULT STDMETHODCALLTYPE GetMediaTypeCount(DWORD* aPtrTypeCount) override;
 
+            HRESULT STDMETHODCALLTYPE GetMediaTypeByIndex(DWORD aIndex, IMFMediaType** aPtrPtrType) override;
 
+            HRESULT STDMETHODCALLTYPE SetCurrentMediaType(IMFMediaType* aPtrMediaType) override;
 
-				// IMFStreamSink implementation
-				virtual HRESULT STDMETHODCALLTYPE Flush();
-				virtual HRESULT STDMETHODCALLTYPE GetIdentifier(
-					DWORD* aPtrIdentifier);
-				virtual HRESULT STDMETHODCALLTYPE GetMediaSink(
-					IMFMediaSink** aPtrPtrMediaSink);
-				virtual HRESULT STDMETHODCALLTYPE GetMediaTypeHandler(
-					IMFMediaTypeHandler** aPtrPtrHandler);
-				virtual HRESULT STDMETHODCALLTYPE PlaceMarker(
-					MFSTREAMSINK_MARKER_TYPE aMarkerType, 
-					const PROPVARIANT* aPtrVarMarkerValue, 
-					const PROPVARIANT* aPtrVarContextValue);
-				virtual HRESULT STDMETHODCALLTYPE ProcessSample(
-					IMFSample* aPtrSample);
+            HRESULT STDMETHODCALLTYPE GetCurrentMediaType(IMFMediaType** aPtrPtrMediaType) override;
 
+            HRESULT STDMETHODCALLTYPE GetMajorType(GUID* PtrGUIDMajorType) override; // IMFStreamSink implementation
+            HRESULT STDMETHODCALLTYPE Flush() override;
 
-				// IMFMediaEventGenerator implementation
-				virtual HRESULT STDMETHODCALLTYPE BeginGetEvent(
-					IMFAsyncCallback* aPtrCallback, 
-					IUnknown* aPtrUnkState);
-				virtual HRESULT STDMETHODCALLTYPE EndGetEvent(
-					IMFAsyncResult* aPtrResult, 
-					IMFMediaEvent** aPtrPtrEvent);
-				virtual HRESULT STDMETHODCALLTYPE GetEvent(
-					DWORD aFlags, 
-					IMFMediaEvent** aPtrPtrEvent);
-				virtual HRESULT STDMETHODCALLTYPE QueueEvent(
-					MediaEventType aMediaEventType,
-					REFGUID aRefGUIDExtendedType,
-					HRESULT aHRStatus, 
-					const PROPVARIANT* aPtrValue);
+            HRESULT STDMETHODCALLTYPE GetIdentifier(DWORD* aPtrIdentifier) override;
 
+            HRESULT STDMETHODCALLTYPE GetMediaSink(IMFMediaSink** aPtrPtrMediaSink) override;
 
-				// IStreamSink implementation
-				virtual HRESULT STDMETHODCALLTYPE getMaxRate(
-					BOOL aThin, 
-					float* aPtrRate);
-				virtual HRESULT STDMETHODCALLTYPE preroll();
-				virtual HRESULT STDMETHODCALLTYPE shutdown();
+            HRESULT STDMETHODCALLTYPE GetMediaTypeHandler(IMFMediaTypeHandler** aPtrPtrHandler) override;
 
+            HRESULT STDMETHODCALLTYPE PlaceMarker(MFSTREAMSINK_MARKER_TYPE aMarkerType,
+                                                  const PROPVARIANT* aPtrVarMarkerValue,
+                                                  const PROPVARIANT* aPtrVarContextValue) override;
 
-				// IMFGetService
-				virtual STDMETHODIMP GetService(REFGUID guidService, REFIID riid, LPVOID* ppvObject) override;
+            HRESULT STDMETHODCALLTYPE ProcessSample(IMFSample* aPtrSample) override;
 
+            // IMFMediaEventGenerator implementation
+            HRESULT STDMETHODCALLTYPE BeginGetEvent(IMFAsyncCallback* aPtrCallback, IUnknown* aPtrUnkState) override;
 
-				// IMFAsyncCallback methods
-				virtual HRESULT STDMETHODCALLTYPE GetParameters(
-					DWORD* aPtrFlags, 
-					DWORD* aPtrQueue);
-				virtual HRESULT STDMETHODCALLTYPE Invoke(
-					IMFAsyncResult* aPtrAsyncResult);
+            HRESULT STDMETHODCALLTYPE EndGetEvent(IMFAsyncResult* aPtrResult, IMFMediaEvent** aPtrPtrEvent) override;
 
-			protected:
-				
-				virtual bool findInterface(
-					REFIID aRefIID,
-					void** aPtrPtrVoidObject)
-				{
-					auto lresult = castInterfaces(
-						aRefIID,
-						aPtrPtrVoidObject,
-						static_cast<IMFMediaEventGenerator*>(this));
+            HRESULT STDMETHODCALLTYPE GetEvent(DWORD aFlags, IMFMediaEvent** aPtrPtrEvent) override;
 
-					if (!lresult)
-					{
-						return BaseUnknown::findInterface(
-							aRefIID,
-							aPtrPtrVoidObject);
-					}
+            HRESULT STDMETHODCALLTYPE QueueEvent(MediaEventType aMediaEventType, REFGUID aRefGUIDExtendedType,
+                                                 HRESULT aHRStatus, const PROPVARIANT* aPtrValue) override;
 
-					return lresult;
-				}
+            // IStreamSink implementation
+            HRESULT STDMETHODCALLTYPE getMaxRate(BOOL aThin, float* aPtrRate) override;
 
-			private:
+            HRESULT STDMETHODCALLTYPE preroll() override;
 
+            HRESULT STDMETHODCALLTYPE shutdown() override; // IMFGetService
+            STDMETHODIMP GetService(REFGUID guidService, REFIID riid, LPVOID* ppvObject) override;
 
-				const DWORD mStreamID;
-				const DWORD mMixerStreamID;
-				DWORD mWorkQueueId;
-				bool mIsShutdown;
-				bool mIsSingleStream;
-				CComPtrCustom<IMFMediaType> mCurrentMediaType;
+            // IMFAsyncCallback methods
+            HRESULT STDMETHODCALLTYPE GetParameters(DWORD* aPtrFlags, DWORD* aPtrQueue) override;
 
-				CComPtrCustom<IMFMediaSink> mMediaSink;
-				CComPtrCustom<IMFMediaEventQueue> mEventQueue;  
-				CComPtrCustom<IPresenter> mPresenter;
-				CComPtrCustom<IMFMediaType> mCurrentType;
-				
-				CComPtrCustom<IMFTransform> mMixer;
+            HRESULT STDMETHODCALLTYPE Invoke(IMFAsyncResult* aPtrAsyncResult) override;
 
-				std::mutex mAccessMutex;
-				std::mutex mClockStateAccessMutex;
-				std::mutex mProcessMutex;
+         protected:
+            bool findInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+            {
+               auto lresult = castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IMFMediaEventGenerator*>(this));
+               if (!lresult) {
+                  return BaseUnknown::findInterface(aRefIID, aPtrPtrVoidObject);
+               }
+               return lresult;
+            }
 
+         private:
+            const DWORD mStreamID;
+            const DWORD mMixerStreamID;
+            DWORD mWorkQueueId;
+            bool mIsShutdown;
+            bool mIsSingleStream;
+            CComPtrCustom<IMFMediaType> mCurrentMediaType;
+            CComPtrCustom<IMFMediaSink> mMediaSink;
+            CComPtrCustom<IMFMediaEventQueue> mEventQueue;
+            CComPtrCustom<IPresenter> mPresenter;
+            CComPtrCustom<IMFMediaType> mCurrentType;
+            CComPtrCustom<IMFTransform> mMixer;
+            std::mutex mAccessMutex;
+            std::mutex mClockStateAccessMutex;
+            std::mutex mProcessMutex;
+            StreamEnum mStreamState;
 
-				StreamEnum mStreamState;
+            EVRStreamSink(DWORD aStreamID, DWORD aMixerStreamID);
 
+            virtual ~EVRStreamSink();
 
-				EVRStreamSink(
-					DWORD aStreamID,
-					DWORD aMixerStreamID);
-				virtual ~EVRStreamSink();
-				HRESULT checkShutdown() const;
-				HRESULT createVideoAllocator(
-					IMFVideoSampleAllocator** aPtrPtrVideoSampleAllocator);
-			};
-		}
-	}
+            HRESULT checkShutdown() const;
+
+            HRESULT createVideoAllocator(IMFVideoSampleAllocator** aPtrPtrVideoSampleAllocator);
+         };
+      }
+   }
 }

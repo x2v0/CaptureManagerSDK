@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CustomisedFilterTopologyNode.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../Common/ComPtrCustom.h"
@@ -30,79 +29,47 @@ SOFTWARE.
 
 namespace EVRMultiSink
 {
-	using namespace CaptureManager::Core;
+   using namespace Core;
 
-	CustomisedFilterTopologyNode::CustomisedFilterTopologyNode(
-		IMFTopologyNode* aPtrIMFTopologyNode,
-		IMFActivate* aPtrIMFActivate)
-	{
-		mTopologyNode = aPtrIMFTopologyNode;
+   CustomisedFilterTopologyNode::CustomisedFilterTopologyNode(IMFTopologyNode* aPtrIMFTopologyNode,
+                                                              IMFActivate* aPtrIMFActivate)
+   {
+      mTopologyNode = aPtrIMFTopologyNode;
+      mActivate = aPtrIMFActivate;
+   }
 
-		mActivate = aPtrIMFActivate;
-	}
+   CustomisedFilterTopologyNode::~CustomisedFilterTopologyNode() { }
 
+   bool CustomisedFilterTopologyNode::findIncapsulatedInterface(REFIID aRefIID, void** aPtrPtrVoidObject)
+   {
+      HRESULT lresult(E_FAIL);
+      bool lState = false;
+      do {
+         LOG_INVOKE_WIDE_QUERY_INTERFACE_METHOD(mTopologyNode, aRefIID, aPtrPtrVoidObject);
+         lState = true;
+      } while (false);
+      if (!lState && (aRefIID == __uuidof(IBaseFilter))) {
+         do {
+            LOG_CHECK_STATE(FAILED(createBaseFilter()));
+            LOG_INVOKE_WIDE_QUERY_INTERFACE_METHOD(mBaseFilter, aRefIID, aPtrPtrVoidObject);
+            lState = true;
+         } while (false);
+      }
+      return lState;
+   }
 
-	CustomisedFilterTopologyNode::~CustomisedFilterTopologyNode()
-	{
-	}
-
-	
-	bool CustomisedFilterTopologyNode::findIncapsulatedInterface(
-		REFIID aRefIID,
-		void** aPtrPtrVoidObject)
-	{
-		HRESULT lresult(E_FAIL);
-
-		bool lState = false;
-
-		do
-		{
-			LOG_INVOKE_WIDE_QUERY_INTERFACE_METHOD(mTopologyNode, aRefIID, aPtrPtrVoidObject);
-
-			lState = true;
-
-		} while (false);
-
-		if (!lState && (aRefIID == __uuidof(IBaseFilter)))
-		{
-
-			do
-			{
-				LOG_CHECK_STATE(FAILED(createBaseFilter()));
-
-				LOG_INVOKE_WIDE_QUERY_INTERFACE_METHOD(mBaseFilter, aRefIID, aPtrPtrVoidObject);
-
-				lState = true;
-
-			} while (false);
-			
-		}
-
-		return lState;
-	}
-	
-	HRESULT CustomisedFilterTopologyNode::createBaseFilter()
-	{
-		HRESULT lresult(E_FAIL);
-
-		do
-		{
-			if (mBaseFilter)
-			{
-				lresult = S_OK;
-
-				break;
-			}
-
-			LOG_CHECK_PTR_MEMORY(mActivate);
-
-			LOG_INVOKE_MF_METHOD(ActivateObject, mActivate,
-				IID_PPV_ARGS(&mBaseFilter));
-
-			LOG_CHECK_PTR_MEMORY(mBaseFilter);
-
-		} while (false);
-
-		return lresult;
-	}
+   HRESULT CustomisedFilterTopologyNode::createBaseFilter()
+   {
+      HRESULT lresult(E_FAIL);
+      do {
+         if (mBaseFilter) {
+            lresult = S_OK;
+            break;
+         }
+         LOG_CHECK_PTR_MEMORY(mActivate);
+         LOG_INVOKE_MF_METHOD(ActivateObject, mActivate, IID_PPV_ARGS(&mBaseFilter));
+         LOG_CHECK_PTR_MEMORY(mBaseFilter);
+      } while (false);
+      return lresult;
+   }
 }

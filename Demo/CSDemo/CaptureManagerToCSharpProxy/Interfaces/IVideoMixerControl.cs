@@ -22,33 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IVideoMixerControl
-    {
-        bool setPosition(object aPtrVideoMixerNode,
-            /* [in] */ float aLeft,
-            /* [in] */ float aRight,
-            /* [in] */ float aTop,
-            /* [in] */ float aBottom);
-        
-        bool setSrcPosition(object aPtrVideoMixerNode,
-            /* [in] */ float aLeft,
-            /* [in] */ float aRight,
-            /* [in] */ float aTop,
-            /* [in] */ float aBottom);
-        
-        bool setZOrder(object aPtrVideoMixerNode,
-            /* [in] */ UInt32 aZOrder);
+   public interface IVideoMixerControl
+   {
+      #region Public methods
 
-        bool setOpacity(object aPtrVideoMixerNode,
-            /* [in] */ float aOpacity);
-        
-        bool flush(object aPtrVideoMixerNode);
-    }
+      bool flush(object aPtrVideoMixerNode);
+
+      bool setOpacity(object aPtrVideoMixerNode,
+                      /* [in] */
+                      float aOpacity);
+
+      bool setPosition(object aPtrVideoMixerNode,
+                       /* [in] */
+                       float aLeft,
+                       /* [in] */
+                       float aRight,
+                       /* [in] */
+                       float aTop,
+                       /* [in] */
+                       float aBottom);
+
+      bool setSrcPosition(object aPtrVideoMixerNode,
+                          /* [in] */
+                          float aLeft,
+                          /* [in] */
+                          float aRight,
+                          /* [in] */
+                          float aTop,
+                          /* [in] */
+                          float aBottom);
+
+      bool setZOrder(object aPtrVideoMixerNode,
+                     /* [in] */
+                     uint aZOrder);
+
+      #endregion
+   }
 }

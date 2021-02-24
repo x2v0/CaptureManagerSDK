@@ -22,54 +22,57 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SwitcherNodeFactory: ISwitcherNodeFactory
-    {
-        CaptureManagerLibrary.ISwitcherNodeFactory mSwitcherNodeFactory;
+   internal class SwitcherNodeFactory : ISwitcherNodeFactory
+   {
+      #region Constructors and destructors
 
-        public SwitcherNodeFactory(CaptureManagerLibrary.ISwitcherNodeFactory aSwitcherNodeFactory)
-        {
-            mSwitcherNodeFactory = aSwitcherNodeFactory;
-        }
+      public SwitcherNodeFactory(CaptureManagerLibrary.ISwitcherNodeFactory aSwitcherNodeFactory)
+      {
+         mSwitcherNodeFactory = aSwitcherNodeFactory;
+      }
 
-        public bool createSwitcherNode(object aPtrDownStreamTopologyNode, out object aPtrPtrTopologySwitcherNode)
-        {
-            bool lresult = false;
-            
-            do
-            {
-                aPtrPtrTopologySwitcherNode = null;
+      #endregion
 
-                if (mSwitcherNodeFactory == null)
-                    break;
-                
-                try
-                {
+      #region  Fields
 
-                    mSwitcherNodeFactory.createSwitcherNode(
-                        aPtrDownStreamTopologyNode,
-                        out aPtrPtrTopologySwitcherNode);
+      private readonly CaptureManagerLibrary.ISwitcherNodeFactory mSwitcherNodeFactory;
 
-                    if (aPtrPtrTopologySwitcherNode == null)
-                        break;
+      #endregion
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      #region Interface methods
 
-            } while (false);
+      public bool createSwitcherNode(object aPtrDownStreamTopologyNode, out object aPtrPtrTopologySwitcherNode)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
-    }
+         do {
+            aPtrPtrTopologySwitcherNode = null;
+
+            if (mSwitcherNodeFactory == null) {
+               break;
+            }
+
+            try {
+               mSwitcherNodeFactory.createSwitcherNode(aPtrDownStreamTopologyNode, out aPtrPtrTopologySwitcherNode);
+
+               if (aPtrPtrTopologySwitcherNode == null) {
+                  break;
+               }
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

@@ -1,11 +1,9 @@
 #pragma once
-
 #include <mutex>
 #include <condition_variable>
 #include <list>
 #include <map>
 #include <queue>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/MFHeaders.h"
 #include "../Common/BoxMode.h"
@@ -17,216 +15,133 @@
 
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
-			struct ICustomisedRequest;
-			
-			class CustomisedMediaSession :
-				public BaseUnknown<IMFMediaSession, ISessionSwitcherControl>
-			{
-				enum class MediaSessionSate: int
-				{
-					None = 0,
-					SessionStarted = None + 1,
-					SessionPaused = SessionStarted + 1,
-					SessionStopped = SessionPaused + 1,
-					SessionClosed = SessionStopped + 1,
-					SessionShutdowned = SessionClosed + 1
-					
-				};
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         struct ICustomisedRequest;
 
-			public:
-				CustomisedMediaSession();
-				virtual ~CustomisedMediaSession();
+         class CustomisedMediaSession : public BaseUnknown<IMFMediaSession, ISessionSwitcherControl>
+         {
+            enum class MediaSessionSate : int
+            {
+               None = 0,
+               SessionStarted = None + 1,
+               SessionPaused = SessionStarted + 1,
+               SessionStopped = SessionPaused + 1,
+               SessionClosed = SessionStopped + 1,
+               SessionShutdowned = SessionClosed + 1
+            };
 
-				// ISessionSwitcherControl interface
+         public:
+            CustomisedMediaSession();
 
-				virtual HRESULT STDMETHODCALLTYPE pauseSwitchers();
+            virtual ~CustomisedMediaSession(); // ISessionSwitcherControl interface
+            HRESULT STDMETHODCALLTYPE pauseSwitchers() override;
 
-				virtual HRESULT STDMETHODCALLTYPE resumeSwitchers();
+            HRESULT STDMETHODCALLTYPE resumeSwitchers() override;
 
-				virtual HRESULT STDMETHODCALLTYPE detachSwitchers();
+            HRESULT STDMETHODCALLTYPE detachSwitchers() override;
 
-				virtual HRESULT STDMETHODCALLTYPE attachSwitcher(
-					/* [in] */ IMFTopologyNode *aPtrSwitcherNode,
-					/* [in] */ IMFTopologyNode *aPtrDownStreamNode);
+            HRESULT STDMETHODCALLTYPE attachSwitcher(/* [in] */ IMFTopologyNode* aPtrSwitcherNode, /* [in] */
+                                                                IMFTopologyNode* aPtrDownStreamNode) override;
 
-			
+            // IMFMediaEventGenerator implementation
+            HRESULT STDMETHODCALLTYPE GetEvent(DWORD dwFlags, IMFMediaEvent** ppEvent) override;
 
-				// IMFMediaEventGenerator implementation
+            HRESULT STDMETHODCALLTYPE BeginGetEvent(IMFAsyncCallback* aPtrCallback, IUnknown* aPtrUnkState) override;
 
-				virtual HRESULT STDMETHODCALLTYPE GetEvent(
-					DWORD dwFlags,
-					IMFMediaEvent **ppEvent);
+            HRESULT STDMETHODCALLTYPE EndGetEvent(IMFAsyncResult* aPtrResult, IMFMediaEvent** aPtrPtrEvent) override;
 
-				virtual HRESULT STDMETHODCALLTYPE BeginGetEvent(
-					IMFAsyncCallback* aPtrCallback,
-					IUnknown* aPtrUnkState);
+            HRESULT STDMETHODCALLTYPE QueueEvent(MediaEventType aMediaEventType, REFGUID aRefGUIDExtendedType,
+                                                 HRESULT aHRESULTStatus, const PROPVARIANT* aPtrPropVariantValue)
+            override; // IMFMediaSession implementation
+            HRESULT STDMETHODCALLTYPE SetTopology(DWORD aSetTopologyFlags, IMFTopology* aPtrTopology) override;
 
-				virtual HRESULT STDMETHODCALLTYPE EndGetEvent(
-					IMFAsyncResult* aPtrResult,
-					IMFMediaEvent** aPtrPtrEvent);
+            HRESULT STDMETHODCALLTYPE ClearTopologies() override;
 
-				virtual HRESULT STDMETHODCALLTYPE QueueEvent(
-					MediaEventType aMediaEventType,
-					REFGUID aRefGUIDExtendedType,
-					HRESULT aHRESULTStatus,
-					const PROPVARIANT* aPtrPropVariantValue);
+            HRESULT STDMETHODCALLTYPE Start(const GUID* aConstPtrGUIDTimeFormat,
+                                            const PROPVARIANT* aConstPtrVarStartPosition) override;
 
-				// IMFMediaSession implementation
-			
-				virtual HRESULT STDMETHODCALLTYPE SetTopology(
-					DWORD aSetTopologyFlags,
-					IMFTopology* aPtrTopology);
+            HRESULT STDMETHODCALLTYPE Pause() override;
 
-				virtual HRESULT STDMETHODCALLTYPE ClearTopologies();
+            HRESULT STDMETHODCALLTYPE Stop() override;
 
-				virtual HRESULT STDMETHODCALLTYPE Start(
-					const GUID* aConstPtrGUIDTimeFormat,
-					const PROPVARIANT* aConstPtrVarStartPosition);
+            HRESULT STDMETHODCALLTYPE Close() override;
 
-				virtual HRESULT STDMETHODCALLTYPE Pause();
+            HRESULT STDMETHODCALLTYPE Shutdown() override;
 
-				virtual HRESULT STDMETHODCALLTYPE Stop();
+            HRESULT STDMETHODCALLTYPE GetClock(IMFClock** ppClock) override;
 
-				virtual HRESULT STDMETHODCALLTYPE Close();
+            HRESULT STDMETHODCALLTYPE GetSessionCapabilities(DWORD* pdwCaps) override;
 
-				virtual HRESULT STDMETHODCALLTYPE Shutdown();
+            HRESULT STDMETHODCALLTYPE GetFullTopology(DWORD dwGetFullTopologyFlags, TOPOID TopoId,
+                                                      IMFTopology** ppFullTopology) override;
 
-				virtual HRESULT STDMETHODCALLTYPE GetClock(
-					IMFClock **ppClock);
+            virtual HRESULT checkInitBarier(IMFMediaStream* aPtrMediaStream);
 
-				virtual HRESULT STDMETHODCALLTYPE GetSessionCapabilities(
-					DWORD *pdwCaps);
+            virtual HRESULT checkFinishBarier();
 
-				virtual HRESULT STDMETHODCALLTYPE GetFullTopology(
-					DWORD dwGetFullTopologyFlags,
-					TOPOID TopoId,
-					IMFTopology **ppFullTopology);
+            HRESULT resetTargetNode(IMFTopologyNode* aPtrUpStreamTopologyNode, IMFMediaType* aPtrUpStreamMediaType,
+                                    ITopologyResolver* aPtrTopologyResolver);
 
+         protected:
+            bool findInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+            {
+               if (aRefIID == __uuidof(IMFMediaEventGenerator)) {
+                  return castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IMFMediaEventGenerator*>(this));
+               }
+               return BaseUnknown::findInterface(aRefIID, aPtrPtrVoidObject);
+            }
 
+         CAPTUREMANAGER_BOX
+            std::mutex mMutex;
+            std::mutex mAccesseMutex;
+            bool mIsSwitchersDetached;
+            std::map<TOPOID, CollectionOfIDs> mSwitcherCollection;
+            std::list<CollectionOfIDs> mListOfStreamsCollectionOfID;
+            CComPtrCustom<IMFMediaEventQueue> mEventQueue;
+            CComPtrCustom<IMFPresentationClock> mClock;
+            MediaSessionSate mMediaSessionSate;
+            LONGLONG mClockStartOffset;
+            std::list<CComPtrCustom<IMediaPipeline>> mListOfMediaPipelineProcessors;
+            CComPtrCustom<ITopologyResolver> mVideoTopologyResolver;
+            CComPtrCustom<ITopologyResolver> mAudioTopologyResolver;
+            std::condition_variable mInitBarierCondition;
+            std::mutex mInitBarierMutex;
+            std::mutex mFinishBarierMutex;
+            std::atomic<LONG> mInitBarierCount;
+            std::list<IMFMediaStream*> mMediaStreamList;
+            bool mFinishBarierState;
+            bool mSessionIsInitialised;
+            std::queue<CComPtrCustom<IMFTopology>> mTopologyQueue;
+            CComPtrCustom<IMFTopology> mCurrentTopology;
 
+            HRESULT resolveTopology(IMFTopology* aPtrTopology);
 
-				virtual HRESULT checkInitBarier(IMFMediaStream* aPtrMediaStream);
+            HRESULT resolveStreamTopology(IMFTopology* aPtrTopology, std::list<TOPOID>& aRefListOfUsedSources,
+                                          IMFTopologyNode* aPtrUpStreamTopologyNode,
+                                          IMFMediaType* aPtrUpStreamMediaType);
 
-				virtual HRESULT checkFinishBarier();
+            HRESULT queueTopologyReadyEvent(IMFTopology* aPtrTopology, HRESULT aResult);
 
+            HRESULT notifyToBeginStreaming(IMFTopology* aPtrTopology);
 
-				HRESULT resetTargetNode(
-					IMFTopologyNode* aPtrUpStreamTopologyNode,
-					IMFMediaType* aPtrUpStreamMediaType,
-					ITopologyResolver* aPtrTopologyResolver);
+            HRESULT notifyToEndStreaming(IMFTopology* aPtrTopology);
 
+            HRESULT notifyToEndStreaming(IMFTopologyNode* aPtrTopologyNode);
 
+            HRESULT findOutputNodes(std::vector<CComPtrCustom<IMFTopologyNode>>& aOutputTopologyNodes,
+                                    IMFTopologyNode* aPtrDownStreamNode);
 
-			protected:
-				
-				virtual bool findInterface(
-					REFIID aRefIID,
-					void** aPtrPtrVoidObject)
-				{
-					if (aRefIID == __uuidof(IMFMediaEventGenerator))
-					{
-						return castInterfaces(
-							aRefIID,
-							aPtrPtrVoidObject,
-							static_cast<IMFMediaEventGenerator*>(this));
-					}
-					else
-					{
-						return BaseUnknown::findInterface(
-							aRefIID,
-							aPtrPtrVoidObject);
-					}
-				}
-				
-			CAPTUREMANAGER_BOX
+            HRESULT releaseNode(IMFTopologyNode* aPtrDownStreamNode);
 
-				std::mutex mMutex;
+            HRESULT enumAndAddOutputTopologyNode(IMFTopology* aPtrTopology, IMFTopologyNode* aPtrTopologyNode);
 
-				std::mutex mAccesseMutex;
+            HRESULT STDMETHODCALLTYPE notifyToBeginSwitcherStreaming(/* [in] */ IMFTopologyNode* aPtrTopologyNode);
 
-				bool mIsSwitchersDetached;
-
-				std::map<TOPOID, CollectionOfIDs> mSwitcherCollection;
-
-				std::list<CollectionOfIDs> mListOfStreamsCollectionOfID;
-
-				CComPtrCustom<IMFMediaEventQueue>  mEventQueue;
-
-				CComPtrCustom<IMFPresentationClock>  mClock;
-
-				MediaSessionSate mMediaSessionSate;
-
-				LONGLONG mClockStartOffset;
-
-				std::list<CComPtrCustom<IMediaPipeline>>  mListOfMediaPipelineProcessors;
-
-				CComPtrCustom<ITopologyResolver> mVideoTopologyResolver;
-
-				CComPtrCustom<ITopologyResolver> mAudioTopologyResolver;
-				
-
-
-				std::condition_variable mInitBarierCondition;
-
-				std::mutex mInitBarierMutex;
-
-				std::mutex mFinishBarierMutex;
-
-				std::atomic<LONG> mInitBarierCount;
-				
-				std::list<IMFMediaStream*> mMediaStreamList;
-
-				bool mFinishBarierState;
-							
-				bool mSessionIsInitialised;
-
-				std::queue<CComPtrCustom<IMFTopology>> mTopologyQueue;
-
-				CComPtrCustom<IMFTopology> mCurrentTopology;
-
-				HRESULT resolveTopology(
-					IMFTopology* aPtrTopology);
-
-				HRESULT resolveStreamTopology(
-					IMFTopology* aPtrTopology,
-					std::list<TOPOID>& aRefListOfUsedSources,
-					IMFTopologyNode* aPtrUpStreamTopologyNode,
-					IMFMediaType* aPtrUpStreamMediaType);
-				
-				HRESULT queueTopologyReadyEvent(
-					IMFTopology* aPtrTopology,
-					HRESULT aResult);
-
-				HRESULT notifyToBeginStreaming(
-					IMFTopology* aPtrTopology);
-
-				HRESULT notifyToEndStreaming(
-					IMFTopology* aPtrTopology);
-
-				HRESULT notifyToEndStreaming(
-					IMFTopologyNode* aPtrTopologyNode);
-
-
-				HRESULT findOutputNodes(
-					std::vector<CComPtrCustom<IMFTopologyNode>>& aOutputTopologyNodes,
-					IMFTopologyNode* aPtrDownStreamNode);
-
-
-				HRESULT releaseNode(IMFTopologyNode* aPtrDownStreamNode);
-
-				HRESULT enumAndAddOutputTopologyNode(
-					IMFTopology* aPtrTopology,
-					IMFTopologyNode* aPtrTopologyNode);
-
-				HRESULT STDMETHODCALLTYPE notifyToBeginSwitcherStreaming(
-					/* [in] */ IMFTopologyNode *aPtrTopologyNode);
-				
-				HRESULT getTargetNode(IMFTopologyNode* aPtrDownStreamNode, IMFTopologyNode** aPtrPtrTargetStreamNode);
-			};
-		}
-	}
+            HRESULT getTargetNode(IMFTopologyNode* aPtrDownStreamNode, IMFTopologyNode** aPtrPtrTargetStreamNode);
+         };
+      }
+   }
 }

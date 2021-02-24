@@ -1,89 +1,65 @@
 #pragma once
-
 #include <map>
 #include <vector>
 #include <Unknwn.h>
-
-
 #include "../Common/ComPtrCustom.h"
 #include "../CaptureManagerBroker/ISessionCallbackInner.h"
-
-
 struct IMFTopologyNode;
 struct IMFTopology;
 
 namespace CaptureManager
 {
-	namespace Core
-	{
+   namespace Core
+   {
+      class SessionProcessor;
 
-		class SessionProcessor;
+      class SessionProcessorManager
+      {
+      public:
+         typedef struct SourceToOutputPair_
+         {
+            IMFTopologyNode* mPtrSourceTopologyNode;
+            IMFTopologyNode* mPtrOutputTopologyNode;
+         } SourceToOutputPair;
 
-		class SessionProcessorManager
-		{
-		public:
+      public:
+         HRESULT createSession(std::vector<IMFTopologyNode*>& aSourceNodes, IUnknown* aPtrISessionCallback,
+                               SessionDescriptor& aRefSessionDescriptor);
 
-			typedef struct SourceToOutputPair_
-			{
-				IMFTopologyNode* mPtrSourceTopologyNode;
+         HRESULT closeAllSessions();
 
-				IMFTopologyNode* mPtrOutputTopologyNode;
+         HRESULT closeSession(SessionDescriptor& aRefSessionDescriptor);
 
-			} SourceToOutputPair;
+         HRESULT startSession(SessionDescriptor& aRefSessionDescriptor, LONGLONG aStartPosition = 0,
+                              GUID aGUIDTimeFormat = GUID_NULL);
 
-		public:
+         HRESULT pauseSession(SessionDescriptor& aRefSessionDescriptor);
 
-			HRESULT createSession(
-				std::vector<IMFTopologyNode*>& aSourceNodes,
-				IUnknown* aPtrISessionCallback,
-				SessionDescriptor& aRefSessionDescriptor);
+         HRESULT stopSession(SessionDescriptor& aRefSessionDescriptor);
 
-			HRESULT closeAllSessions();
+         HRESULT pauseSwitchers(SessionDescriptor& aRefSessionDescriptor);
 
-			HRESULT closeSession(
-				SessionDescriptor& aRefSessionDescriptor);
+         HRESULT resumeSwitchers(SessionDescriptor& aRefSessionDescriptor);
 
-			HRESULT startSession(
-				SessionDescriptor& aRefSessionDescriptor, 
-				LONGLONG aStartPosition = 0, 
-				const GUID aGUIDTimeFormat = GUID_NULL);
+         HRESULT detachSwitchers(SessionDescriptor& aRefSessionDescriptor);
 
-			HRESULT pauseSession(
-				SessionDescriptor& aRefSessionDescriptor);
+         HRESULT attachSwitcher(/* [in] */ IUnknown* aPtrSwitcherNode, /* [in] */ IUnknown* aPtrDownStreamNode);
 
-			HRESULT stopSession(
-				SessionDescriptor& aRefSessionDescriptor);
+      protected:
+         SessionProcessorManager();
 
-			HRESULT pauseSwitchers(
-				SessionDescriptor& aRefSessionDescriptor);
+         ~SessionProcessorManager();
 
-			HRESULT resumeSwitchers(
-				SessionDescriptor& aRefSessionDescriptor);
+      private:
+         SessionProcessorManager(const SessionProcessorManager&) = delete;
 
-			HRESULT detachSwitchers(
-				SessionDescriptor& aRefSessionDescriptor);
-			
-			HRESULT attachSwitcher(
-				/* [in] */ IUnknown *aPtrSwitcherNode,
-				/* [in] */ IUnknown *aPtrDownStreamNode);
-			
-		protected:
-			SessionProcessorManager();
-			~SessionProcessorManager();
-		private:
-			SessionProcessorManager(const SessionProcessorManager&) = delete;
-			SessionProcessorManager& operator=(const SessionProcessorManager&) = delete;
+         SessionProcessorManager& operator=(const SessionProcessorManager&) = delete;
 
-			HRESULT enumAndAddOutputTopologyNode(
-				IMFTopology* aPtrTopology, 
-				IMFTopologyNode* aPtrTopologyNode);
-			
+         HRESULT enumAndAddOutputTopologyNode(IMFTopology* aPtrTopology, IMFTopologyNode* aPtrTopologyNode);
 
-			SessionDescriptor mNextSessionDescriptor;
-
-			std::map<SessionDescriptor, CComPtrCustom<IUnknown>> mSessionProcessorDictionary;
-
-			CComPtrCustom<IUnknown> mSessionAsyncCallback;
-		};
-	}
+         SessionDescriptor mNextSessionDescriptor;
+         std::map<SessionDescriptor, CComPtrCustom<IUnknown>> mSessionProcessorDictionary;
+         CComPtrCustom<IUnknown> mSessionAsyncCallback;
+      };
+   }
 }

@@ -23,20 +23,19 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IEncoderControl
-    {
-        bool createEncoderNodeFactory(
-            Guid aRefEncoderTypeGUID,
-            out IEncoderNodeFactory aIEncoderNodeFactory);
+   public interface IEncoderControl
+   {
+      #region Public methods
 
-        bool getCollectionOfEncoders(out string aPtrPtrXMLstring);
+      bool createEncoderNodeFactory(Guid aRefEncoderTypeGUID, out IEncoderNodeFactory aIEncoderNodeFactory);
 
-        bool getMediaTypeCollectionOfEncoder(object aPtrUncompressedMediaType, Guid aRefEncoderCLSID, out string aPtrPtrXMLstring);
-    }
+      bool getCollectionOfEncoders(out string aPtrPtrXMLstring);
+
+      bool getMediaTypeCollectionOfEncoder(object aPtrUncompressedMediaType, Guid aRefEncoderCLSID, out string aPtrPtrXMLstring);
+
+      #endregion
+   }
 }

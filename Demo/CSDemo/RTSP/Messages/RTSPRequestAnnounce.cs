@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Messages
+﻿namespace Rtsp.Messages
 {
-    public class RtspRequestAnnounce : RtspRequest
-    {
-        // constructor
+   public class RtspRequestAnnounce : RtspRequest
+   {
+      #region Constructors and destructors
 
-        public RtspRequestAnnounce()
-        {
-            Command = "ANNOUNCE * RTSP/1.0";
-        }
-    }
+      // constructor
+
+      public RtspRequestAnnounce()
+      {
+         Command = "ANNOUNCE * RTSP/1.0";
+      }
+
+      #endregion
+   }
 }

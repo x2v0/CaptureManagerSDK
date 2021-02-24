@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Messages
+﻿namespace Rtsp.Messages
 {
-    public class RtspRequestTeardown : RtspRequest
-    {
+   public class RtspRequestTeardown : RtspRequest
+   {
+      #region Constructors and destructors
 
-        // Constructor
-        public RtspRequestTeardown()
-        {
-            Command = "TEARDOWN * RTSP/1.0";
-        }
-    }
+      // Constructor
+      public RtspRequestTeardown()
+      {
+         Command = "TEARDOWN * RTSP/1.0";
+      }
+
+      #endregion
+   }
 }

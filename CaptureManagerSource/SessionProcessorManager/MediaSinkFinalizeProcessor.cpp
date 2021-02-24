@@ -21,99 +21,56 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "MediaSinkFinalizeProcessor.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/Common.h"
 
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		MediaSinkFinalizeProcessor::MediaSinkFinalizeProcessor()
-		{
-		}
+   namespace Core
+   {
+      MediaSinkFinalizeProcessor::MediaSinkFinalizeProcessor() { }
+      MediaSinkFinalizeProcessor::~MediaSinkFinalizeProcessor() { }
 
-		MediaSinkFinalizeProcessor::~MediaSinkFinalizeProcessor()
-		{
-		}
+      HRESULT MediaSinkFinalizeProcessor::finalizeMediaSink(IMFMediaSink* aPtrMediaSink)
+      {
+         HRESULT lresult;
+         do {
+            std::unique_lock<std::mutex> lLock(mMutex);
+            LOG_CHECK_PTR_MEMORY(aPtrMediaSink);
+            CComPtrCustom<IMFFinalizableMediaSink> lFinalizableMediaSink;
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrMediaSink, &lFinalizableMediaSink);
+            LOG_CHECK_PTR_MEMORY(lFinalizableMediaSink);
+            try {
+               LOG_INVOKE_MF_METHOD(BeginFinalize, lFinalizableMediaSink, this, lFinalizableMediaSink);
+               auto lconditionResult = mConditionVariable.wait_for(lLock, std::chrono::seconds(2));
+               LOG_CHECK_STATE_DESCR(lconditionResult == std::cv_status::timeout, CONTEXT_E_SYNCH_TIMEOUT);
+            } catch (...) { }
+         } while (false);
+         return lresult;
+      } // IMFAsyncCallback implements
+      HRESULT STDMETHODCALLTYPE MediaSinkFinalizeProcessor::GetParameters(DWORD* aPtrFlags, DWORD* aPtrQueue)
+      {
+         return S_OK;
+      }
 
-		HRESULT MediaSinkFinalizeProcessor::finalizeMediaSink(
-			IMFMediaSink* aPtrMediaSink)
-		{
-			HRESULT lresult;
-
-			do
-			{
-				std::unique_lock<std::mutex> lLock(mMutex);
-
-				LOG_CHECK_PTR_MEMORY(aPtrMediaSink);
-				
-				CComPtrCustom<IMFFinalizableMediaSink> lFinalizableMediaSink;							
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrMediaSink, &lFinalizableMediaSink);
-				
-				LOG_CHECK_PTR_MEMORY(lFinalizableMediaSink);
-				
-				try
-				{
-					LOG_INVOKE_MF_METHOD(BeginFinalize, lFinalizableMediaSink, this, lFinalizableMediaSink);
-					
-					auto lconditionResult = mConditionVariable.wait_for(lLock, std::chrono::seconds(2));
-
-					LOG_CHECK_STATE_DESCR(lconditionResult == std::cv_status::timeout, CONTEXT_E_SYNCH_TIMEOUT);
-					
-				}
-				catch (...)
-				{
-
-				}
-
-			} while (false);
-			
-			return lresult;
-		}
-
-		// IMFAsyncCallback implements
-
-		HRESULT STDMETHODCALLTYPE MediaSinkFinalizeProcessor::GetParameters(
-			DWORD* aPtrFlags,
-			DWORD* aPtrQueue)
-		{
-			return S_OK;
-		}
-
-		HRESULT STDMETHODCALLTYPE MediaSinkFinalizeProcessor::Invoke(
-			IMFAsyncResult* aPtrAsyncResult)
-		{
-			HRESULT lresult;
-
-			do
-			{
-				std::unique_lock<std::mutex> lLock(mMutex);
-
-				LOG_CHECK_PTR_MEMORY(aPtrAsyncResult);
-								
-				LOG_INVOKE_MF_METHOD(GetStatus, aPtrAsyncResult);
-								
-				CComPtrCustom<IUnknown> lMediaSinkUnk;
-
-				LOG_INVOKE_POINTER_METHOD(aPtrAsyncResult, GetState, &lMediaSinkUnk);
-				
-				CComQIPtrCustom<IMFFinalizableMediaSink> lFinalizableMediaSink = lMediaSinkUnk;
-
-				LOG_CHECK_PTR_MEMORY(lFinalizableMediaSink);
-				
-				LOG_INVOKE_MF_METHOD(EndFinalize, lFinalizableMediaSink, aPtrAsyncResult);
-												
-			} while (false);
-			
-			mConditionVariable.notify_one();
-
-			return lresult;
-		}
-	}
+      HRESULT STDMETHODCALLTYPE MediaSinkFinalizeProcessor::Invoke(IMFAsyncResult* aPtrAsyncResult)
+      {
+         HRESULT lresult;
+         do {
+            std::unique_lock<std::mutex> lLock(mMutex);
+            LOG_CHECK_PTR_MEMORY(aPtrAsyncResult);
+            LOG_INVOKE_MF_METHOD(GetStatus, aPtrAsyncResult);
+            CComPtrCustom<IUnknown> lMediaSinkUnk;
+            LOG_INVOKE_POINTER_METHOD(aPtrAsyncResult, GetState, &lMediaSinkUnk);
+            CComQIPtrCustom<IMFFinalizableMediaSink> lFinalizableMediaSink = lMediaSinkUnk;
+            LOG_CHECK_PTR_MEMORY(lFinalizableMediaSink);
+            LOG_INVOKE_MF_METHOD(EndFinalize, lFinalizableMediaSink, aPtrAsyncResult);
+         } while (false);
+         mConditionVariable.notify_one();
+         return lresult;
+      }
+   }
 }

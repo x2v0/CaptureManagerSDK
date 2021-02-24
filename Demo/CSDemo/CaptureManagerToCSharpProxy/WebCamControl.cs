@@ -22,103 +22,83 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class WebCamControl : IWebCamControl
-    {
+   internal class WebCamControl : IWebCamControl
+   {
+      #region Constructors and destructors
 
-        private CaptureManagerLibrary.IWebCamControl mIWebCamControl;
+      public WebCamControl(CaptureManagerLibrary.IWebCamControl aIWebCamControl)
+      {
+         mIWebCamControl = aIWebCamControl;
+      }
 
-        public WebCamControl(CaptureManagerLibrary.IWebCamControl aIWebCamControl)
-        {
-            mIWebCamControl = aIWebCamControl;
-        }
-                
-        public void getCamParametr(
-            uint aParametrIndex, 
-            out int aCurrentValue, 
-            out int aMin, 
-            out int aMax, 
-            out int aStep, 
-            out int aDefault, 
-            out int aFlag)
-        {
-            if (mIWebCamControl == null)
-            { 
-                aCurrentValue = 0;
-                aMin = 0; 
-                aMax = 0; 
-                aStep = 0;
-                aDefault = 0;
-                aFlag = 0;
+      #endregion
 
-                return;
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.IWebCamControl mIWebCamControl;
+
+      #endregion
+
+      #region Interface methods
+
+      public void getCamParametr(uint aParametrIndex, out int aCurrentValue, out int aMin, out int aMax, out int aStep, out int aDefault, out int aFlag)
+      {
+         if (mIWebCamControl == null) {
+            aCurrentValue = 0;
+            aMin = 0;
+            aMax = 0;
+            aStep = 0;
+            aDefault = 0;
+            aFlag = 0;
+
+            return;
+         }
+
+         mIWebCamControl.getCamParametr(aParametrIndex, out aCurrentValue, out aMin, out aMax, out aStep, out aDefault, out aFlag);
+      }
+
+      public void getCamParametrs(out string aXMLstring)
+      {
+         aXMLstring = "";
+
+         if (mIWebCamControl == null) {
+            return;
+         }
+
+         var lPtrXMLstring = IntPtr.Zero;
+
+         do {
+            try {
+               (mIWebCamControl as IWebCamControlInner).getCamParametrs(out lPtrXMLstring);
+
+               if (lPtrXMLstring != IntPtr.Zero) {
+                  aXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
+               }
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
             }
+         } while (false);
 
-            mIWebCamControl.getCamParametr(
-                aParametrIndex,
-                out aCurrentValue,
-                out aMin,
-                out aMax,
-                out aStep,
-                out aDefault,
-                out aFlag);
-        }
+         if (lPtrXMLstring != IntPtr.Zero) {
+            Marshal.FreeBSTR(lPtrXMLstring);
+         }
+      }
 
-        public void getCamParametrs(
-            out string aXMLstring)
-        {
-            aXMLstring = "";
+      public void setCamParametr(uint aParametrIndex, int aNewValue, int aFlag)
+      {
+         if (mIWebCamControl == null) {
+            return;
+         }
 
-            if (mIWebCamControl == null)
-            {
-                return;
-            }
+         mIWebCamControl.setCamParametr(aParametrIndex, aNewValue, aFlag);
+      }
 
-            IntPtr lPtrXMLstring = IntPtr.Zero;
-
-            do
-            {
-                try
-                {
-                    (mIWebCamControl as IWebCamControlInner).getCamParametrs(out lPtrXMLstring);
-
-                    if (lPtrXMLstring != IntPtr.Zero)
-                        aXMLstring = Marshal.PtrToStringBSTR(lPtrXMLstring);
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            if (lPtrXMLstring != IntPtr.Zero)
-                Marshal.FreeBSTR(lPtrXMLstring);
-        }
-
-        public void setCamParametr(
-            uint aParametrIndex,
-            int aNewValue,
-            int aFlag)
-        {
-
-            if (mIWebCamControl == null)
-            {
-                return;
-            }
-
-            mIWebCamControl.setCamParametr(
-                aParametrIndex,
-                aNewValue,
-                aFlag);
-        }
-    }
+      #endregion
+   }
 }

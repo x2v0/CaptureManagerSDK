@@ -23,89 +23,131 @@ SOFTWARE.
 */
 
 
-
 using System;
 using System.Runtime.InteropServices;
+
 namespace CaptureManagerToCSharpProxy
 {
-    [Guid("1276CC17-BCA8-4200-87BB-7180EF562447")]
-    [TypeLibType(4160)]
-    internal interface ISourceControlInner
-    {
-        void getCollectionOfSources(out IntPtr aPtrXMLstring);
-    }
+   [Guid("1276CC17-BCA8-4200-87BB-7180EF562447")]
+   [TypeLibType(4160)]
+   internal interface ISourceControlInner
+   {
+      #region Public methods
 
-    [Guid("C6BA3732-197E-438B-8E73-277759A7B58F")]
-    [TypeLibType(4160)]
-    internal interface ISinkControlInner
-    {
-        void getCollectionOfSinks(out IntPtr aPtrXMLstring);
-    }
+      void getCollectionOfSources(out IntPtr aPtrXMLstring);
 
-    [Guid("96223507-D8FF-4EC1-B125-71AA7F9726A4")]
-    [TypeLibType(4160)]
-    internal interface IEncoderControlInner
-    {
-        void getCollectionOfEncoders(out IntPtr aPtrXMLstring);
-        void getMediaTypeCollectionOfEncoder(IntPtr aPtrUncompressedMediaType, ref Guid aRefEncoderCLSID, out IntPtr aPtrXMLstring);
-    }
+      #endregion
+   }
 
-    [Guid("74F0DC2B-E470-4359-A1E7-467B521BDFE1")]
-    [TypeLibType(4160)]
-    internal interface IMediaTypeParserInner
-    {
-        void parse(IntPtr aPtrMediaType, out IntPtr aPtrXMLstring);
-    }
+   [Guid("C6BA3732-197E-438B-8E73-277759A7B58F")]
+   [TypeLibType(4160)]
+   internal interface ISinkControlInner
+   {
+      #region Public methods
 
-    [Guid("3BD92C4C-5E06-4901-AE0B-D97E3902EAFC")]
-    [TypeLibType(4096)]
-    internal interface IWebCamControlInner
-    {
-        void getCamParametrs(out IntPtr aXMLstring);
-    }
+      void getCollectionOfSinks(out IntPtr aPtrXMLstring);
 
-    [Guid("47F9883C-77B1-4A0B-9233-B3EAFA8F387E")]
-    [TypeLibType(4160)]
-    internal interface IEVRStreamControlInner
-    {
-        [DispId(1)]
-        void setPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
-        [DispId(2)]
-        void setZOrder(object aPtrEVROutputNode, uint aZOrder);
-        [DispId(3)]
-        void getPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
-        [DispId(4)]
-        void getZOrder(IntPtr aPtrEVROutputNode, out IntPtr aPtrZOrder);
-        [DispId(5)]
-        void flush(object aPtrEVROutputNode);
-        [DispId(6)]
-        void setSrcPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
-        [DispId(7)]
-        void getSrcPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
-        [DispId(8)]
-        void getCollectionOfFilters(IntPtr aPtrEVROutputNode, out IntPtr aPtrXMLstring);
-        [DispId(9)]
-        void setFilterParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue, int aIsEnabled);
-        [DispId(10)]
-        void getCollectionOfOutputFeatures(IntPtr aPtrEVROutputNode, out IntPtr aPtrXMLstring);
-        [DispId(11)]
-        void setOutputFeatureParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue);
-    }
+      #endregion
+   }
 
-    [Guid("39DC3AEF-3B59-4C0D-A1B2-54BF2653C056")]
-    [TypeLibType(4160)]
-    internal interface IVersionControlInner
-    {
-        void getVersion(out uint aPtrMAJOR, out uint aPtrMINOR, out uint aPtrPATCH, out IntPtr aPtrAdditionalLabel);
-        void getXMLStringVersion(out IntPtr aPtrXMLstring);
-        void checkVersion(uint aMAJOR, uint aMINOR, uint aPATCH, out sbyte aPtrResult);
-    }
+   [Guid("96223507-D8FF-4EC1-B125-71AA7F9726A4")]
+   [TypeLibType(4160)]
+   internal interface IEncoderControlInner
+   {
+      #region Public methods
 
-    [Guid("E8F25B4A-8C71-4C9E-BD8C-82260DC4C21B")]
-    [TypeLibType(4160)]
-    internal interface IStreamControlInner
-    {
-        void getCollectionOfStreamControlNodeFactories(out IntPtr aPtrXMLstring);
-        void createStreamControlNodeFactory(ref Guid aREFIID, out object aPtrPtrStreamControlNodeFactory);     
-    }
+      void getCollectionOfEncoders(out IntPtr aPtrXMLstring);
+      void getMediaTypeCollectionOfEncoder(IntPtr aPtrUncompressedMediaType, ref Guid aRefEncoderCLSID, out IntPtr aPtrXMLstring);
+
+      #endregion
+   }
+
+   [Guid("74F0DC2B-E470-4359-A1E7-467B521BDFE1")]
+   [TypeLibType(4160)]
+   internal interface IMediaTypeParserInner
+   {
+      #region Public methods
+
+      void parse(IntPtr aPtrMediaType, out IntPtr aPtrXMLstring);
+
+      #endregion
+   }
+
+   [Guid("3BD92C4C-5E06-4901-AE0B-D97E3902EAFC")]
+   [TypeLibType(4096)]
+   internal interface IWebCamControlInner
+   {
+      #region Public methods
+
+      void getCamParametrs(out IntPtr aXMLstring);
+
+      #endregion
+   }
+
+   [Guid("47F9883C-77B1-4A0B-9233-B3EAFA8F387E")]
+   [TypeLibType(4160)]
+   internal interface IEVRStreamControlInner
+   {
+      #region Public methods
+
+      [DispId(5)]
+      void flush(object aPtrEVROutputNode);
+
+      [DispId(8)]
+      void getCollectionOfFilters(IntPtr aPtrEVROutputNode, out IntPtr aPtrXMLstring);
+
+      [DispId(10)]
+      void getCollectionOfOutputFeatures(IntPtr aPtrEVROutputNode, out IntPtr aPtrXMLstring);
+
+      [DispId(3)]
+      void getPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
+
+      [DispId(7)]
+      void getSrcPosition(object aPtrEVROutputNode, out float aPtrLeft, out float aPtrRight, out float aPtrTop, out float aPtrBottom);
+
+      [DispId(4)]
+      void getZOrder(IntPtr aPtrEVROutputNode, out IntPtr aPtrZOrder);
+
+      [DispId(9)]
+      void setFilterParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue, int aIsEnabled);
+
+      [DispId(11)]
+      void setOutputFeatureParametr(object aPtrEVROutputNode, uint aParametrIndex, int aNewValue);
+
+      [DispId(1)]
+      void setPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+
+      [DispId(6)]
+      void setSrcPosition(object aPtrEVROutputNode, float aLeft, float aRight, float aTop, float aBottom);
+
+      [DispId(2)]
+      void setZOrder(object aPtrEVROutputNode, uint aZOrder);
+
+      #endregion
+   }
+
+   [Guid("39DC3AEF-3B59-4C0D-A1B2-54BF2653C056")]
+   [TypeLibType(4160)]
+   internal interface IVersionControlInner
+   {
+      #region Public methods
+
+      void checkVersion(uint aMAJOR, uint aMINOR, uint aPATCH, out sbyte aPtrResult);
+      void getVersion(out uint aPtrMAJOR, out uint aPtrMINOR, out uint aPtrPATCH, out IntPtr aPtrAdditionalLabel);
+      void getXMLStringVersion(out IntPtr aPtrXMLstring);
+
+      #endregion
+   }
+
+   [Guid("E8F25B4A-8C71-4C9E-BD8C-82260DC4C21B")]
+   [TypeLibType(4160)]
+   internal interface IStreamControlInner
+   {
+      #region Public methods
+
+      void createStreamControlNodeFactory(ref Guid aREFIID, out object aPtrPtrStreamControlNodeFactory);
+      void getCollectionOfStreamControlNodeFactories(out IntPtr aPtrXMLstring);
+
+      #endregion
+   }
 }

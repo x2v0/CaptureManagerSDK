@@ -23,28 +23,23 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IStreamControl
-    {
-        bool getCollectionOfStreamControlNodeFactories(
-            ref string aInfoString);
+   public interface IStreamControl
+   {
+      #region Public methods
 
-        bool createStreamControlNodeFactory(
-            ref ISpreaderNodeFactory aISpreaderNodeFactory);
+      bool createStreamControlNodeFactory(ref ISpreaderNodeFactory aISpreaderNodeFactory);
 
-        bool createStreamControlNodeFactory(
-            Guid aIID,
-            ref ISpreaderNodeFactory aISpreaderNodeFactory);
+      bool createStreamControlNodeFactory(Guid aIID, ref ISpreaderNodeFactory aISpreaderNodeFactory);
 
-        bool createStreamControlNodeFactory(
-            ref ISwitcherNodeFactory aISwitcherNodeFactory);
+      bool createStreamControlNodeFactory(ref ISwitcherNodeFactory aISwitcherNodeFactory);
 
-        bool createStreamControlNodeFactory(
-            ref IMixerNodeFactory aIMixerNodeFactory);
-    }
+      bool createStreamControlNodeFactory(ref IMixerNodeFactory aIMixerNodeFactory);
+
+      bool getCollectionOfStreamControlNodeFactories(ref string aInfoString);
+
+      #endregion
+   }
 }

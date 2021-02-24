@@ -23,16 +23,17 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISourceRequestResult
-    {
-        void getStreamIndex(out uint aPtrStreamIndex);
- 
-        void setData(IntPtr aPtrData, uint aByteSize, int aIsKeyFrame);
-    }
+   public interface ISourceRequestResult
+   {
+      #region Public methods
+
+      void getStreamIndex(out uint aPtrStreamIndex);
+
+      void setData(IntPtr aPtrData, uint aByteSize, int aIsKeyFrame);
+
+      #endregion
+   }
 }

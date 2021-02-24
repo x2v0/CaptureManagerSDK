@@ -1,20 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Sdp
+﻿namespace Rtsp.Sdp
 {
-    public class Bandwidth
-    {
-        public Bandwidth()
-        {
-        }
+   public class Bandwidth
+   {
+      #region Constructors and destructors
 
-        internal static Bandwidth Parse(string value)
-        {
-            //TODO really parse.
-            return new Bandwidth();
-        }
-    }
+      #endregion
+
+      #region Internal methods
+
+      internal static Bandwidth Parse(string value)
+      {
+         //TODO really parse.
+         return new Bandwidth();
+      }
+
+      #endregion
+   }
 }

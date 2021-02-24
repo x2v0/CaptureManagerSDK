@@ -22,258 +22,236 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Xml;
+using CaptureManagerToCSharpProxy;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFIPCameraMJPEGViewer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+   /// <summary>
+   ///    Interaction logic for MainWindow.xaml
+   /// </summary>
+   public partial class MainWindow : Window
+   {
+      #region Static fields
 
-    public partial class MainWindow : Window
-    {
-        public static CaptureManager mCaptureManager = null;
+      public static CaptureManager mCaptureManager;
 
-        ISourceControl mISourceControl = null;
+      #endregion
 
-        ISession mISession = null;
+      #region Constructors and destructors
 
-        public MainWindow()
-        {
-            InitializeComponent();
+      public MainWindow()
+      {
+         InitializeComponent();
 
-            try
-            {
-                mCaptureManager = new CaptureManager("CaptureManager.dll");
+         try {
+            mCaptureManager = new CaptureManager("CaptureManager.dll");
+         } catch (Exception) {
+            try {
+               mCaptureManager = new CaptureManager();
+            } catch (Exception) {
             }
-            catch (System.Exception)
-            {
-                try
-                {
-                    mCaptureManager = new CaptureManager();
-                }
-                catch (System.Exception)
-                {
+         }
 
-                }
-            }
+         if (mCaptureManager == null) {
+            return;
+         }
 
-            if (mCaptureManager == null)
-                return;
+         mISourceControl = mCaptureManager.createSourceControl();
+      }
 
-            mISourceControl = mCaptureManager.createSourceControl();            
-        }
+      #endregion
 
-        private async void mLaunchButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (mLaunchButton.Content.ToString() == "Stop")
-            {
-                if (mISession != null)
-                {
-                    mISession.closeSession();
+      #region  Fields
 
-                    mLaunchButton.Content = "Launch";
-                }
+      private ISession mISession;
 
-                mISession = null;
+      private readonly ISourceControl mISourceControl;
 
-                return;
-            }
+      #endregion
 
-            if (mISourceControl == null)
-                return;
+      #region Private methods
 
-            ICaptureProcessor lICaptureProcessor = null;
+      private async void mLaunchButton_Click(object sender, RoutedEventArgs e)
+      {
+         if (mLaunchButton.Content.ToString() == "Stop") {
+            if (mISession != null) {
+               mISession.closeSession();
 
-            try
-            {
-                lICaptureProcessor = await IPCameraMJPEGCaptureProcessor.createCaptureProcessor();
-            }
-            catch (System.Exception exc)
-            {
-                MessageBox.Show(exc.Message);
-
-                return;
+               mLaunchButton.Content = "Launch";
             }
 
-            if (lICaptureProcessor == null)
-                return;
+            mISession = null;
 
-            object lMediaSource = null;
+            return;
+         }
 
-            mISourceControl.createSourceFromCaptureProcessor(
-                lICaptureProcessor,
-                out lMediaSource);
+         if (mISourceControl == null) {
+            return;
+         }
 
-            if (lMediaSource == null)
-                return;
+         ICaptureProcessor lICaptureProcessor = null;
 
+         try {
+            lICaptureProcessor = await IPCameraMJPEGCaptureProcessor.createCaptureProcessor();
+         } catch (Exception exc) {
+            MessageBox.Show(exc.Message);
 
-            string lxmldoc = "";
+            return;
+         }
 
-            mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+         if (lICaptureProcessor == null) {
+            return;
+         }
 
-            XmlDocument doc = new XmlDocument();
+         object lMediaSource = null;
 
-            doc.LoadXml(lxmldoc);
+         mISourceControl.createSourceFromCaptureProcessor(lICaptureProcessor, out lMediaSource);
 
-            var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
-
-            if (lSinkNode == null)
-                return;
-
-            var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
-
-            if (lContainerNode == null)
-                return;
-
-            IEVRSinkFactory lSinkFactory;
-
-            var lSinkControl = mCaptureManager.createSinkControl();
-
-            lSinkControl.createSinkFactory(
-            Guid.Empty,
-            out lSinkFactory);
-
-            object lEVROutputNode;
-
-            lSinkFactory.createOutputNode(
-                mVideoPanel.Handle,
-                out lEVROutputNode);
-
-            if (lEVROutputNode == null)
-                return;
-
-            object lPtrSourceNode;
-
-            var lSourceControl = mCaptureManager.createSourceControl();
-
-            if (lSourceControl == null)
-                return;
+         if (lMediaSource == null) {
+            return;
+         }
 
 
+         var lxmldoc = "";
 
-            lSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(
-                lMediaSource,
-                0,
-                0,
-                lEVROutputNode,
-                out lPtrSourceNode);
+         mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+
+         var doc = new XmlDocument();
+
+         doc.LoadXml(lxmldoc);
+
+         var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
+
+         if (lSinkNode == null) {
+            return;
+         }
+
+         var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
+
+         if (lContainerNode == null) {
+            return;
+         }
+
+         IEVRSinkFactory lSinkFactory;
+
+         var lSinkControl = mCaptureManager.createSinkControl();
+
+         lSinkControl.createSinkFactory(Guid.Empty, out lSinkFactory);
+
+         object lEVROutputNode;
+
+         lSinkFactory.createOutputNode(mVideoPanel.Handle, out lEVROutputNode);
+
+         if (lEVROutputNode == null) {
+            return;
+         }
+
+         object lPtrSourceNode;
+
+         var lSourceControl = mCaptureManager.createSourceControl();
+
+         if (lSourceControl == null) {
+            return;
+         }
 
 
-            List<object> lSourceMediaNodeList = new List<object>();
-
-            lSourceMediaNodeList.Add(lPtrSourceNode);
-
-            var lSessionControl = mCaptureManager.createSessionControl();
-
-            if (lSessionControl == null)
-                return;
-
-            mISession = lSessionControl.createSession(
-                lSourceMediaNodeList.ToArray());
-
-            if (mISession == null)
-                return;
+         lSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(lMediaSource, 0, 0, lEVROutputNode, out lPtrSourceNode);
 
 
-            mISession.registerUpdateStateDelegate(UpdateStateDelegate);
+         var lSourceMediaNodeList = new List<object>();
 
-            mISession.startSession(0, Guid.Empty);
+         lSourceMediaNodeList.Add(lPtrSourceNode);
 
-            mLaunchButton.Content = "Stop";
+         var lSessionControl = mCaptureManager.createSessionControl();
 
-        }
+         if (lSessionControl == null) {
+            return;
+         }
 
-        void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor)
-        {
-            SessionCallbackEventCode k = (SessionCallbackEventCode)aCallbackEventCode;
+         mISession = lSessionControl.createSession(lSourceMediaNodeList.ToArray());
 
-            switch (k)
+         if (mISession == null) {
+            return;
+         }
+
+
+         mISession.registerUpdateStateDelegate(UpdateStateDelegate);
+
+         mISession.startSession(0, Guid.Empty);
+
+         mLaunchButton.Content = "Stop";
+      }
+
+      private void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor)
+      {
+         var k = (SessionCallbackEventCode) aCallbackEventCode;
+
+         switch (k) {
+            case SessionCallbackEventCode.Unknown:
+               break;
+            case SessionCallbackEventCode.Error:
+               break;
+            case SessionCallbackEventCode.Status_Error:
+               break;
+            case SessionCallbackEventCode.Execution_Error:
+               break;
+            case SessionCallbackEventCode.ItIsReadyToStart:
+               break;
+            case SessionCallbackEventCode.ItIsStarted:
+               break;
+            case SessionCallbackEventCode.ItIsPaused:
+               break;
+            case SessionCallbackEventCode.ItIsStopped:
+               break;
+            case SessionCallbackEventCode.ItIsEnded:
+               break;
+            case SessionCallbackEventCode.ItIsClosed:
+               break;
+            case SessionCallbackEventCode.VideoCaptureDeviceRemoved:
             {
-                case SessionCallbackEventCode.Unknown:
-                    break;
-                case SessionCallbackEventCode.Error:
-                    break;
-                case SessionCallbackEventCode.Status_Error:
-                    break;
-                case SessionCallbackEventCode.Execution_Error:
-                    break;
-                case SessionCallbackEventCode.ItIsReadyToStart:
-                    break;
-                case SessionCallbackEventCode.ItIsStarted:
-                    break;
-                case SessionCallbackEventCode.ItIsPaused:
-                    break;
-                case SessionCallbackEventCode.ItIsStopped:
-                    break;
-                case SessionCallbackEventCode.ItIsEnded:
-                    break;
-                case SessionCallbackEventCode.ItIsClosed:
-                    break;
-                case SessionCallbackEventCode.VideoCaptureDeviceRemoved:
-                    {
-
-
-                        Dispatcher.Invoke(
-                        DispatcherPriority.Normal,
-                        new Action(() => mLaunchButton_Click(null, null)));
-
-                    }
-                    break;
-                default:
-                    break;
+               Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => mLaunchButton_Click(null, null)));
             }
-        }
-        
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (mISession != null)
+               break;
+         }
+      }
+
+      private void Window_Closing(object sender, CancelEventArgs e)
+      {
+         if (mISession != null) {
+            var ltimer = new DispatcherTimer();
+
+            ltimer.Interval = new TimeSpan(0, 0, 0, 1);
+
+            ltimer.Tick += delegate(object sender1, EventArgs e1)
             {
-                var ltimer = new DispatcherTimer();
+               if (mLaunchButton.Content.ToString() == "Stop") {
+                  if (mISession != null) {
+                     mISession.closeSession();
+                  }
 
-                ltimer.Interval = new TimeSpan(0, 0, 0, 1);
+                  mLaunchButton.Content = "Launch";
+               }
 
-                ltimer.Tick += delegate
-                (object sender1, EventArgs e1)
-                {
-                    if (mLaunchButton.Content.ToString() == "Stop")
-                    {
-                        if (mISession != null)
-                        {
-                            mISession.closeSession();
-                        }
+               mISession = null;
 
-                        mLaunchButton.Content = "Launch";
-                    }
+               Close();
 
-                    mISession = null;
+               (sender1 as DispatcherTimer).Stop();
+            };
 
-                    Close();
+            ltimer.Start();
 
-                    (sender1 as DispatcherTimer).Stop();
-                };
+            e.Cancel = true;
+         }
+      }
 
-                ltimer.Start();
-
-                e.Cancel = true;
-            }
-        }
-    }
+      #endregion
+   }
 }

@@ -22,28 +22,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace WPFAreaScreenRecorder
 {
-    class Config
-    {
-        private static Config mInstance = null;
+   internal class Config
+   {
+      #region Static fields
 
-        public static Config Instance { get {
+      private static Config mInstance;
 
-            if (mInstance == null)
-                mInstance = new Config();
+      #endregion
 
-            return mInstance; 
-        } 
-        }
+      #region Constructors and destructors
 
+      private Config()
+      {
+      }
 
-        private Config() { }        
-    }
+      #endregion
+
+      #region Public properties
+
+      public static Config Instance
+      {
+         get
+         {
+            if (mInstance == null) {
+               mInstance = new Config();
+            }
+
+            return mInstance;
+         }
+      }
+
+      #endregion
+   }
 }

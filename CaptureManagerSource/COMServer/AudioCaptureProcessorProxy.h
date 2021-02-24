@@ -11,183 +11,103 @@
 #include "../CaptureInvoker/CaptureInvoker.h"
 #include "CaptureManagerTypeInfo.h"
 #include "InitilaizeCaptureSource.h"
-
 struct IMFMediaType;
 struct IMFSample;
 struct IMMDevice;
 struct IAudioClient;
 struct IAudioCaptureClient;
 struct IMFMediaBuffer;
-
-
 typedef LONGLONG REFERENCE_TIME;
 typedef LONGLONG MFTIME;
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
+   namespace COMServer
+   {
+      class AudioCaptureProcessorProxy : public BaseUnknown<IInnerCaptureProcessor, ISourceRequestResult>,
+                                         public Core::CaptureInvoker
+      {
+      public:
+         AudioCaptureProcessorProxy(); // ISourceRequestResult
+         /* [id][helpstring] */
+         HRESULT STDMETHODCALLTYPE setData(/* [in] */ LPVOID aPtrData, /* [in] */ DWORD aByteSize, /* [in] */
+                                                      BOOL aIsKeyFrame) override;
 
-		class AudioCaptureProcessorProxy :
-			public BaseUnknown<IInnerCaptureProcessor, ISourceRequestResult>, public Core::CaptureInvoker
-		{
-		public:
-			AudioCaptureProcessorProxy();
+         /* [id][helpstring] */
+         HRESULT STDMETHODCALLTYPE getStreamIndex(/* [out] */ DWORD* aPtrStreamIndex) override;
 
-			// ISourceRequestResult
-	
-			virtual /* [id][helpstring] */ HRESULT STDMETHODCALLTYPE setData(
-				/* [in] */ LPVOID aPtrData,
-				/* [in] */ DWORD aByteSize,
-				/* [in] */ BOOL aIsKeyFrame)override;
+         // CaptureInvoker implementation
+         HRESULT STDMETHODCALLTYPE invoke() override; //IInnerCaptureProcessor interface
+         // get friendly name of Processor
+         HRESULT getFrendlyName(BSTR* aPtrString) override;          // get symbolicLink of Processor
+         HRESULT getSymbolicLink(BSTR* aPtrString) override;         // get supported amount of streams
+         HRESULT getStreamAmount(UINT32* aPtrStreamAmount) override; // get supported media types of stream
+         HRESULT getMediaTypes(UINT32 aStreamIndex, BSTR* aPtrStreamNameString, IUnknown*** aPtrPtrPtrMediaType,
+                               UINT32* aPtrMediaTypeCount) override;
 
-			virtual /* [id][helpstring] */ HRESULT STDMETHODCALLTYPE getStreamIndex(
-				/* [out] */ DWORD *aPtrStreamIndex)override;
+         // set supported media type to stream
+         HRESULT setCurrentMediaType(UINT32 aStreamIndex, IUnknown* aPtrMediaType) override; // get new sample of stream
+         HRESULT getNewSample(DWORD aStreamIdentifier, IUnknown** aPtrPtrSample) override;   // start processor
+         HRESULT start() override;                                                           // stop processor
+         HRESULT stop() override;                                                            // pause processor
+         HRESULT pause() override;                                                           // restart processor
+         HRESULT restart() override;                                                         // shutdown processor
+         HRESULT shutdown() override;
 
-			// CaptureInvoker implementation
+         HRESULT init(ICaptureProcessor* aPtrICaptureProcessor, InitilaizeCaptureSource* aPtrInitilaizeCaptureSource);
 
-			virtual HRESULT STDMETHODCALLTYPE invoke() override;
+      private:
+         struct BufferContainer
+         {
+            IMFMediaBuffer* mPtrMediaBuffer;
+         };
 
+         virtual ~AudioCaptureProcessorProxy();
 
-			//IInnerCaptureProcessor interface
+         HRESULT checkShutdown() const;
 
-			// get friendly name of Processor
-			virtual HRESULT getFrendlyName(
-				BSTR* aPtrString);
+         bool isUninitialized();
 
-			// get symbolicLink of Processor
-			virtual HRESULT getSymbolicLink(
-				BSTR* aPtrString);
+         void clearMediaBuffer();
 
-			// get supported amount of streams
-			virtual HRESULT getStreamAmount(
-				UINT32* aPtrStreamAmount);
+         HRESULT allocateBuffer();
 
-			// get supported media types of stream
-			virtual HRESULT getMediaTypes(
-				UINT32 aStreamIndex,
-				BSTR* aPtrStreamNameString,
-				IUnknown*** aPtrPtrPtrMediaType,
-				UINT32* aPtrMediaTypeCount);
+         void writeAudioBuffer(BYTE* aPtrData, UINT32 aBufferByteLength);
 
-			// set supported media type to stream
-			virtual HRESULT setCurrentMediaType(
-				UINT32 aStreamIndex,
-				IUnknown* aPtrMediaType);
+         void pushMediaBuffer(IMFMediaBuffer* aPtrMediaBuffer);
 
-			// get new sample of stream
-			virtual HRESULT getNewSample(
-				DWORD aStreamIdentifier,
-				IUnknown** aPtrPtrSample);
+         bool popMediaBuffer(IMFMediaBuffer** aPtrPtrMediaBuffer);
 
-			// start processor
-			virtual HRESULT start();
-
-			// stop processor
-			virtual HRESULT stop();
-
-			// pause processor
-			virtual HRESULT pause();
-
-			// restart processor
-			virtual HRESULT restart();
-
-			// shutdown processor
-			virtual HRESULT shutdown();
-
-			HRESULT init(ICaptureProcessor* aPtrICaptureProcessor, InitilaizeCaptureSource* aPtrInitilaizeCaptureSource);
-
-		private:
-
-
-			struct BufferContainer
-			{
-				IMFMediaBuffer* mPtrMediaBuffer;
-			};
-
-
-			virtual ~AudioCaptureProcessorProxy();
-
-			HRESULT checkShutdown() const;
-
-			bool isUninitialized();
-
-			void clearMediaBuffer();
-
-			HRESULT allocateBuffer();
-
-			void writeAudioBuffer(
-				BYTE* aPtrData,
-				UINT32 aBufferByteLength);
-
-			void pushMediaBuffer(
-				IMFMediaBuffer* aPtrMediaBuffer);
-
-			bool popMediaBuffer(
-				IMFMediaBuffer** aPtrPtrMediaBuffer);
-
-
-			CComPtrCustom<ICaptureProcessor> mICaptureProcessor;
-
-			CComPtrCustom<InitilaizeCaptureSource> mInitilaizeCaptureSource;
-
-			CComPtrCustom<ISourceRequestResult> mSourceRequestResult;
-
-
-			Sources::SourceState mState;
-
-			bool mReleaseAudioClientLock;
-
-			bool mFirstInvoke;
-
-			MFTIME mPrevTime;
-
-			INT64 mCycleOfCapture;
-
-			MFTIME mDeltaTimeDuration;
-
-			MFTIME mCurrentSampleTime;
-						
-			UINT32 mBlockAlign;
-
-			UINT32 mSamplesPerSec;
-
-			UINT32 mExpectedBufferSize;
-
-			DWORD mSleepDuration;
-
-			DWORD mMillTickTime;
-
-			LONGLONG mSampleDuration;
-			
-			UINT32 mBufferOffset;
-
-			MFTIME mPrevSampleTime;
-
-			std::mutex mAccessMutex;
-
-			std::mutex mNewSampleMutex;
-
-			std::condition_variable mNewSampleCondition;
-
-			std::mutex mReleaseAudioClientMutex;
-
-			std::condition_variable mReleaseAudioClientCondition;
-
-			std::wstring mFriendlyName;
-
-			std::wstring mSymbolicLink;
-
-			DWORD mStreamIndex;
-
-			std::queue<BufferContainer> mBufferQueue;
-
-			std::mutex mAccessBufferQueueMutex;
-
-			CComPtrCustom<IMFMediaBuffer> mCurrentMediaBuffer;
-
-			BOOL mIsCallBack;
-		};
-	}
+         CComPtrCustom<ICaptureProcessor> mICaptureProcessor;
+         CComPtrCustom<InitilaizeCaptureSource> mInitilaizeCaptureSource;
+         CComPtrCustom<ISourceRequestResult> mSourceRequestResult;
+         Sources::SourceState mState;
+         bool mReleaseAudioClientLock;
+         bool mFirstInvoke;
+         MFTIME mPrevTime;
+         INT64 mCycleOfCapture;
+         MFTIME mDeltaTimeDuration;
+         MFTIME mCurrentSampleTime;
+         UINT32 mBlockAlign;
+         UINT32 mSamplesPerSec;
+         UINT32 mExpectedBufferSize;
+         DWORD mSleepDuration;
+         DWORD mMillTickTime;
+         LONGLONG mSampleDuration;
+         UINT32 mBufferOffset;
+         MFTIME mPrevSampleTime;
+         std::mutex mAccessMutex;
+         std::mutex mNewSampleMutex;
+         std::condition_variable mNewSampleCondition;
+         std::mutex mReleaseAudioClientMutex;
+         std::condition_variable mReleaseAudioClientCondition;
+         std::wstring mFriendlyName;
+         std::wstring mSymbolicLink;
+         DWORD mStreamIndex;
+         std::queue<BufferContainer> mBufferQueue;
+         std::mutex mAccessBufferQueueMutex;
+         CComPtrCustom<IMFMediaBuffer> mCurrentMediaBuffer;
+         BOOL mIsCallBack;
+      };
+   }
 }

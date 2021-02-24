@@ -3,45 +3,64 @@ using System.Runtime.InteropServices;
 
 namespace WPFMediaFoundationPlayer.Interop
 {
-    public sealed class Direct3DSurface9 : IDisposable
-    {
-        private ComInterface.IDirect3DSurface9 comObject;
-        private IntPtr native;
-        
-        public object texture { get { return comObject; } }
+   public sealed class Direct3DSurface9 : IDisposable
+   {
+      #region Constructors and destructors
 
-        internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj)
-        {
-            this.comObject = obj;
-            this.native = Marshal.GetIUnknownForObject(this.comObject);
-        }
+      internal Direct3DSurface9(ComInterface.IDirect3DSurface9 obj)
+      {
+         comObject = obj;
+         NativeInterface = Marshal.GetIUnknownForObject(comObject);
+      }
 
-        ~Direct3DSurface9()
-        {
-            this.Release();
-        }
+      ~Direct3DSurface9()
+      {
+         Release();
+      }
 
-        public IntPtr NativeInterface
-        {
-            get { return this.native; }
-        }
+      #endregion
 
-        public void Dispose()
-        {
-            this.Release();
-            GC.SuppressFinalize(this);
-        }
+      #region  Fields
 
-        private void Release()
-        {
-            if (this.comObject != null)
-            {
-                Marshal.Release(this.native);
-                this.native = IntPtr.Zero;
+      private ComInterface.IDirect3DSurface9 comObject;
 
-                Marshal.ReleaseComObject(this.comObject);
-                this.comObject = null;
-            }
-        }
-    }
+      #endregion
+
+      #region Public properties
+
+      public IntPtr NativeInterface
+      {
+         get;
+         private set;
+      }
+
+      public object texture => comObject;
+
+      #endregion
+
+      #region Interface methods
+
+      public void Dispose()
+      {
+         Release();
+         GC.SuppressFinalize(this);
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void Release()
+      {
+         if (comObject != null) {
+            Marshal.Release(NativeInterface);
+            NativeInterface = IntPtr.Zero;
+
+            Marshal.ReleaseComObject(comObject);
+            comObject = null;
+         }
+      }
+
+      #endregion
+   }
 }

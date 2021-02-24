@@ -22,17 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISpreaderNodeFactory
-    {
-        bool createSpreaderNode(
-            List<object> aDownStreamTopologyNodelist,
-            out object aTopologyNode);
-    }
+   public interface ISpreaderNodeFactory
+   {
+      #region Public methods
+
+      bool createSpreaderNode(List<object> aDownStreamTopologyNodelist, out object aTopologyNode);
+
+      #endregion
+   }
 }

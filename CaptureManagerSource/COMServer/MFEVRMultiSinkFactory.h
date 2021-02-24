@@ -1,5 +1,4 @@
 #pragma once
-
 #include "CaptureManagerTypeInfo.h"
 #include "BaseDispatch.h"
 #include "IContainer.h"
@@ -7,55 +6,38 @@
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		MIDL_INTERFACE("A2224D8D-C3C1-4593-8AC9-C0FCF318FF05")
-		CMVRMultiSinkFactoryProxy: public IUnknown
-		{
-		};
+   namespace COMServer
+   {
+      MIDL_INTERFACE("A2224D8D-C3C1-4593-8AC9-C0FCF318FF05") CMVRMultiSinkFactoryProxy : public IUnknown { };
 
-		class MFEVRMultiSinkFactory :
-			public BaseDispatch<IEVRMultiSinkFactory, IContainer, CMVRMultiSinkFactoryProxy>
-		{
-		public:
-			MFEVRMultiSinkFactory();
-			virtual ~MFEVRMultiSinkFactory();
+      class MFEVRMultiSinkFactory : public BaseDispatch<IEVRMultiSinkFactory, IContainer, CMVRMultiSinkFactoryProxy>
+      {
+      public:
+         MFEVRMultiSinkFactory();
 
-			static GUIDToNamePair getGUIDToNamePair();
+         virtual ~MFEVRMultiSinkFactory();
 
-			// IEVRMultiSinkFactory interface
-			STDMETHOD(createOutputNodes)(
-				/* [in] */ LPVOID aHandle,
-				/* [in] */ IUnknown *aPtrUnkTarget,
-				/* [in] */ DWORD aOutputNodeAmount,
-				/* [out] */ VARIANT *aPtrArrayPtrTopologyOutputNodes);
+         static GUIDToNamePair getGUIDToNamePair();
 
-			// IDispatch interface stub
+         // IEVRMultiSinkFactory interface
+         STDMETHOD(createOutputNodes)(/* [in] */ LPVOID aHandle, /* [in] */ IUnknown* aPtrUnkTarget, /* [in] */
+                                                 DWORD aOutputNodeAmount,                            /* [out] */
+                                                 VARIANT* aPtrArrayPtrTopologyOutputNodes) override;
 
-			STDMETHOD(GetIDsOfNames)(
-				__RPC__in REFIID riid,
-				/* [size_is][in] */ __RPC__in_ecount_full(cNames) LPOLESTR *rgszNames,
-				/* [range][in] */ __RPC__in_range(0, 16384) UINT cNames,
-				LCID lcid,
-				/* [size_is][out] */ __RPC__out_ecount_full(cNames) DISPID *rgDispId);
+         // IDispatch interface stub
+         STDMETHOD(GetIDsOfNames)(__RPC__in REFIID riid,                             /* [size_is][in] */
+                                  __RPC__in_ecount_full(cNames) LPOLESTR* rgszNames, /* [range][in] */
+                                  __RPC__in_range(0, 16384) UINT cNames, LCID lcid,  /* [size_is][out] */
+                                  __RPC__out_ecount_full(cNames) DISPID* rgDispId) override;
 
-			virtual HRESULT invokeMethod(
-				/* [annotation][in] */
-				_In_  DISPID dispIdMember,
-				/* [annotation][out][in] */
-				_In_  DISPPARAMS *pDispParams,
-				/* [annotation][out] */
-				_Out_opt_  VARIANT *pVarResult);
+         HRESULT invokeMethod( /* [annotation][in] */ _In_ DISPID dispIdMember,
+                                                      /* [annotation][out][in] */
+                                                      _In_ DISPPARAMS* pDispParams,            /* [annotation][out] */
+                                                      _Out_opt_ VARIANT* pVarResult) override; // IContainer interface
+         STDMETHOD(setContainerFormat)(REFGUID aRefContainerTypeGUID) override;
 
-			// IContainer interface
-
-			STDMETHOD(setContainerFormat)(
-				REFGUID aRefContainerTypeGUID);
-
-		private:
-
-			static void getReadModes(std::vector<GUIDToNamePair>& aRefReadModes);
-		};
-	}
+      private:
+         static void getReadModes(std::vector<GUIDToNamePair>& aRefReadModes);
+      };
+   }
 }
-

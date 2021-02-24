@@ -1,35 +1,29 @@
 #pragma once
-
 #include <windows.h>
 #include <atomic>
 
-
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		class ClassFactory
-		{
-		public:
+   namespace COMServer
+   {
+      class ClassFactory
+      {
+      public:
+         HRESULT getClassObject(REFCLSID aRefCLSID, REFIID aRefIID, void** aPtrPtrVoidObject);
 
-			HRESULT getClassObject(
-				REFCLSID aRefCLSID,
-				REFIID aRefIID,
-				void** aPtrPtrVoidObject);
+         HRESULT checkLock();
 
-			HRESULT checkLock();
+         ULONG lock();
 
-			ULONG lock();
+         ULONG unlock();
 
-			ULONG unlock();
+      protected:
+         ClassFactory();
 
-		protected:
-			ClassFactory();
-			virtual ~ClassFactory();
+         virtual ~ClassFactory();
 
-		private:
-			
-			std::atomic<ULONG> mLockCount = 0;
-		};
-	}
+      private:
+         std::atomic<ULONG> mLockCount = 0;
+      };
+   }
 }

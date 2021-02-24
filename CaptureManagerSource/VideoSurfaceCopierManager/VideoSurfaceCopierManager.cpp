@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "VideoSurfaceCopierManager.h"
 #include "Direct3DSurface9Transform.h"
 #include "VideoSampleAllocatorTransform.h"
@@ -30,77 +29,43 @@ SOFTWARE.
 #include "../Common/ComPtrCustom.h"
 #include "../Common/MFHeaders.h"
 
-
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		VideoSurfaceCopierManager::VideoSurfaceCopierManager()
-		{
-		}
-		
-		VideoSurfaceCopierManager::~VideoSurfaceCopierManager()
-		{
-		}
+   namespace Transform
+   {
+      VideoSurfaceCopierManager::VideoSurfaceCopierManager() { }
+      VideoSurfaceCopierManager::~VideoSurfaceCopierManager() { }
 
-		HRESULT VideoSurfaceCopierManager::createVideoSurfaceCopier(
-			IUnknown* aPtrDeviceManager,
-			IUnknown* aPtrMediaType,
-			IUnknown** aPtrPtrTransform)
-		{
-			using namespace Direct3DSurface9;
-
-			using namespace VideoSampleAllocator;
-
-			HRESULT lresult;
-
-			do
-			{
-				CComPtrCustom<IMFMediaType> lMediaType;
-
-				LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrMediaType, &lMediaType);
-				
-				CComQIPtrCustom<IDirect3DDeviceManager9> lDirect3DDeviceManager9;
-
-				lDirect3DDeviceManager9 = aPtrDeviceManager;
-				
-				if (lDirect3DDeviceManager9)
-				{
-					CComPtrCustom<Direct3DSurface9Transform> lDirect3DSurface9Transform(
-						new (std::nothrow) Direct3DSurface9Transform);
-
-					LOG_INVOKE_POINTER_METHOD(lDirect3DSurface9Transform, init,
-						lDirect3DDeviceManager9,
-						lMediaType);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3DSurface9Transform, aPtrPtrTransform);
-				}
-				else
-				{
-					CComQIPtrCustom<IMFVideoSampleAllocator>  lIMFVideoSampleAllocator;
-
-					lIMFVideoSampleAllocator = aPtrDeviceManager;
-
-					if (lIMFVideoSampleAllocator)
-					{
-						CComPtrCustom<VideoSampleAllocatorTransform> lVideoSampleAllocatorTransform(
-							new (std::nothrow) VideoSampleAllocatorTransform);
-
-						LOG_INVOKE_POINTER_METHOD(lVideoSampleAllocatorTransform, init,
-							lIMFVideoSampleAllocator,
-							lMediaType);
-
-						LOG_INVOKE_QUERY_INTERFACE_METHOD(lVideoSampleAllocatorTransform, aPtrPtrTransform);
-					}
-					else
-					{
-						lresult = E_FAIL;
-					}
-				}
-				
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT VideoSurfaceCopierManager::createVideoSurfaceCopier(IUnknown* aPtrDeviceManager, IUnknown* aPtrMediaType,
+                                                                  IUnknown** aPtrPtrTransform)
+      {
+         using namespace Direct3DSurface9;
+         using namespace VideoSampleAllocator;
+         HRESULT lresult;
+         do {
+            CComPtrCustom<IMFMediaType> lMediaType;
+            LOG_INVOKE_QUERY_INTERFACE_METHOD(aPtrMediaType, &lMediaType);
+            CComQIPtrCustom<IDirect3DDeviceManager9> lDirect3DDeviceManager9;
+            lDirect3DDeviceManager9 = aPtrDeviceManager;
+            if (lDirect3DDeviceManager9) {
+               CComPtrCustom<Direct3DSurface9Transform> lDirect3DSurface9Transform(
+                  new(std::nothrow) Direct3DSurface9Transform);
+               LOG_INVOKE_POINTER_METHOD(lDirect3DSurface9Transform, init, lDirect3DDeviceManager9, lMediaType);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3DSurface9Transform, aPtrPtrTransform);
+            } else {
+               CComQIPtrCustom<IMFVideoSampleAllocator> lIMFVideoSampleAllocator;
+               lIMFVideoSampleAllocator = aPtrDeviceManager;
+               if (lIMFVideoSampleAllocator) {
+                  CComPtrCustom<VideoSampleAllocatorTransform> lVideoSampleAllocatorTransform(
+                     new(std::nothrow) VideoSampleAllocatorTransform);
+                  LOG_INVOKE_POINTER_METHOD(lVideoSampleAllocatorTransform, init, lIMFVideoSampleAllocator, lMediaType);
+                  LOG_INVOKE_QUERY_INTERFACE_METHOD(lVideoSampleAllocatorTransform, aPtrPtrTransform);
+               } else {
+                  lresult = E_FAIL;
+               }
+            }
+         } while (false);
+         return lresult;
+      }
+   }
 }

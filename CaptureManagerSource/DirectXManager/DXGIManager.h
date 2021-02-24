@@ -1,18 +1,14 @@
 #pragma once
-
 #include <Unknwn.h>
-
 #include "../Common/Common.h"
-
 struct IMFDXGIBuffer;
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		namespace DXGI
-		{
-
+   namespace Core
+   {
+      namespace DXGI
+      {
 #ifdef _DEBUG_CAPTUREMANAGER
 #define LOG_INVOKE_DXGI_FUNCTION(Function, ...) lresult = DXGI::DXGIManager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -28,8 +24,7 @@ namespace CaptureManager
 		L" Error code: ",\
 		lresult);\
 		break;\
-					}\
-
+					}
 #else
 #define LOG_INVOKE_DXGI_FUNCTION(Function, ...) {\
 	lresult = DXGI::DXGIManager::Function(__VA_ARGS__);\
@@ -40,8 +35,6 @@ namespace CaptureManager
 						}\
 
 #endif
-
-
 #ifdef _DEBUG_CAPTUREMANAGER
 #define LOG_INVOKE_DXGI_METHOD(Function, ...) lresult = DXGI::DXGIManager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -52,55 +45,39 @@ namespace CaptureManager
 		L" Error code: ",\
 		lresult);\
 		break;\
-						}\
-
+						}
 #else
 #define LOG_INVOKE_DXGI_METHOD(Function, Object, ...) lresult = Object->Function(__VA_ARGS__);\
 	if (FAILED(lresult))break;\
 
 #endif
+         typedef HRESULT (WINAPI *CreateDXGIFactory1)(REFIID, void**);
 
+         class DXGIManager
+         {
+         public:
+            static CreateDXGIFactory1 CreateDXGIFactory1;
+         public:
+            HRESULT getState();
 
-			typedef HRESULT(WINAPI *CreateDXGIFactory1)(
-				REFIID, 
-				void **);
+            static HRESULT STDMETHODCALLTYPE GetResource(IMFDXGIBuffer* aPtrIMFDXGIBuffer, /* [annotation][in] */
+                                                         REFIID riid, /* [annotation][out] */ LPVOID* ppvObject);
 
-			class DXGIManager
-			{
-			public:
+         protected:
+            DXGIManager();
 
-				static CreateDXGIFactory1 CreateDXGIFactory1;
+            virtual ~DXGIManager();
 
+         private:
+            HRESULT mState;
 
-			public:
+            HRESULT initFunctions(HMODULE aModule);
 
-				HRESULT getState();
-
-				static HRESULT STDMETHODCALLTYPE GetResource(
-					IMFDXGIBuffer* aPtrIMFDXGIBuffer,
-					/* [annotation][in] */
-					REFIID riid,
-					/* [annotation][out] */
-					LPVOID *ppvObject);
-
-			protected:
-				DXGIManager();
-				virtual ~DXGIManager();
-
-			private:
-
-				HRESULT mState;
-
-				HRESULT initFunctions(HMODULE aModule);
-
-
-				static HRESULT WINAPI stubCreateDXGIFactory1(
-					REFIID,
-					void **)
-				{
-					return E_NOTIMPL;
-				}
-			};
-		}
-	}
+            static HRESULT WINAPI stubCreateDXGIFactory1(REFIID, void**)
+            {
+               return E_NOTIMPL;
+            }
+         };
+      }
+   }
 }

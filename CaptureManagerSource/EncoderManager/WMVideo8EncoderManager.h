@@ -1,69 +1,42 @@
 #pragma once
-
 #include <vector>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
 #include "IEncoderManager.h"
 #include "BaseEncoderManager.h"
-
 struct IPropertyStore;
 
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		namespace Encoder
-		{
-			class WMVideo8EncoderManager :
-				public BaseUnknown<IEncoderManager>,
-				public BaseEncoderManager
-			{
-			public:
-				
-				// IEncoderManager interface
+   namespace Transform
+   {
+      namespace Encoder
+      {
+         class WMVideo8EncoderManager : public BaseUnknown<IEncoderManager>, public BaseEncoderManager
+         {
+         public: // IEncoderManager interface
+            HRESULT enumEncoderMediaTypes(IMFMediaType* aPtrInputMediaType, EncodingSettings aEncodingSettings,
+                                          REFGUID aRefEncoderCLSID,
+                                          std::vector<CComPtrCustom<IUnknown>>& aRefListOfMediaTypes) override;
 
-				virtual HRESULT enumEncoderMediaTypes(
-					IMFMediaType* aPtrInputMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					std::vector<CComPtrCustom<IUnknown>> &aRefListOfMediaTypes);
+            HRESULT getCompressedMediaType(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                                           REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                                           IMFMediaType** aPtrPtrCompressedMediaType) override;
 
-				virtual HRESULT getCompressedMediaType(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFMediaType** aPtrPtrCompressedMediaType);
+            HRESULT getEncoder(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                               REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                               IMFTransform** aPtrPtrEncoderTransform) override; // WMVideo8EncoderManager interface
+            static GUID getFirstMediaSubType();
 
-				virtual HRESULT getEncoder(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFTransform** aPtrPtrEncoderTransform);
+            static GUID getSecondMediaSubType();
 
-				// WMVideo8EncoderManager interface
+         private:
+            HRESULT setEncodingProperties(IPropertyStore* aPtrPropertyStore, EncodingSettings aEncodingSettings);
 
-				static GUID getFirstMediaSubType();
+            HRESULT addPrivateData(IMFTransform* aPtrEncoderTransform, IMFMediaType* aPtrMediaType);
 
-				static GUID getSecondMediaSubType();
-
-			private:
-
-				HRESULT setEncodingProperties(
-					IPropertyStore* aPtrPropertyStore,
-					EncodingSettings aEncodingSettings);
-
-				HRESULT addPrivateData(
-					IMFTransform* aPtrEncoderTransform,
-					IMFMediaType* aPtrMediaType);
-
-				HRESULT fixMediaType(
-					IMFMediaType* aPtrUncompressedMediaType,
-					IMFMediaType* aPtrFixedUncompressedMediaType);
-
-			};
-		}
-	}
+            HRESULT fixMediaType(IMFMediaType* aPtrUncompressedMediaType, IMFMediaType* aPtrFixedUncompressedMediaType);
+         };
+      }
+   }
 }

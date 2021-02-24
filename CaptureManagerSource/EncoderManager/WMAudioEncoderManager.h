@@ -1,66 +1,41 @@
 #pragma once
-
 #include <vector>
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
 #include "IEncoderManager.h"
-
 struct IPropertyStore;
 
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		namespace Encoder
-		{
-			class WMAudioEncoderManager :
-				public BaseUnknown<IEncoderManager>
-			{
-			public:
-				
-				// IEncoderManager interface
+   namespace Transform
+   {
+      namespace Encoder
+      {
+         class WMAudioEncoderManager : public BaseUnknown<IEncoderManager>
+         {
+         public: // IEncoderManager interface
+            HRESULT enumEncoderMediaTypes(IMFMediaType* aPtrInputMediaType, EncodingSettings aEncodingSettings,
+                                          REFGUID aRefEncoderCLSID,
+                                          std::vector<CComPtrCustom<IUnknown>>& aRefListOfMediaTypes) override;
 
-				virtual HRESULT enumEncoderMediaTypes(
-					IMFMediaType* aPtrInputMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					std::vector<CComPtrCustom<IUnknown>> &aRefListOfMediaTypes);
+            HRESULT getCompressedMediaType(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                                           REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                                           IMFMediaType** aPtrPtrCompressedMediaType) override;
 
-				virtual HRESULT getCompressedMediaType(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFMediaType** aPtrPtrCompressedMediaType);
+            HRESULT getEncoder(IMFMediaType* aPtrUncompressedMediaType, EncodingSettings aEncodingSettings,
+                               REFGUID aRefEncoderCLSID, DWORD lIndexCompressedMediaType,
+                               IMFTransform** aPtrPtrEncoderTransform) override; // WMAudioEncoderManager interface
+            static GUID getMediaSubType();
 
-				virtual HRESULT getEncoder(
-					IMFMediaType* aPtrUncompressedMediaType,
-					EncodingSettings aEncodingSettings,
-					REFGUID aRefEncoderCLSID,
-					DWORD lIndexCompressedMediaType,
-					IMFTransform** aPtrPtrEncoderTransform);
+         private:
+            HRESULT setEncodingProperties(IPropertyStore* aPtrPropertyStore, EncodingSettings aEncodingSettings);
 
-				// WMAudioEncoderManager interface
-				
-				static GUID getMediaSubType();
+            HRESULT copyAndModifyInputMediaType(IMFMediaType* aPtrOriginalInputMediaType,
+                                                IMFMediaType** aPtrPtrCopyInputMediaType);
 
-			private:
-				
-				HRESULT setEncodingProperties(
-					IPropertyStore* aPtrPropertyStore,
-					EncodingSettings aEncodingSettings);
-
-				HRESULT copyAndModifyInputMediaType(
-					IMFMediaType* aPtrOriginalInputMediaType,
-					IMFMediaType** aPtrPtrCopyInputMediaType);
-
-				HRESULT createStubUncompressedMediaType(
-					UINT32 aSamplePerSecond,
-					UINT32 aNumChannels,
-					UINT32 aBitsPerSample,
-					IMFMediaType** aPtrPtrStubUncompressedMediaType);
-			};
-		}
-	}
+            HRESULT createStubUncompressedMediaType(UINT32 aSamplePerSecond, UINT32 aNumChannels, UINT32 aBitsPerSample,
+                                                    IMFMediaType** aPtrPtrStubUncompressedMediaType);
+         };
+      }
+   }
 }

@@ -1,24 +1,20 @@
 #pragma once
-
 #include "CaptureManagerTypeInfo.h"
 #include "BaseDispatch.h"
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		class AudioMixerControl :
-			public BaseDispatch<IAudioMixerControl>
-		{
-		public:
-			AudioMixerControl();
-			virtual ~AudioMixerControl();
+   namespace COMServer
+   {
+      class AudioMixerControl : public BaseDispatch<IAudioMixerControl>
+      {
+      public:
+         AudioMixerControl();
 
-		//	IAudioMixerControl implements
-		
-			virtual /* [id][helpstring] */ HRESULT STDMETHODCALLTYPE setRelativeVolume(
-				/* [in] */ IUnknown *aPtrAudioMixerNode,
-				/* [in] */ FLOAT aRelativeVolume) override;
-		};
-	}
+         virtual ~AudioMixerControl(); //	IAudioMixerControl implements
+         /* [id][helpstring] */
+         HRESULT STDMETHODCALLTYPE setRelativeVolume(/* [in] */ IUnknown* aPtrAudioMixerNode, /* [in] */
+                                                                FLOAT aRelativeVolume) override;
+      };
+   }
 }

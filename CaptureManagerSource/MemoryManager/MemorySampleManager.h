@@ -1,26 +1,21 @@
 #pragma once
 #include "IMemorySampleManager.h"
-
 struct IMFMediaType;
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		class MemorySampleManager
-		{
-		public:
+   namespace Core
+   {
+      class MemorySampleManager
+      {
+      public:
+         static HRESULT createVideoMemorySampleManager(IMFMediaType* aPtrMediaType,
+                                                       IMemorySampleManager** aPtrPtrMemorySampleManager);
 
-			static HRESULT createVideoMemorySampleManager(
-				IMFMediaType* aPtrMediaType,
-				IMemorySampleManager** aPtrPtrMemorySampleManager);
+      private:
+         MemorySampleManager() = delete;
 
-		private:
-			MemorySampleManager() = delete;
-			~MemorySampleManager() = delete;
-		};
-	}
+         ~MemorySampleManager() = delete;
+      };
+   }
 }
-
-
-

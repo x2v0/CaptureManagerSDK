@@ -22,55 +22,60 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFMediaFoundationPlayer
 {
-    class CaptureManagerEVRMultiSinkFactory : ICaptureManagerEVRMultiSinkFactory
-    {
-        IEVRMultiSinkFactory mIEVRMultiSinkFactory = null;
+   internal class CaptureManagerEVRMultiSinkFactory : ICaptureManagerEVRMultiSinkFactory
+   {
+      #region Constructors and destructors
 
-        IEVRStreamControl mIEVRStreamControl = null;
+      public CaptureManagerEVRMultiSinkFactory(IEVRMultiSinkFactory aIEVRMultiSinkFactory, uint aMaxVideoRenderStreamCount, IEVRStreamControl aIEVRStreamControl)
+      {
+         mIEVRMultiSinkFactory = aIEVRMultiSinkFactory;
 
-        uint mMaxVideoRenderStreamCount = 0;
+         mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
 
-        public CaptureManagerEVRMultiSinkFactory(
-            IEVRMultiSinkFactory aIEVRMultiSinkFactory,
-            uint aMaxVideoRenderStreamCount,
-            IEVRStreamControl aIEVRStreamControl)
-        {
-            mIEVRMultiSinkFactory = aIEVRMultiSinkFactory;
+         mIEVRStreamControl = aIEVRStreamControl;
+      }
 
-            mMaxVideoRenderStreamCount = aMaxVideoRenderStreamCount;
+      #endregion
 
-            mIEVRStreamControl = aIEVRStreamControl;
-        }
+      #region  Fields
 
-        public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
-        {
-            if (mIEVRMultiSinkFactory == null)
-            {
-                aTopologyOutputNodesList = new List<object>();
+      private readonly IEVRMultiSinkFactory mIEVRMultiSinkFactory;
 
-                return false;
-            }
+      private readonly IEVRStreamControl mIEVRStreamControl;
 
-            return mIEVRMultiSinkFactory.createOutputNodes(aHandle, aPtrUnkSharedResource, aOutputNodeAmount, out aTopologyOutputNodesList);
-        }
-        
-        public uint getMaxVideoRenderStreamCount()
-        {
-            return mMaxVideoRenderStreamCount;
-        }
+      private readonly uint mMaxVideoRenderStreamCount;
 
-        public IEVRStreamControl getIEVRStreamControl()
-        {
-            return mIEVRStreamControl;
-        }
-    }
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
+      {
+         if (mIEVRMultiSinkFactory == null) {
+            aTopologyOutputNodesList = new List<object>();
+
+            return false;
+         }
+
+         return mIEVRMultiSinkFactory.createOutputNodes(aHandle, aPtrUnkSharedResource, aOutputNodeAmount, out aTopologyOutputNodesList);
+      }
+
+      public IEVRStreamControl getIEVRStreamControl()
+      {
+         return mIEVRStreamControl;
+      }
+
+      public uint getMaxVideoRenderStreamCount()
+      {
+         return mMaxVideoRenderStreamCount;
+      }
+
+      #endregion
+   }
 }

@@ -6,73 +6,58 @@
 
 //#include "Result.h"
 //#include "pugixml.hpp"
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		class IMaker;
-	}
+   namespace Core
+   {
+      class IMaker;
+   }
 
-	namespace Transform
-	{
-		namespace Encoder
-		{
-			class EncoderInfoData
-			{
-			public:
+   namespace Transform
+   {
+      namespace Encoder
+      {
+         class EncoderInfoData
+         {
+         public:
+            GUID mGUID;
+            GUID mMediaSubType;
+            BOOL mIsStreaming;
+            UINT32 mMaxBitRate;
+            UINT32 mMinBitRate;
+         };
 
-				GUID mGUID;
+         struct IEncoderManager;
 
-				GUID mMediaSubType;
-				
-				BOOL mIsStreaming;
+         struct GUIDComparer
+         {
+            bool operator()(const EncoderInfoData& Left, const EncoderInfoData& Right) const
+            {
+               return memcmp(&Left.mGUID, &Right.mGUID, sizeof(Right.mGUID)) < 0;
+            }
+         };
 
-				UINT32 mMaxBitRate;
+         class EncoderManagerFactory
+         {
+         public:
+            HRESULT registerInstanceMaker(EncoderInfoData aEncoderInfoData, const Core::IMaker* aPtrMaker);
 
-				UINT32 mMinBitRate;
+            HRESULT createEncoderManager(REFGUID aRefEncoderCLSID, IEncoderManager** aPtrPtrIEncoderManager);
 
-			};
+            HRESULT getMaxMinBitRate(REFGUID aRefEncoderCLSID, UINT32& aRefMaxBitRate, UINT32& aRefMinBitRate);
 
-			struct IEncoderManager;
+         protected:
+            EncoderManagerFactory();
 
-			struct GUIDComparer
-			{
-				bool operator()(const EncoderInfoData & Left, const EncoderInfoData & Right) const
-				{
-					return memcmp(&Left.mGUID, &Right.mGUID, sizeof(Right.mGUID)) < 0;
-				}
-			};
+            ~EncoderManagerFactory();
 
-			class EncoderManagerFactory
-			{
-			public:
-				
-				HRESULT registerInstanceMaker(
-					EncoderInfoData aEncoderInfoData,
-					const CaptureManager::Core::IMaker* aPtrMaker);
+         private:
+            std::map<EncoderInfoData, const Core::IMaker*, GUIDComparer> mEncoderManagerMakers;
 
-				HRESULT createEncoderManager(
-					REFGUID aRefEncoderCLSID,
-					IEncoderManager** aPtrPtrIEncoderManager);
+            EncoderManagerFactory(const EncoderManagerFactory&) = delete;
 
-				HRESULT getMaxMinBitRate(
-					REFGUID aRefEncoderCLSID,
-					UINT32& aRefMaxBitRate,
-					UINT32& aRefMinBitRate);
-
-			protected:
-
-				EncoderManagerFactory();
-				~EncoderManagerFactory();
-
-			private:
-
-				std::map<EncoderInfoData, const CaptureManager::Core::IMaker*, GUIDComparer> mEncoderManagerMakers;
-								
-				EncoderManagerFactory(const EncoderManagerFactory&) = delete;
-				EncoderManagerFactory& operator=(const EncoderManagerFactory&) = delete;
-			};
-		}
-	}
+            EncoderManagerFactory& operator=(const EncoderManagerFactory&) = delete;
+         };
+      }
+   }
 }

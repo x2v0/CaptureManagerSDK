@@ -23,55 +23,69 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
+using WPFWebViewerEVRDisplay.Interop;
 
 namespace WPFWebViewerEVRDisplay
 {
-    internal class EVRDisplay : System.Windows.Controls.ContentControl
-    {
-        private System.Windows.Interop.D3DImage imageSource = null;
+   internal class EVRDisplay : ContentControl
+   {
+      #region Constructors and destructors
 
-        private Interop.Direct3DSurface9 surface = null;
+      public EVRDisplay()
+      {
+         var lTuple = D3D9Image.createD3D9Image();
 
-        public Interop.Direct3DSurface9 Surface { get { return surface; } }
+         if (lTuple != null) {
+            imageSource = lTuple.Item1;
 
-        public EVRDisplay()
-        {
-            var lTuple = D3D9Image.createD3D9Image();
+            Surface = lTuple.Item2;
+         }
 
-            if(lTuple != null)
-            {
-                this.imageSource = lTuple.Item1;
+         if (imageSource != null) {
+            var image = new Image();
+            image.Stretch = Stretch.Uniform;
+            image.Source = imageSource;
+            AddChild(image);
 
-                this.surface = lTuple.Item2;
-            }
-            
-            if (this.imageSource != null)
-            {
-                var image = new System.Windows.Controls.Image();
-                image.Stretch = System.Windows.Media.Stretch.Uniform;
-                image.Source = this.imageSource;
-                this.AddChild(image);
+            // To greatly reduce flickering we're only going to AddDirtyRect
+            // when WPF is rendering.
+            CompositionTarget.Rendering += CompositionTargetRendering;
+         }
+      }
 
-                // To greatly reduce flickering we're only going to AddDirtyRect
-                // when WPF is rendering.
-                System.Windows.Media.CompositionTarget.Rendering += this.CompositionTargetRendering;
-            }
-        }
+      #endregion
 
-        private void CompositionTargetRendering(object sender, EventArgs e)
-        {
-            if (this.imageSource != null && this.imageSource.IsFrontBufferAvailable)
-            {
-                this.imageSource.Lock();
-                this.imageSource.AddDirtyRect(new Int32Rect(0, 0, this.imageSource.PixelWidth, this.imageSource.PixelHeight));
-                this.imageSource.Unlock();
-            }
-        }
-    }
+      #region  Fields
+
+      private readonly D3DImage imageSource;
+
+      #endregion
+
+      #region Public properties
+
+      public Direct3DSurface9 Surface
+      {
+         get;
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void CompositionTargetRendering(object sender, EventArgs e)
+      {
+         if ((imageSource != null) &&
+             imageSource.IsFrontBufferAvailable) {
+            imageSource.Lock();
+            imageSource.AddDirtyRect(new Int32Rect(0, 0, imageSource.PixelWidth, imageSource.PixelHeight));
+            imageSource.Unlock();
+         }
+      }
+
+      #endregion
+   }
 }

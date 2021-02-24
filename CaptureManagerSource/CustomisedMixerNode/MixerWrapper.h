@@ -3,40 +3,30 @@
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
 
-
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         class MixerWrapper : public BaseUnknown<IMixerWrapper>
+         {
+         public:
+            MixerWrapper(DWORD aInputNodeAmount);
 
-			class MixerWrapper :
-				public BaseUnknown<IMixerWrapper>
-			{
-			public:
-				MixerWrapper(DWORD aInputNodeAmount);
-				virtual ~MixerWrapper();
-							   
-				static HRESULT getStreamCount(
-					REFGUID aRefMajorType,
-					DWORD& aRefInputNodeAmount);
+            virtual ~MixerWrapper();
 
-			//	IMixerWrapper implementation
+            static HRESULT getStreamCount(REFGUID aRefMajorType, DWORD& aRefInputNodeAmount);
 
-				virtual HRESULT initialize(
-					IMFMediaType* aPtrMediaTypeType)override;
+            //	IMixerWrapper implementation
+            HRESULT initialize(IMFMediaType* aPtrMediaTypeType) override;
 
-				virtual HRESULT getMixer(
-					IMFTransform** aPtrMixer)override;
-		
+            HRESULT getMixer(IMFTransform** aPtrMixer) override;
 
-			private:
-
-				CComPtrCustom<IUnknown> mMixerUnkTransform;
-
-				const DWORD mInputNodeAmount;
-			};
-		}
-	}
+         private:
+            CComPtrCustom<IUnknown> mMixerUnkTransform;
+            const DWORD mInputNodeAmount;
+         };
+      }
+   }
 }

@@ -22,423 +22,417 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Xml;
+using CaptureManagerToCSharpProxy;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WindowsFormsDemo
 {
-    public partial class WebViewer : Form
-    {
-        CaptureManager mCaptureManager = null;
+   public partial class WebViewer : Form
+   {
+      #region Constructors and destructors
 
-        ISession mISession = null;
-        
-        class ContainerItem
-        {
-            public string mFriendlyName = "SourceItem";
+      public WebViewer()
+      {
+         InitializeComponent();
 
-            public XmlNode mXmlNode;
 
-            public override string ToString()
-            {
-                return mFriendlyName;
+         try {
+            mCaptureManager = new CaptureManager("CaptureManager.dll");
+         } catch (Exception) {
+            try {
+               mCaptureManager = new CaptureManager();
+            } catch (Exception) {
             }
-        }
-        
-        public WebViewer()
-        {
-            InitializeComponent();
+         }
 
+         fillSourceCmboBox();
+      }
 
-            try
-            {
-                mCaptureManager = new CaptureManager("CaptureManager.dll");
-            }
-            catch (System.Exception)
-            {
-                try
-                {
-                    mCaptureManager = new CaptureManager();
-                }
-                catch (System.Exception)
-                {
+      #endregion
 
-                }
-            }
+      #region  Fields
 
-            fillSourceCmboBox();
-        }
+      private readonly CaptureManager mCaptureManager;
 
-        private void fillSourceCmboBox()
-        {
+      private ISession mISession;
 
+      #endregion
 
-            if (mCaptureManager == null)
-                return;
+      #region Private methods
 
-            System.Xml.XmlDocument doc = new System.Xml.XmlDocument();
+      private void aLlToolStripMenuItem_Click(object sender, EventArgs e)
+      {
+      }
 
-            string lxmldoc = "";
+      private void dSCrossbarToolStripMenuItem_Click(object sender, EventArgs e)
+      {
+         fillSourceCmboBox();
+      }
 
-            mCaptureManager.getCollectionOfSources(ref lxmldoc);
+      private void fillSourceCmboBox()
+      {
+         if (mCaptureManager == null) {
+            return;
+         }
 
-            if (string.IsNullOrEmpty(lxmldoc))
-                return;
+         var doc = new XmlDocument();
 
-            doc.LoadXml(lxmldoc);
+         var lxmldoc = "";
 
-            string lXPath = "//*[";
+         mCaptureManager.getCollectionOfSources(ref lxmldoc);
 
-            if(toolStripMenuItem1.Checked)
-            {
+         if (string.IsNullOrEmpty(lxmldoc)) {
+            return;
+         }
 
-                lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY']/SingleValue[@Value='CLSID_WebcamInterfaceDeviceCategory']";
-            }
-                        
-            if (toolStripMenuItem2.Checked)
-            {
-                if (toolStripMenuItem1.Checked)
-                    lXPath += "or ";
+         doc.LoadXml(lxmldoc);
 
-                lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_HW_SOURCE']/SingleValue[@Value='Software device']";
+         var lXPath = "//*[";
+
+         if (toolStripMenuItem1.Checked) {
+            lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY']/SingleValue[@Value='CLSID_WebcamInterfaceDeviceCategory']";
+         }
+
+         if (toolStripMenuItem2.Checked) {
+            if (toolStripMenuItem1.Checked) {
+               lXPath += "or ";
             }
 
-            if (dSCrossbarToolStripMenuItem.Checked)
-            {
-                if (toolStripMenuItem1.Checked || toolStripMenuItem2.Checked)
-                    lXPath += "or ";
+            lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_HW_SOURCE']/SingleValue[@Value='Software device']";
+         }
 
-                lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY']/SingleValue[@Value='CLSID_VideoInputDeviceCategory']";
-            }                      
-            
-            lXPath += "]";
-
-            XmlNodeList lSourceNodes = null;
-
-            try
-            {
-
-                lSourceNodes = doc.SelectNodes(lXPath);
-            }
-            catch (Exception)
-            {
-
+         if (dSCrossbarToolStripMenuItem.Checked) {
+            if (toolStripMenuItem1.Checked ||
+                toolStripMenuItem2.Checked) {
+               lXPath += "or ";
             }
 
-            sourceComboBox.Items.Clear();
+            lXPath += "Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY']/SingleValue[@Value='CLSID_VideoInputDeviceCategory']";
+         }
 
-            if (lSourceNodes == null)
-                return;
+         lXPath += "]";
 
-            if (lSourceNodes != null)
-            {
-                foreach (var item in lSourceNodes)
-                {
-                    var lNode = (XmlNode)item;
+         XmlNodeList lSourceNodes = null;
 
-                    if (lNode != null)
-                    {
-                        var lvalueNode = lNode.SelectSingleNode("Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME']/SingleValue/@Value");
+         try {
+            lSourceNodes = doc.SelectNodes(lXPath);
+         } catch (Exception) {
+         }
 
-                        ContainerItem lSourceItem = new ContainerItem()
-                        {
-                            mFriendlyName = lvalueNode.Value,
-                            mXmlNode = lNode
-                        };
+         sourceComboBox.Items.Clear();
 
-                        sourceComboBox.Items.Add(lSourceItem);
-                    }
+         if (lSourceNodes == null) {
+            return;
+         }
 
+         if (lSourceNodes != null) {
+            foreach (var item in lSourceNodes) {
+               var lNode = (XmlNode) item;
 
-                }
+               if (lNode != null) {
+                  var lvalueNode = lNode.SelectSingleNode("Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME']/SingleValue/@Value");
+
+                  var lSourceItem = new ContainerItem {
+                     mFriendlyName = lvalueNode.Value,
+                     mXmlNode = lNode
+                  };
+
+                  sourceComboBox.Items.Add(lSourceItem);
+               }
             }
-        }
+         }
+      }
 
-        private void sourceComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var lSelectedSourceItem = (ContainerItem)sourceComboBox.SelectedItem;
+      private void label1_Click(object sender, EventArgs e)
+      {
+      }
 
-            if (lSelectedSourceItem == null)
-                return;
+      private void label2_Click(object sender, EventArgs e)
+      {
+      }
 
-            var lStreamNodes = lSelectedSourceItem.mXmlNode.SelectNodes("PresentationDescriptor/StreamDescriptor");
+      private void label3_Click(object sender, EventArgs e)
+      {
+      }
 
-            if (lStreamNodes == null)
-                return;
+      private void mediaTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+      {
+      }
 
-            streamComboBox.Items.Clear();
+      private void sourceComboBox_SelectedIndexChanged(object sender, EventArgs e)
+      {
+         var lSelectedSourceItem = (ContainerItem) sourceComboBox.SelectedItem;
 
-            foreach (var item in lStreamNodes)
-            {
-                var lNode = (XmlNode)item;
+         if (lSelectedSourceItem == null) {
+            return;
+         }
 
-                if(lNode != null)
-                {
-                    var lvalueNode = lNode.SelectSingleNode("@MajorType");
+         var lStreamNodes = lSelectedSourceItem.mXmlNode.SelectNodes("PresentationDescriptor/StreamDescriptor");
 
-                    ContainerItem lSourceItem = new ContainerItem()
-                    {
-                        mFriendlyName = lvalueNode.Value.Replace("MFMediaType_", ""),
-                        mXmlNode = lNode
-                    };
+         if (lStreamNodes == null) {
+            return;
+         }
 
-                    streamComboBox.Items.Add(lSourceItem);
-                }
+         streamComboBox.Items.Clear();
+
+         foreach (var item in lStreamNodes) {
+            var lNode = (XmlNode) item;
+
+            if (lNode != null) {
+               var lvalueNode = lNode.SelectSingleNode("@MajorType");
+
+               var lSourceItem = new ContainerItem {
+                  mFriendlyName = lvalueNode.Value.Replace("MFMediaType_", ""),
+                  mXmlNode = lNode
+               };
+
+               streamComboBox.Items.Add(lSourceItem);
             }
-        }
+         }
+      }
 
-        private void streamComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var lSelectedStreamItem = (ContainerItem)streamComboBox.SelectedItem;
+      private void start_stopBtn_Click(object sender, EventArgs e)
+      {
+         if (start_stopBtn.Text == "Stop") {
+            if (mISession != null) {
+               mISession.closeSession();
 
-            if (lSelectedStreamItem == null)
-                return;
-
-            var lMediaTypeNodes = lSelectedStreamItem.mXmlNode.SelectNodes("MediaTypes/MediaType");
-
-            if (lMediaTypeNodes == null)
-                return;
-
-            mediaTypeComboBox.Items.Clear();
-
-            foreach (var item in lMediaTypeNodes)
-            {
-                var lNode = (XmlNode)item;
-
-                if (lNode != null)
-                {
-                    var lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[1]/@Value");
-
-                    string mTitle = lvalueNode.Value;
-
-                    lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[2 ]/@Value");
-
-                    mTitle += "x" + lvalueNode.Value;
-
-                    lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_RATE']/RatioValue/@Value");
-
-                    mTitle += ", " + lvalueNode.Value + " FPS, ";
-
-                    lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_SUBTYPE']/SingleValue/@Value");
-
-                    mTitle += lvalueNode.Value.Replace("MFVideoFormat_", "");
-
-
-                    ContainerItem lSourceItem = new ContainerItem()
-                    {
-                        mFriendlyName = mTitle,// lvalueNode.Value.Replace("MFMediaType_", ""),
-                        mXmlNode = lNode
-                    };
-
-                    mediaTypeComboBox.Items.Add(lSourceItem);
-                }
-            }
-        }
-
-        private void start_stopBtn_Click(object sender, EventArgs e)
-        {
-
-            if (start_stopBtn.Text == "Stop")
-            {
-                if (mISession != null)
-                {
-                    mISession.closeSession();
-
-                    start_stopBtn.Text = "Start";
-                }
-
-                mISession = null;
-
-                return;
+               start_stopBtn.Text = "Start";
             }
 
-            var lSelectedSourceItem = (ContainerItem)sourceComboBox.SelectedItem;
+            mISession = null;
 
-            if (lSelectedSourceItem == null)
-                return;
+            return;
+         }
 
-            var lSourceNode = lSelectedSourceItem.mXmlNode;
+         var lSelectedSourceItem = (ContainerItem) sourceComboBox.SelectedItem;
 
-            if (lSourceNode == null)
-                return;
+         if (lSelectedSourceItem == null) {
+            return;
+         }
 
-            var lNode = lSourceNode.SelectSingleNode("Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK']/SingleValue/@Value");
+         var lSourceNode = lSelectedSourceItem.mXmlNode;
 
-            if (lNode == null)
-                return;
+         if (lSourceNode == null) {
+            return;
+         }
 
-            string lSymbolicLink = lNode.Value;
+         var lNode = lSourceNode.SelectSingleNode("Source.Attributes/Attribute[@Name='MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK']/SingleValue/@Value");
 
-            var lSelectedStreamItem = (ContainerItem)streamComboBox.SelectedItem;
+         if (lNode == null) {
+            return;
+         }
 
-            if (lSelectedStreamItem == null)
-                return;
+         var lSymbolicLink = lNode.Value;
 
-            lSourceNode = lSelectedStreamItem.mXmlNode;
+         var lSelectedStreamItem = (ContainerItem) streamComboBox.SelectedItem;
 
-            if (lSourceNode == null)
-                return;
+         if (lSelectedStreamItem == null) {
+            return;
+         }
 
-            lNode = lSourceNode.SelectSingleNode("@Index");
+         lSourceNode = lSelectedStreamItem.mXmlNode;
 
-            if (lNode == null)
-                return;
+         if (lSourceNode == null) {
+            return;
+         }
 
-            uint lStreamIndex = 0;
+         lNode = lSourceNode.SelectSingleNode("@Index");
 
-            if (!uint.TryParse(lNode.Value, out lStreamIndex))
-            {
-                return;
+         if (lNode == null) {
+            return;
+         }
+
+         uint lStreamIndex = 0;
+
+         if (!uint.TryParse(lNode.Value, out lStreamIndex)) {
+            return;
+         }
+
+         var lMediaTypeItem = (ContainerItem) mediaTypeComboBox.SelectedItem;
+
+         if (lMediaTypeItem == null) {
+            return;
+         }
+
+         lSourceNode = lMediaTypeItem.mXmlNode;
+
+         if (lSourceNode == null) {
+            return;
+         }
+
+         lNode = lSourceNode.SelectSingleNode("@Index");
+
+         if (lNode == null) {
+            return;
+         }
+
+         uint lMediaTypeIndex = 0;
+
+         if (!uint.TryParse(lNode.Value, out lMediaTypeIndex)) {
+            return;
+         }
+
+
+         var lxmldoc = "";
+
+         mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+
+         var doc = new XmlDocument();
+
+         doc.LoadXml(lxmldoc);
+
+         var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
+
+         if (lSinkNode == null) {
+            return;
+         }
+
+         var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
+
+         if (lContainerNode == null) {
+            return;
+         }
+
+         IEVRSinkFactory lSinkFactory;
+
+         var lSinkControl = mCaptureManager.createSinkControl();
+
+         lSinkControl.createSinkFactory(Guid.Empty, out lSinkFactory);
+
+         object lEVROutputNode;
+
+         lSinkFactory.createOutputNode(mVideoPanel.Handle, out lEVROutputNode);
+
+         if (lEVROutputNode == null) {
+            return;
+         }
+
+         object lPtrSourceNode;
+
+         var lSourceControl = mCaptureManager.createSourceControl();
+
+         if (lSourceControl == null) {
+            return;
+         }
+
+
+         lSourceControl.createSourceNode(lSymbolicLink, lStreamIndex, lMediaTypeIndex, lEVROutputNode, out lPtrSourceNode);
+
+
+         var lSourceMediaNodeList = new List<object>();
+
+         lSourceMediaNodeList.Add(lPtrSourceNode);
+
+         var lSessionControl = mCaptureManager.createSessionControl();
+
+         if (lSessionControl == null) {
+            return;
+         }
+
+         mISession = lSessionControl.createSession(lSourceMediaNodeList.ToArray());
+
+         if (mISession == null) {
+            return;
+         }
+
+         mISession.startSession(0, Guid.Empty);
+
+         start_stopBtn.Text = "Stop";
+
+         Marshal.ReleaseComObject(lEVROutputNode);
+      }
+
+      private void streamComboBox_SelectedIndexChanged(object sender, EventArgs e)
+      {
+         var lSelectedStreamItem = (ContainerItem) streamComboBox.SelectedItem;
+
+         if (lSelectedStreamItem == null) {
+            return;
+         }
+
+         var lMediaTypeNodes = lSelectedStreamItem.mXmlNode.SelectNodes("MediaTypes/MediaType");
+
+         if (lMediaTypeNodes == null) {
+            return;
+         }
+
+         mediaTypeComboBox.Items.Clear();
+
+         foreach (var item in lMediaTypeNodes) {
+            var lNode = (XmlNode) item;
+
+            if (lNode != null) {
+               var lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[1]/@Value");
+
+               var mTitle = lvalueNode.Value;
+
+               lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_SIZE']/Value.ValueParts/ValuePart[2 ]/@Value");
+
+               mTitle += "x" + lvalueNode.Value;
+
+               lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_FRAME_RATE']/RatioValue/@Value");
+
+               mTitle += ", " + lvalueNode.Value + " FPS, ";
+
+               lvalueNode = lNode.SelectSingleNode("MediaTypeItem[@Name='MF_MT_SUBTYPE']/SingleValue/@Value");
+
+               mTitle += lvalueNode.Value.Replace("MFVideoFormat_", "");
+
+
+               var lSourceItem = new ContainerItem {
+                  mFriendlyName = mTitle, // lvalueNode.Value.Replace("MFMediaType_", ""),
+                  mXmlNode = lNode
+               };
+
+               mediaTypeComboBox.Items.Add(lSourceItem);
             }
+         }
+      }
 
-            var lMediaTypeItem = (ContainerItem)mediaTypeComboBox.SelectedItem;
+      private void toolStripMenuItem1_Click(object sender, EventArgs e)
+      {
+      }
 
-            if (lMediaTypeItem == null)
-                return;
+      private void toolStripMenuItem1_Click_1(object sender, EventArgs e)
+      {
+         fillSourceCmboBox();
+      }
 
-            lSourceNode = lMediaTypeItem.mXmlNode;
+      private void toolStripMenuItem2_Click(object sender, EventArgs e)
+      {
+         fillSourceCmboBox();
+      }
 
-            if (lSourceNode == null)
-                return;
+      #endregion
 
-            lNode = lSourceNode.SelectSingleNode("@Index");
+      #region Nested classes
 
-            if (lNode == null)
-                return;
+      private class ContainerItem
+      {
+         #region  Fields
 
-            uint lMediaTypeIndex = 0;
+         public string mFriendlyName = "SourceItem";
 
-            if (!uint.TryParse(lNode.Value, out lMediaTypeIndex))
-            {
-                return;
-            }
+         public XmlNode mXmlNode;
 
+         #endregion
 
-            string lxmldoc = "";
+         #region Public methods
 
-            mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+         public override string ToString()
+         {
+            return mFriendlyName;
+         }
 
-            XmlDocument doc = new XmlDocument();
+         #endregion
+      }
 
-            doc.LoadXml(lxmldoc);
-
-            var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
-
-            if (lSinkNode == null)
-                return;
-
-            var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
-
-            if (lContainerNode == null)
-                return;
-
-            IEVRSinkFactory lSinkFactory;
-
-            var lSinkControl = mCaptureManager.createSinkControl();
-
-            lSinkControl.createSinkFactory(
-            Guid.Empty,
-            out lSinkFactory);
-
-            object lEVROutputNode;
-
-            lSinkFactory.createOutputNode(
-                mVideoPanel.Handle,
-                out lEVROutputNode);
-
-            if (lEVROutputNode == null)
-                return;
-            
-            object lPtrSourceNode;
-
-            var lSourceControl = mCaptureManager.createSourceControl();
-
-            if (lSourceControl == null)
-                return;
-
-
-            lSourceControl.createSourceNode(
-                lSymbolicLink,
-                lStreamIndex,
-                lMediaTypeIndex,
-                lEVROutputNode,
-                out lPtrSourceNode);
-
-
-            List<object> lSourceMediaNodeList = new List<object>();
-
-            lSourceMediaNodeList.Add(lPtrSourceNode);
-
-            var lSessionControl = mCaptureManager.createSessionControl();
-
-            if (lSessionControl == null)
-                return;
-
-            mISession = lSessionControl.createSession(
-                lSourceMediaNodeList.ToArray());
-
-            if (mISession == null)
-                return;
-
-            mISession.startSession(0, Guid.Empty);
-
-            start_stopBtn.Text = "Stop";
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(lEVROutputNode);
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void mediaTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void aLlToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolStripMenuItem1_Click_1(object sender, EventArgs e)
-        {
-            fillSourceCmboBox();
-        }
-
-        private void toolStripMenuItem2_Click(object sender, EventArgs e)
-        {
-            fillSourceCmboBox();
-        }
-
-        private void dSCrossbarToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            fillSourceCmboBox();
-        }
-    }
+      #endregion
+   }
 }

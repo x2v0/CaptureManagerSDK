@@ -21,57 +21,48 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CustomisedRequest.h"
 #include "ICustomisedRequest.h"
 
-
-
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
-			CustomisedRequest::CustomisedRequest(
-				CustomisedRequestType aCustomisedRequestType,
-				IUnknown* aPtrUnkSender,
-				IUnknown* aPtrUnkSenderTopologyNode,
-				DWORD aIndexOfStreamNode) :
-				mCustomisedRequestType(aCustomisedRequestType),
-				mIndexOfStreamNode(aIndexOfStreamNode)
-			{
-				mUnkSender = aPtrUnkSender;
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         CustomisedRequest::CustomisedRequest(CustomisedRequestType aCustomisedRequestType, IUnknown* aPtrUnkSender,
+                                              IUnknown* aPtrUnkSenderTopologyNode, DWORD aIndexOfStreamNode) :
+            mCustomisedRequestType(aCustomisedRequestType), mIndexOfStreamNode(aIndexOfStreamNode)
+         {
+            mUnkSender = aPtrUnkSender;
+            mUnkSenderTopologyNode = aPtrUnkSenderTopologyNode;
+         }
 
-				mUnkSenderTopologyNode = aPtrUnkSenderTopologyNode;
-			}
+         CustomisedRequest::~CustomisedRequest()
+         {
+            mUnkSender.Release();
+            mUnkSenderTopologyNode.Release();
+         }
 
-			CustomisedRequest::~CustomisedRequest()
-			{
-				mUnkSender.Release();
+         ICustomisedRequest::CustomisedRequestType CustomisedRequest::getCustomisedRequestType()
+         {
+            return mCustomisedRequestType;
+         }
 
-				mUnkSenderTopologyNode.Release();
-			}
+         IUnknown* CustomisedRequest::getPtrUnkSender()
+         {
+            return mUnkSender;
+         }
 
-			ICustomisedRequest::CustomisedRequestType CustomisedRequest::getCustomisedRequestType()
-			{
-				return mCustomisedRequestType;
-			}
+         IUnknown* CustomisedRequest::getPtrUnkSenderTopologyNode()
+         {
+            return mUnkSenderTopologyNode;
+         }
 
-			IUnknown* CustomisedRequest::getPtrUnkSender()
-			{
-				return mUnkSender;
-			}
-
-			IUnknown* CustomisedRequest::getPtrUnkSenderTopologyNode()
-			{
-				return mUnkSenderTopologyNode;
-			}
-
-			DWORD CustomisedRequest::getIndexOfStreamNode()
-			{
-				return mIndexOfStreamNode;
-			}
-		}
-	}
+         DWORD CustomisedRequest::getIndexOfStreamNode()
+         {
+            return mIndexOfStreamNode;
+         }
+      }
+   }
 }

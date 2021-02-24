@@ -21,34 +21,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "SampleGrabberGemstone.h"
-
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberCall
-		{
-			SampleGrabberGemstone::SampleGrabberGemstone(
-				CComPtrCustom<IMFTopologyNode>& aRefOutputNode,
-				CComPtrCustom<IRead>& aReadBuffer)						
-			{
-				mOutputNode = aRefOutputNode;
+   namespace Sinks
+   {
+      namespace SampleGrabberCall
+      {
+         SampleGrabberGemstone::SampleGrabberGemstone(CComPtrCustom<IMFTopologyNode>& aRefOutputNode,
+                                                      CComPtrCustom<IRead>& aReadBuffer)
+         {
+            mOutputNode = aRefOutputNode;
+            mReadBuffer = aReadBuffer;
+         }
 
-				mReadBuffer = aReadBuffer;
-			}
+         SampleGrabberGemstone::~SampleGrabberGemstone()
+         {
+            mOutputNode.Release();
+         }
 
-			SampleGrabberGemstone::~SampleGrabberGemstone()
-			{
-				mOutputNode.Release();
-			}
-
-			HRESULT SampleGrabberGemstone::readData(unsigned char* aPtrData, DWORD& aRefByteSize)
-			{
-				return mReadBuffer->readData(aPtrData, &aRefByteSize);
-			}
-		}
-	}
+         HRESULT SampleGrabberGemstone::readData(unsigned char* aPtrData, DWORD& aRefByteSize)
+         {
+            return mReadBuffer->readData(aPtrData, &aRefByteSize);
+         }
+      }
+   }
 }

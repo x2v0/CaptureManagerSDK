@@ -22,83 +22,121 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using System;
+using System.Xml;
 using CaptureManagerToCSharpProxy;
 using CaptureManagerToCSharpProxy.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace WPFMediaFoundationPlayerHandler
 {
-    class CaptureManagerVideoRendererMultiSinkFactory
-    {
+   internal class CaptureManagerVideoRendererMultiSinkFactory
+   {
+      #region Static fields
 
-        private CaptureManagerVideoRendererMultiSinkFactory()
-        {
-            LibraryIndex = 0;
-        }
+      private static CaptureManagerVideoRendererMultiSinkFactory mInstance;
 
-        private bool uploadCaptureManagerToCSharpProxy(
-            out ICaptureManagerEVRMultiSinkFactory aICaptureManagerEVRMultiSinkFactory)
-        {
-            bool lresult = false;
+      #endregion
 
-            do
-            {
-                aICaptureManagerEVRMultiSinkFactory = null;
+      #region Constructors and destructors
 
-                CaptureManager mCaptureManager = null;
+      private CaptureManagerVideoRendererMultiSinkFactory()
+      {
+         LibraryIndex = 0;
+      }
 
-                try
-                {
-                    mCaptureManager = new CaptureManager("CaptureManager.dll");
-                }
-                catch (Exception)
-                {
-                    try
-                    {
-                        mCaptureManager = new CaptureManager();
-                    }
-                    catch (Exception)
-                    {
+      #endregion
 
-                    }
-                }
+      #region Public properties
 
-                if (mCaptureManager == null)
-                    break;
+      public int LibraryIndex
+      {
+         get;
+         set;
+      }
 
-                string lXMLSinkString = "";
+      #endregion
 
-                mCaptureManager.getCollectionOfSinks(ref lXMLSinkString);
+      #region Public methods
 
-                XmlDocument doc = new XmlDocument();
+      public static CaptureManagerVideoRendererMultiSinkFactory getInstance()
+      {
+         if (mInstance == null) {
+            mInstance = new CaptureManagerVideoRendererMultiSinkFactory();
+         }
 
-                doc.LoadXml(lXMLSinkString);
+         return mInstance;
+      }
 
-                var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{A2224D8D-C3C1-4593-8AC9-C0FCF318FF05}']");
+      public ICaptureManagerEVRMultiSinkFactory getICaptureManagerEVRMultiSinkFactory()
+      {
+         ICaptureManagerEVRMultiSinkFactory mICaptureManagerEVRMultiSinkFactory = null;
 
-                if (lSinkNode == null)
-                    break;
 
-                var lMaxPortCountAttributeNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart/@MaxPortCount");
+         if (LibraryIndex == 0) {
+            uploadCaptureManagerToCSharpProxy(out mICaptureManagerEVRMultiSinkFactory);
+         } else if (LibraryIndex == 1) {
+            uploadCaptureManagerVideoRendererToCSharpProxy(out mICaptureManagerEVRMultiSinkFactory);
+         }
 
-                if (lMaxPortCountAttributeNode == null)
-                    break;
 
-                uint lmaxPorts = 0;
+         return mICaptureManagerEVRMultiSinkFactory;
+      }
 
-                if (!uint.TryParse(lMaxPortCountAttributeNode.Value, out lmaxPorts))
-                    break;
+      #endregion
 
-                if (lmaxPorts == 0)
-                    break;
+      #region Private methods
+
+      private bool uploadCaptureManagerToCSharpProxy(out ICaptureManagerEVRMultiSinkFactory aICaptureManagerEVRMultiSinkFactory)
+      {
+         var lresult = false;
+
+         do {
+            aICaptureManagerEVRMultiSinkFactory = null;
+
+            CaptureManager mCaptureManager = null;
+
+            try {
+               mCaptureManager = new CaptureManager("CaptureManager.dll");
+            } catch (Exception) {
+               try {
+                  mCaptureManager = new CaptureManager();
+               } catch (Exception) {
+               }
+            }
+
+            if (mCaptureManager == null) {
+               break;
+            }
+
+            var lXMLSinkString = "";
+
+            mCaptureManager.getCollectionOfSinks(ref lXMLSinkString);
+
+            var doc = new XmlDocument();
+
+            doc.LoadXml(lXMLSinkString);
+
+            var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{A2224D8D-C3C1-4593-8AC9-C0FCF318FF05}']");
+
+            if (lSinkNode == null) {
+               break;
+            }
+
+            var lMaxPortCountAttributeNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart/@MaxPortCount");
+
+            if (lMaxPortCountAttributeNode == null) {
+               break;
+            }
+
+            uint lmaxPorts = 0;
+
+            if (!uint.TryParse(lMaxPortCountAttributeNode.Value, out lmaxPorts)) {
+               break;
+            }
+
+            if (lmaxPorts == 0) {
+               break;
+            }
 
 //                "<SinkFactory Name="CaptureManagerVRMultiSinkFactory" GUID="{A2224D8D-C3C1-4593-8AC9-C0FCF318FF05}" Title="CaptureManager Video Renderer multi sink factory">
 //- <Value.ValueParts>
@@ -108,88 +146,50 @@ namespace WPFMediaFoundationPlayerHandler
 //"
 
 
-                ISinkControl lISinkControl = mCaptureManager.createSinkControl();
+            var lISinkControl = mCaptureManager.createSinkControl();
 
-                if (lISinkControl == null)
-                    break;
-
-                IEVRMultiSinkFactory lIEVRMultiSinkFactory = null;
-
-                lISinkControl.createCompatibleEVRMultiSinkFactory(Guid.Empty, out lIEVRMultiSinkFactory);
-
-                if (lIEVRMultiSinkFactory == null)
-                    break;
-
-                IEVRStreamControl lIEVRStreamControl = mCaptureManager.createEVRStreamControl();
-
-                if (lIEVRStreamControl == null)
-                    break;
-
-                aICaptureManagerEVRMultiSinkFactory = new CaptureManagerEVRMultiSinkFactory(
-                    lIEVRMultiSinkFactory,
-                    lmaxPorts,
-                    lIEVRStreamControl);
-
-                lresult = true;
-                                
-            }
-            while (false);
-
-            return lresult;
-        }
-
-        private bool uploadCaptureManagerVideoRendererToCSharpProxy(
-            out ICaptureManagerEVRMultiSinkFactory aICaptureManagerEVRMultiSinkFactory)
-        {
-            aICaptureManagerEVRMultiSinkFactory = null;
-
-            bool lresult = false;
-
-            do
-            {
-                aICaptureManagerEVRMultiSinkFactory = new CaptureManagerEVRMultiSinkFactory(
-                    CMVRMultiSinkFactoryLoader.getInstance().mIEVRMultiSinkFactory,
-                    CMVRMultiSinkFactoryLoader.getInstance().MaxPorts,
-                    CMVRMultiSinkFactoryLoader.getInstance().mIEVRStreamControl);
-
-                lresult = true;
-            }
-            while (false);
-
-            return lresult;
-        }
-
-        private static CaptureManagerVideoRendererMultiSinkFactory mInstance = null;
-
-        public static CaptureManagerVideoRendererMultiSinkFactory getInstance()
-        {
-            if (mInstance == null)
-            {
-                mInstance = new CaptureManagerVideoRendererMultiSinkFactory();
+            if (lISinkControl == null) {
+               break;
             }
 
-            return mInstance;
-        }
+            IEVRMultiSinkFactory lIEVRMultiSinkFactory = null;
 
-        public ICaptureManagerEVRMultiSinkFactory getICaptureManagerEVRMultiSinkFactory()
-        {
+            lISinkControl.createCompatibleEVRMultiSinkFactory(Guid.Empty, out lIEVRMultiSinkFactory);
 
-            ICaptureManagerEVRMultiSinkFactory mICaptureManagerEVRMultiSinkFactory = null;
-
-
-            if(LibraryIndex == 0)
-            {
-                uploadCaptureManagerToCSharpProxy(out mICaptureManagerEVRMultiSinkFactory);
-            }
-            else if (LibraryIndex == 1)
-            {
-                uploadCaptureManagerVideoRendererToCSharpProxy(out mICaptureManagerEVRMultiSinkFactory);
+            if (lIEVRMultiSinkFactory == null) {
+               break;
             }
 
+            var lIEVRStreamControl = mCaptureManager.createEVRStreamControl();
 
-            return mICaptureManagerEVRMultiSinkFactory;
-        }
+            if (lIEVRStreamControl == null) {
+               break;
+            }
 
-        public int LibraryIndex { get; set; }
-    }
+            aICaptureManagerEVRMultiSinkFactory = new CaptureManagerEVRMultiSinkFactory(lIEVRMultiSinkFactory, lmaxPorts, lIEVRStreamControl);
+
+            lresult = true;
+         } while (false);
+
+         return lresult;
+      }
+
+      private bool uploadCaptureManagerVideoRendererToCSharpProxy(out ICaptureManagerEVRMultiSinkFactory aICaptureManagerEVRMultiSinkFactory)
+      {
+         aICaptureManagerEVRMultiSinkFactory = null;
+
+         var lresult = false;
+
+         do {
+            aICaptureManagerEVRMultiSinkFactory = new CaptureManagerEVRMultiSinkFactory(CMVRMultiSinkFactoryLoader.getInstance().mIEVRMultiSinkFactory,
+                                                                                        CMVRMultiSinkFactoryLoader.getInstance().MaxPorts, CMVRMultiSinkFactoryLoader.getInstance().mIEVRStreamControl);
+
+            lresult = true;
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

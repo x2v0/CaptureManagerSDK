@@ -22,84 +22,84 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class RenderingControl : IRenderingControl
-    {
-        private CaptureManagerLibrary.IRenderingControl mIRenderingControl = null;
+   internal class RenderingControl : IRenderingControl
+   {
+      #region Constructors and destructors
 
-        public RenderingControl(
-            CaptureManagerLibrary.IRenderingControl aIRenderingControl)
-        {
-            mIRenderingControl = aIRenderingControl;
-        }
+      public RenderingControl(CaptureManagerLibrary.IRenderingControl aIRenderingControl)
+      {
+         mIRenderingControl = aIRenderingControl;
+      }
 
-        public bool enableInnerRendering(object aPtrEVROutputNode, bool aIsInnerRendering)
-        {
-            bool lresult = false;
+      #endregion
 
-            do
-            {
-                if (mIRenderingControl == null)
-                    break;
+      #region  Fields
 
-                if (aPtrEVROutputNode == null)
-                    break;
+      private readonly CaptureManagerLibrary.IRenderingControl mIRenderingControl;
 
-                try
-                {
-                    mIRenderingControl.enableInnerRendering(aPtrEVROutputNode, 
-                        aIsInnerRendering? 1: 0);
+      #endregion
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+      #region Interface methods
 
-            } while (false);
+      public bool enableInnerRendering(object aPtrEVROutputNode, bool aIsInnerRendering)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         do {
+            if (mIRenderingControl == null) {
+               break;
+            }
 
-        public bool renderToTarget(object aPtrEVROutputNode, object aPtrRenderTarget, bool aCopyMode)
-        {
-            bool lresult = false;
+            if (aPtrEVROutputNode == null) {
+               break;
+            }
 
-            do
-            {
-                if (mIRenderingControl == null)
-                    break;
+            try {
+               mIRenderingControl.enableInnerRendering(aPtrEVROutputNode, aIsInnerRendering ? 1 : 0);
 
-                if (aPtrEVROutputNode == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                if (aPtrRenderTarget == null)
-                    break;
+         return lresult;
+      }
 
-                try
-                {
-                    mIRenderingControl.renderToTarget(aPtrEVROutputNode,
-                        aPtrRenderTarget,
-                        aCopyMode ? 1 : 0);
+      public bool renderToTarget(object aPtrEVROutputNode, object aPtrRenderTarget, bool aCopyMode)
+      {
+         var lresult = false;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         do {
+            if (mIRenderingControl == null) {
+               break;
+            }
 
-            } while (false);
+            if (aPtrEVROutputNode == null) {
+               break;
+            }
 
-            return lresult;
-        }
-    }
+            if (aPtrRenderTarget == null) {
+               break;
+            }
+
+            try {
+               mIRenderingControl.renderToTarget(aPtrEVROutputNode, aPtrRenderTarget, aCopyMode ? 1 : 0);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

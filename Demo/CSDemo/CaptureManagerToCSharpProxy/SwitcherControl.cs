@@ -22,214 +22,203 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SwitcherControl : ISwitcherControl
-    {
-        CaptureManagerLibrary.ISwitcherControl mSwitcherControl = null;
+   internal class SwitcherControl : ISwitcherControl
+   {
+      #region Constructors and destructors
 
-        public SwitcherControl(CaptureManagerLibrary.ISwitcherControl aSwitcherControl)
-        {
-            mSwitcherControl = aSwitcherControl;
-        }
+      public SwitcherControl(CaptureManagerLibrary.ISwitcherControl aSwitcherControl)
+      {
+         mSwitcherControl = aSwitcherControl;
+      }
 
-        public bool pauseSwitchers(ISession aSession)
-        {
-            bool lresult = false;
+      #endregion
 
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
+      #region  Fields
 
-                    if (aSession == null)
-                        break;
+      private readonly CaptureManagerLibrary.ISwitcherControl mSwitcherControl;
 
-                    uint lSessionDescriptor = 0;
+      #endregion
 
-                    if (!aSession.getSessionDescriptor(out lSessionDescriptor))
-                        break;
+      #region Interface methods
 
-                    mSwitcherControl.pauseSwitchers(lSessionDescriptor);
+      public bool atttachSwitcher(object aSwitcherNode, object aAttachedNode)
+      {
+         var lresult = false;
 
-                    lresult = true;
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (aSwitcherNode == null) {
+                  break;
+               }
 
-            } while (false);
+               if (aAttachedNode == null) {
+                  break;
+               }
 
-            return lresult;
-        }
+               mSwitcherControl.attachSwitcher(aSwitcherNode, aAttachedNode);
 
-        public bool resumeSwitchers(ISession aSession)
-        {
-            bool lresult = false;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
+         return lresult;
+      }
 
-                    if (aSession == null)
-                        break;
+      public bool detachSwitchers(ISession aSession)
+      {
+         var lresult = false;
 
-                    uint lSessionDescriptor = 0;
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
 
-                    if (!aSession.getSessionDescriptor(out lSessionDescriptor))
-                        break;
+               if (aSession == null) {
+                  break;
+               }
 
-                    mSwitcherControl.resumeSwitchers(lSessionDescriptor);
+               uint lSessionDescriptor = 0;
 
-                    lresult = true;
+               if (!aSession.getSessionDescriptor(out lSessionDescriptor)) {
+                  break;
+               }
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               mSwitcherControl.detachSwitchers(lSessionDescriptor);
 
-            } while (false);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            return lresult;
-        }
-        
-        public bool detachSwitchers(ISession aSession)
-        {
-            bool lresult = false;
-
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
-
-                    if (aSession == null)
-                        break;
-
-                    uint lSessionDescriptor = 0;
-
-                    if (!aSession.getSessionDescriptor(out lSessionDescriptor))
-                        break;
-
-                    mSwitcherControl.detachSwitchers(lSessionDescriptor);
-
-                    lresult = true;
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
-
-        public bool atttachSwitcher(object aSwitcherNode, object aAttachedNode)
-        {
-            bool lresult = false;
-
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
-
-                    if (aSwitcherNode == null)
-                        break;
-
-                    if (aAttachedNode == null)
-                        break;
-                                        
-                    mSwitcherControl.attachSwitcher(aSwitcherNode, aAttachedNode);
-
-                    lresult = true;
-
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
+         return lresult;
+      }
 
 
-        public bool pauseSwitcher(object aSwitcherNode)
-        {
-            bool lresult = false;
+      public bool pauseSwitcher(object aSwitcherNode)
+      {
+         var lresult = false;
 
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
 
-                    if (aSwitcherNode == null)
-                        break;
+               if (aSwitcherNode == null) {
+                  break;
+               }
 
-                    mSwitcherControl.pauseSwitcher(aSwitcherNode);
+               mSwitcherControl.pauseSwitcher(aSwitcherNode);
 
-                    lresult = true;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool pauseSwitchers(ISession aSession)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
 
-        public bool resumeSwitcher(object aSwitcherNode)
-        {
-            bool lresult = false;
+               if (aSession == null) {
+                  break;
+               }
 
-            do
-            {
-                try
-                {
-                    if (mSwitcherControl == null)
-                        break;
+               uint lSessionDescriptor = 0;
 
-                    if (aSwitcherNode == null)
-                        break;
+               if (!aSession.getSessionDescriptor(out lSessionDescriptor)) {
+                  break;
+               }
 
-                    mSwitcherControl.resumeSwitcher(aSwitcherNode);
+               mSwitcherControl.pauseSwitchers(lSessionDescriptor);
 
-                    lresult = true;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         return lresult;
+      }
 
-            } while (false);
+      public bool resumeSwitcher(object aSwitcherNode)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
-    }
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
+
+               if (aSwitcherNode == null) {
+                  break;
+               }
+
+               mSwitcherControl.resumeSwitcher(aSwitcherNode);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      public bool resumeSwitchers(ISession aSession)
+      {
+         var lresult = false;
+
+         do {
+            try {
+               if (mSwitcherControl == null) {
+                  break;
+               }
+
+               if (aSession == null) {
+                  break;
+               }
+
+               uint lSessionDescriptor = 0;
+
+               if (!aSession.getSessionDescriptor(out lSessionDescriptor)) {
+                  break;
+               }
+
+               mSwitcherControl.resumeSwitchers(lSessionDescriptor);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

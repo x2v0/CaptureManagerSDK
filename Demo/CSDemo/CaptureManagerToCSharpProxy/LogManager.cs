@@ -22,35 +22,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CaptureManagerToCSharpProxy.Interfaces;
-
+using System.Diagnostics.CodeAnalysis;
 
 namespace CaptureManagerToCSharpProxy
 {
-    public delegate void WriteDelegate(string sender);
+   public delegate void WriteDelegate(string sender);
 
-    public class LogManager
-    {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
-        public event WriteDelegate WriteDelegateEvent;
+   public class LogManager
+   {
+      #region Static fields
 
-        private static LogManager mInstance = new LogManager();
+      private static readonly LogManager mInstance = new LogManager();
 
-        private LogManager() { }
+      #endregion
 
-        public static LogManager getInstance()
-        {
-            return mInstance;
-        }
+      #region Constructors and destructors
 
-        internal void write(string aMessage) 
-        {
-            if (WriteDelegateEvent != null)
-                WriteDelegateEvent(aMessage);
-        }
-    }
+      private LogManager()
+      {
+      }
+
+      #endregion
+
+      #region Public events
+
+      [SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
+      public event WriteDelegate WriteDelegateEvent;
+
+      #endregion
+
+      #region Public methods
+
+      public static LogManager getInstance()
+      {
+         return mInstance;
+      }
+
+      #endregion
+
+      #region Internal methods
+
+      internal void write(string aMessage)
+      {
+         if (WriteDelegateEvent != null) {
+            WriteDelegateEvent(aMessage);
+         }
+      }
+
+      #endregion
+   }
 }

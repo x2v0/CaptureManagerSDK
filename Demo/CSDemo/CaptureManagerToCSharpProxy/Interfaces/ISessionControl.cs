@@ -22,16 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISessionControl
-    {
-        ISession createSession(
-            /* [in] */ object[] aArrayOfSourceNodesOfTopology);
-    }
+   public interface ISessionControl
+   {
+      #region Public methods
+
+      ISession createSession(
+         /* [in] */ object[] aArrayOfSourceNodesOfTopology);
+
+      #endregion
+   }
 }

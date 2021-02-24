@@ -23,100 +23,75 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class EncoderNodeFactory : IEncoderNodeFactory
-    {
-        private CaptureManagerLibrary.IEncoderNodeFactory mIEncoderNodeFactory;
+   internal class EncoderNodeFactory : IEncoderNodeFactory
+   {
+      #region Constructors and destructors
 
-        public EncoderNodeFactory(
-            CaptureManagerLibrary.IEncoderNodeFactory aIEncoderNodeFactory)
-        {
-            mIEncoderNodeFactory = aIEncoderNodeFactory;
-        }
+      public EncoderNodeFactory(CaptureManagerLibrary.IEncoderNodeFactory aIEncoderNodeFactory)
+      {
+         mIEncoderNodeFactory = aIEncoderNodeFactory;
+      }
 
-        public bool createCompressedMediaType(
-            object aUncompressedMediaType, 
-            Guid aEncodingModeGUID, 
-            uint aEncodingModeValue, 
-            uint aIndexCompressedMediaType, 
-            out object aCompressedMediaType)
-        {
-            bool lresult = false;
+      #endregion
 
-            aCompressedMediaType = null;
+      #region  Fields
 
-            do
-            {
-                if (mIEncoderNodeFactory == null)
-                    break;
+      private readonly CaptureManagerLibrary.IEncoderNodeFactory mIEncoderNodeFactory;
 
-                try
-                {
+      #endregion
 
-                    mIEncoderNodeFactory.createCompressedMediaType(
-                        aUncompressedMediaType,
-                        aEncodingModeGUID,
-                        aEncodingModeValue,
-                        aIndexCompressedMediaType,
-                        out aCompressedMediaType);
+      #region Interface methods
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-                
-            } while (false);
+      public bool createCompressedMediaType(object aUncompressedMediaType, Guid aEncodingModeGUID, uint aEncodingModeValue, uint aIndexCompressedMediaType, out object aCompressedMediaType)
+      {
+         var lresult = false;
 
-            return lresult;
-        }
+         aCompressedMediaType = null;
 
-        public bool createEncoderNode(
-            object aUncompressedMediaType, 
-            Guid aEncodingModeGUID, 
-            uint aEncodingModeValue, 
-            uint aIndexCompressedMediaType, 
-            object aDownStreamNode,
-            out object aEncoderNode)
-        {
-            bool lresult = false;
+         do {
+            if (mIEncoderNodeFactory == null) {
+               break;
+            }
 
-            aEncoderNode = null;
+            try {
+               mIEncoderNodeFactory.createCompressedMediaType(aUncompressedMediaType, aEncodingModeGUID, aEncodingModeValue, aIndexCompressedMediaType, out aCompressedMediaType);
 
-            do
-            {
-                if (mIEncoderNodeFactory == null)
-                    break;
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-                try
-                {
+         return lresult;
+      }
 
-                    mIEncoderNodeFactory.createEncoderNode(
-                        aUncompressedMediaType,
-                        aEncodingModeGUID,
-                        aEncodingModeValue,
-                        aIndexCompressedMediaType, 
-                        aDownStreamNode,
-                        out aEncoderNode);
+      public bool createEncoderNode(object aUncompressedMediaType, Guid aEncodingModeGUID, uint aEncodingModeValue, uint aIndexCompressedMediaType, object aDownStreamNode, out object aEncoderNode)
+      {
+         var lresult = false;
 
-                    lresult = true;
+         aEncoderNode = null;
 
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+         do {
+            if (mIEncoderNodeFactory == null) {
+               break;
+            }
 
-            } while (false);
+            try {
+               mIEncoderNodeFactory.createEncoderNode(aUncompressedMediaType, aEncodingModeGUID, aEncodingModeValue, aIndexCompressedMediaType, aDownStreamNode, out aEncoderNode);
 
-            return lresult;
-        }
-    }
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

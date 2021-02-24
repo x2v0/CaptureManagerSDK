@@ -1,5 +1,4 @@
 #pragma once
-
 #include "../CaptureManagerBroker/StreamControlCommon.h"
 #include "../PugiXML/pugixml.hpp"
 #include <vector>
@@ -8,36 +7,32 @@
 
 namespace CaptureManager
 {
-	namespace MediaSession
-	{
-		namespace CustomisedMediaSession
-		{
-			class CustomisedMixerNodeFactory
-			{
-				struct MixerNodeInfo
-				{
-					StreamControlInfo mStreamControlInfo;
-				};
+   namespace MediaSession
+   {
+      namespace CustomisedMediaSession
+      {
+         class CustomisedMixerNodeFactory
+         {
+            struct MixerNodeInfo
+            {
+               StreamControlInfo mStreamControlInfo;
+            };
 
-			public:
+         public:
+            HRESULT getCustomisedMixerNodeFactoryCollection(pugi::xml_node& aRefRootXMLElement,
+                                                            std::vector<StreamControlInfo>& aCollection);
 
-				HRESULT getCustomisedMixerNodeFactoryCollection(
-					pugi::xml_node& aRefRootXMLElement,
-					std::vector<StreamControlInfo>& aCollection);
+            HRESULT createCustomisedMixerNodes(IUnknown* aPtrDownStreamTopologyNode, DWORD aInputNodeAmount,
+                                               std::vector<CComPtrCustom<IUnknown>>& aRefInputNodes);
 
-				HRESULT createCustomisedMixerNodes(
-					IUnknown *aPtrDownStreamTopologyNode,
-					DWORD aInputNodeAmount,
-					std::vector<CComPtrCustom<IUnknown>>& aRefInputNodes);
+         protected:
+            CustomisedMixerNodeFactory();
 
-			protected:
-				CustomisedMixerNodeFactory();
-				virtual ~CustomisedMixerNodeFactory();
+            virtual ~CustomisedMixerNodeFactory();
 
-			private:
-
-				std::vector<MixerNodeInfo> mMixerNodeInfos;
-			};
-		}
-	}
+         private:
+            std::vector<MixerNodeInfo> mMixerNodeInfos;
+         };
+      }
+   }
 }

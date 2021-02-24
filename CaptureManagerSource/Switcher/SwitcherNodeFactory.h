@@ -1,20 +1,19 @@
 #pragma once
 #include <Unknwnbase.h>
 
-
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		class SwitcherNodeFactory
-		{
-		public:
-			SwitcherNodeFactory();
-			virtual ~SwitcherNodeFactory();
+   namespace Transform
+   {
+      class SwitcherNodeFactory
+      {
+      public:
+         SwitcherNodeFactory();
 
-			HRESULT STDMETHODCALLTYPE createSwitcherNode(
-				IUnknown *aPtrDownStreamTopologyNode,
-				IUnknown **aPtrPtrTopologySwitcherNode);
-		};
-	}
+         virtual ~SwitcherNodeFactory();
+
+         HRESULT STDMETHODCALLTYPE createSwitcherNode(IUnknown* aPtrDownStreamTopologyNode,
+                                                      IUnknown** aPtrPtrTopologySwitcherNode);
+      };
+   }
 }

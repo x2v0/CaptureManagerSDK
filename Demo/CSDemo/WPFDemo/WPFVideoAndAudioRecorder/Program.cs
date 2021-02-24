@@ -22,69 +22,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
+using System.Windows;
+using CaptureManagerToCSharpProxy;
 
 namespace WPFVideoAndAudioRecorder
 {
+   internal class Program
+   {
+      #region Static fields
 
-    class Program
-    {
+      public static CaptureManager mCaptureManager;
 
-        public static CaptureManager mCaptureManager = null;
+      #endregion
 
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [MTAThread]
-        static void Main(string[] args)
-        {
-            try
-            {
-                mCaptureManager = new CaptureManager("CaptureManager.dll");
+      #region Private methods
+
+      /// <summary>
+      ///    The main entry point for the application.
+      /// </summary>
+      [MTAThread]
+      private static void Main(string[] args)
+      {
+         try {
+            mCaptureManager = new CaptureManager("CaptureManager.dll");
+         } catch (Exception) {
+            try {
+               mCaptureManager = new CaptureManager();
+            } catch (Exception) {
             }
-            catch (System.Exception)
-            {
-                try
-                {
-                    mCaptureManager = new CaptureManager();
-                }
-                catch (System.Exception)
-                {
+         }
 
-                }
+
+         var t = new Thread(delegate()
+         {
+            try {
+               var lApplication = new Application();
+
+               lApplication.Run(new MainWindow());
+            } catch (Exception ex) {
             }
+         });
+         t.SetApartmentState(ApartmentState.STA);
 
+         t.Start();
+      }
 
-            var t = new Thread(
-
-               delegate ()
-               {
-
-                   try
-                   {
-                       var lApplication = new System.Windows.Application();
-
-                       lApplication.Run(new MainWindow());
-                   }
-                   catch (Exception ex)
-                   {
-                   }
-                   finally
-                   {
-                   }
-               });
-            t.SetApartmentState(ApartmentState.STA);
-
-            t.Start();
-
-        }
-    }
+      #endregion
+   }
 }
-

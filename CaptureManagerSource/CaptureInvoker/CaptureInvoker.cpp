@@ -21,106 +21,68 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "CaptureInvoker.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../Common/Common.h"
 #include "../LogPrintOut/LogPrintOut.h"
 #include "../Common/Singleton.h"
 
-
 namespace CaptureManager
 {
-	namespace Core
-	{
-		CaptureInvoker::CaptureInvoker(AVRT_PRIORITY_AvrtManager aAVRT_PRIORITY_AvrtManager, std::wstring aTaskName) :
-			mCaptureInvokerState(CaptureInvokerState::Stopped),
-			mAVRT_PRIORITY_AvrtManager(aAVRT_PRIORITY_AvrtManager),
-			mTaskName(aTaskName)
-		{
-		}
+   namespace Core
+   {
+      CaptureInvoker::CaptureInvoker(AVRT_PRIORITY_AvrtManager aAVRT_PRIORITY_AvrtManager, std::wstring aTaskName) :
+         mAVRT_PRIORITY_AvrtManager(aAVRT_PRIORITY_AvrtManager), mTaskName(aTaskName), mCaptureInvokerState(Stopped) { }
 
-		CaptureInvoker::~CaptureInvoker()
-		{
-		}
+      CaptureInvoker::~CaptureInvoker() { }
 
-		HRESULT CaptureInvoker::start()
-		{
+      HRESULT CaptureInvoker::start()
+      {
+         HRESULT lresult(E_NOTIMPL);
+         do {
+            LOG_INVOKE_FUNCTION(Singleton<Core::AvrtManager>::getInstance().initialize);
+            std::lock_guard<std::mutex> lLock(mAccessMutex);
+            mCaptureInvokerState = Started;
+            mCaptureThread.reset(new std::thread([this]()
+            {
+               HANDLE mmcssHandle = nullptr;
+               DWORD mmcssTaskIndex = 0;
+               mmcssHandle = AvrtManager::AvSetMmThreadCharacteristicsW(mTaskName.c_str(), &mmcssTaskIndex);
+               if (mmcssHandle != nullptr)
+                  AvrtManager::AvSetMmThreadPriority(mmcssHandle, mAVRT_PRIORITY_AvrtManager);
+               while (mCaptureInvokerState == Started) {
+                  this->invoke();
+               }
+               if (mmcssHandle != nullptr)
+                  AvrtManager::AvRevertMmThreadCharacteristics(mmcssHandle);
+            }));
+         } while (false);
+         return lresult;
+      }
 
-			HRESULT lresult(E_NOTIMPL);
+      HRESULT CaptureInvoker::stop()
+      {
+         HRESULT lresult(E_NOTIMPL);
+         do {
+            lresult = S_OK;
+            if (mCaptureInvokerState != Started) {
+               break;
+            }
+            mCaptureInvokerState = Stopped;
+            if (mCaptureThread)
+               mCaptureThread->join();
+            mCaptureThread.reset();
+         } while (false);
+         return lresult;
+      }
 
-			do
-			{
-				LOG_INVOKE_FUNCTION(Singleton<Core::AvrtManager>::getInstance().initialize);				
-
-				std::lock_guard<std::mutex> lLock(mAccessMutex);
-				
-				mCaptureInvokerState = CaptureInvokerState::Started;
-				
-				mCaptureThread.reset(new std::thread(
-					[this]()
-				{
-					HANDLE mmcssHandle = NULL;
-
-					DWORD mmcssTaskIndex = 0;
-
-					mmcssHandle = AvrtManager::AvSetMmThreadCharacteristicsW(mTaskName.c_str(), &mmcssTaskIndex);
-
-					if (mmcssHandle != nullptr)
-						AvrtManager::AvSetMmThreadPriority(mmcssHandle, mAVRT_PRIORITY_AvrtManager);
-															
-					while (mCaptureInvokerState == CaptureInvokerState::Started)
-					{
-						this->invoke();
-					}
-
-					if (mmcssHandle != nullptr)
-						AvrtManager::AvRevertMmThreadCharacteristics(mmcssHandle);
-				}
-				));
-
-			} while (false);
-
-			return lresult;
-		}
-
-		HRESULT CaptureInvoker::stop()
-		{
-
-			HRESULT lresult(E_NOTIMPL);
-
-			do
-			{
-				lresult = S_OK;
-
-				if (mCaptureInvokerState != CaptureInvokerState::Started)
-				{
-					break;
-				}
-
-				mCaptureInvokerState = CaptureInvokerState::Stopped;
-
-				if (mCaptureThread)
-					mCaptureThread->join();
-
-				mCaptureThread.reset();
-				
-			} while (false);
-
-			return lresult;
-		}
-		
-		HRESULT STDMETHODCALLTYPE CaptureInvoker::invoke()
-		{
-			HRESULT lresult(E_NOTIMPL);
-
-			do
-			{
-				lresult = S_OK;
-
-			} while (false);
-
-			return lresult;
-		}
-	}
+      HRESULT STDMETHODCALLTYPE CaptureInvoker::invoke()
+      {
+         HRESULT lresult(E_NOTIMPL);
+         do {
+            lresult = S_OK;
+         } while (false);
+         return lresult;
+      }
+   }
 }

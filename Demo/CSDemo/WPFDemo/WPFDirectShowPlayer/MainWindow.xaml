@@ -3,14 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:WPFDirectShowPlayer"
         Title="MainWindow" Height="600" Width="800">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+   <Grid>
+      <Grid.RowDefinitions>
+         <RowDefinition />
+         <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
 
-        <local:EVRDisplay x:Name="mEVRDisplay" Margin="10" />
+      <local:EVRDisplay x:Name="mEVRDisplay" Margin="10" />
 
-        <Button Click="Button_Click" Grid.Row="1" Height="50" Content="Play" FontSize="30"/>
-    </Grid>
+      <Button Click="Button_Click" Grid.Row="1" Height="50" Content="Play" FontSize="30" />
+   </Grid>
 </Window>

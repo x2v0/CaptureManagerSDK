@@ -1,43 +1,35 @@
 #pragma once
-
-
 #include "../CaptureManagerBroker/StreamControlCommon.h"
 #include "../PugiXML/pugixml.hpp"
 #include <vector>
 #include <Unknwnbase.h>
 
-
 namespace CaptureManager
 {
-	namespace Transform
-	{
-		class SampleAccumulatorNodeFactory
-		{
-			struct SampleAccumulatorInfo
-			{
-				StreamControlInfo mStreamControlInfo;
+   namespace Transform
+   {
+      class SampleAccumulatorNodeFactory
+      {
+         struct SampleAccumulatorInfo
+         {
+            StreamControlInfo mStreamControlInfo;
+            int mSampleSize;
+         };
 
-				int mSampleSize;
-			};
+      public:
+         HRESULT getSampleAccumulatorNodeFactoryCollection(pugi::xml_node& aRefRootXMLElement,
+                                                           std::vector<StreamControlInfo>& aCollection);
 
-		public:
+         HRESULT createSampleAccumulatorNode(REFIID aREFIID, std::vector<IUnknown*> aArrayDownStreamTopologyNodes,
+                                             IUnknown** aPtrPtrTopologySampleAccumulatorNode);
 
-			HRESULT getSampleAccumulatorNodeFactoryCollection(
-				pugi::xml_node& aRefRootXMLElement,
-				std::vector<StreamControlInfo>& aCollection);
+      protected:
+         SampleAccumulatorNodeFactory();
 
-			HRESULT createSampleAccumulatorNode(
-				REFIID aREFIID,
-				std::vector<IUnknown*> aArrayDownStreamTopologyNodes,
-				IUnknown** aPtrPtrTopologySampleAccumulatorNode);
+         ~SampleAccumulatorNodeFactory();
 
-		protected:
-			SampleAccumulatorNodeFactory();
-			~SampleAccumulatorNodeFactory();
-
-		private:
-
-			std::vector<SampleAccumulatorInfo> mSampleAccumulatorInfo;
-		};
-	}
+      private:
+         std::vector<SampleAccumulatorInfo> mSampleAccumulatorInfo;
+      };
+   }
 }

@@ -1,28 +1,20 @@
 #pragma once
-
 #include <windows.h>
 #include "../Common/BaseUnknown.h"
 
 namespace CaptureManager
 {
-	namespace COMServer
-	{
-		class CoLogPrintOutClassFactory :
-			public BaseUnknown<IClassFactory>
-		{
-		public:
-			CoLogPrintOutClassFactory();
-			virtual ~CoLogPrintOutClassFactory();
+   namespace COMServer
+   {
+      class CoLogPrintOutClassFactory : public BaseUnknown<IClassFactory>
+      {
+      public:
+         CoLogPrintOutClassFactory();
 
+         virtual ~CoLogPrintOutClassFactory(); // IClassFactory interface
+         STDMETHODIMP LockServer(BOOL aLock) override;
 
-			// IClassFactory interface
-			STDMETHODIMP LockServer(
-				BOOL aLock);
-
-			STDMETHODIMP CreateInstance(
-				LPUNKNOWN aPtrUnkOuter,
-				REFIID aRefIID,
-				void** aPtrPtrVoidObject);
-		};
-	}
+         STDMETHODIMP CreateInstance(LPUNKNOWN aPtrUnkOuter, REFIID aRefIID, void** aPtrPtrVoidObject) override;
+      };
+   }
 }

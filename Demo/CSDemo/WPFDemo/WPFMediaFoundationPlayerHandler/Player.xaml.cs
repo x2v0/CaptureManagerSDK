@@ -22,625 +22,554 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using MediaFoundation;
-using MediaFoundation.Misc;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
+using CaptureManagerToCSharpProxy.Interfaces;
+using MediaFoundation;
+using MediaFoundation.Misc;
+using Microsoft.Win32;
 
 namespace WPFMediaFoundationPlayerHandler
 {
-    /// <summary>
-    /// Interaction logic for Player.xaml
-    /// </summary>
-    public partial class Player : UserControl
-    {
-        protected IMFMediaSession m_pSession = null;
-        protected IMFMediaSource m_pSource = null;
+   /// <summary>
+   ///    Interaction logic for Player.xaml
+   /// </summary>
+   public partial class Player : UserControl
+   {
+      #region Constructors and destructors
 
-        public IMFTopologyNode mIMFTopologyNode = null;
+      public Player()
+      {
+         InitializeComponent();
 
-        public uint mMaxVideoRenderStreamCount = 0;
+         mTickTimer.Interval = TimeSpan.FromMilliseconds(100);
 
-        public CaptureManagerToCSharpProxy.Interfaces.IEVRStreamControl mIEVRStreamControl = null;
+         mTickTimer.Tick += mTickTimer_Tick;
+      }
 
-        private bool mIsPlaying = false;
+      #endregion
 
-        private IMFClock mPresentationClock = null;
+      #region  Fields
 
-        private long mMediaDuration = 0;
+      public IEVRStreamControl mIEVRStreamControl = null;
 
-        private double mNewValue = -1.0;
+      public IMFTopologyNode mIMFTopologyNode = null;
 
-        private DispatcherTimer mTickTimer = new DispatcherTimer();
+      public uint mMaxVideoRenderStreamCount = 0;
+      protected IMFMediaSession m_pSession;
+      protected IMFMediaSource m_pSource;
 
-        private bool mIsSeek = false;
+      private bool lPress;
 
-        public Player()
-        {
-            InitializeComponent();
+      private bool mIsPlaying;
 
-            mTickTimer.Interval = TimeSpan.FromMilliseconds(100);
+      private bool mIsSeek;
 
-            mTickTimer.Tick += mTickTimer_Tick;
-        }
+      private long mMediaDuration;
 
-        void mTickTimer_Tick(object sender, EventArgs e)
-        {
-            if (mPresentationClock == null)
-                return;
+      private double mNewValue = -1.0;
 
-            if (mMediaDuration == 0)
-                return;
+      private IMFClock mPresentationClock;
 
-            if (mIsSeek)
-                return;
+      private Point mPrevPoint;
 
-            long lClockTime = 0;
+      private readonly DispatcherTimer mTickTimer = new DispatcherTimer();
 
-            long lSystemTime = 0;
+      #endregion
 
-            mPresentationClock.GetCorrelatedTime(0, out lClockTime, out lSystemTime);
+      #region Public methods
 
-            mSlider.Value = ((double)((double)lClockTime / (double)mMediaDuration)) * mSlider.Maximum;
-        }
+      public void Stop()
+      {
+         if (m_pSession != null) {
+            var hr = m_pSession.Stop();
+         }
+      }
 
-        private void m_SelectVideoFileBtn_Click(object sender, RoutedEventArgs e)
-        {
-            do
-            {
-                OpenFileDialog lopenFileDialog = new OpenFileDialog();
+      #endregion
 
-                lopenFileDialog.AddExtension = true;
+      #region Protected methods
 
-                var lresult = lopenFileDialog.ShowDialog();
+      protected void AddBranchToPartialTopology(IMFTopology pTopology, IMFPresentationDescriptor pSourcePD, int iStream)
+      {
+         MFError throwonhr;
 
-                if (lresult != true)
-                    break;
+         IMFStreamDescriptor pSourceSD = null;
+         IMFTopologyNode pSourceNode = null;
+         IMFTopologyNode pOutputNode = null;
+         var fSelected = false;
 
-                createSession(lopenFileDialog.FileName);
-                
-            } while (false);
+         // Get the stream descriptor for this stream.
+         throwonhr = pSourcePD.GetStreamDescriptorByIndex(iStream, out fSelected, out pSourceSD);
 
-        }
+         // Create the topology branch only if the stream is selected.
+         // Otherwise, do nothing.
+         if (fSelected) {
+            // Create a source node for this stream.
+            CreateSourceStreamNode(pSourcePD, pSourceSD, out pSourceNode);
 
-        private void createSession(string sFilePath)
-        {
-            try
-            {
-                MFError throwonhr = null;
+            // Create the output node for the renderer.
+            CreateOutputNode(pSourceSD, out pOutputNode);
 
-                if (m_pSession == null)
-                    throwonhr = MFExtern.MFCreateMediaSession(null, out m_pSession);
-                else
-                    Stop();
+            // Add both nodes to the topology.
+            throwonhr = pTopology.AddNode(pSourceNode);
+            throwonhr = pTopology.AddNode(pOutputNode);
 
-                // Create the media source.
-
-                CreateMediaSource(sFilePath);
-
-                if (m_pSource == null)
-                    return;
-
-                IMFPresentationDescriptor lPresentationDescriptor = null;
-
-                m_pSource.CreatePresentationDescriptor(out lPresentationDescriptor);
-
-                if (lPresentationDescriptor == null)
-                    return;
-                
-                lPresentationDescriptor.GetUINT64(MFAttributesClsid.MF_PD_DURATION, out mMediaDuration);                              
-
-                IMFTopology pTopology = null;
-
-                // Create a partial topology.
-                CreateTopologyFromSource(out pTopology);
-
-                HResult hr = HResult.S_OK;
-                // Set the topology on the media session.
-                hr = m_pSession.SetTopology(MFSessionSetTopologyFlags.Immediate, pTopology);
-
-                StartPlayback();
-
-            }
-            catch (Exception)
-            {
-            }
-        }
+            // Connect the source node to the output node.
+            throwonhr = pSourceNode.ConnectOutput(0, pOutputNode, 0);
+         }
+      }
 
 
+      protected void CreateMediaSource(string sURL)
+      {
+         IMFSourceResolver pSourceResolver;
+         object pSource;
 
-        protected void CreateMediaSource(string sURL)
-        {
-            IMFSourceResolver pSourceResolver;
-            object pSource;
+         // Create the source resolver.
+         var hr = MFExtern.MFCreateSourceResolver(out pSourceResolver);
+         MFError.ThrowExceptionForHR(hr);
 
-            // Create the source resolver.
-            HResult hr = MFExtern.MFCreateSourceResolver(out pSourceResolver);
+         try {
+            // Use the source resolver to create the media source.
+            var ObjectType = MFObjectType.Invalid;
+
+            hr = pSourceResolver.CreateObjectFromURL(sURL, // URL of the source.
+                                                     MFResolution.MediaSource, // Create a source object.
+                                                     null, // Optional property store.
+                                                     out ObjectType, // Receives the created object type.
+                                                     out pSource // Receives a pointer to the media source.
+                                                    );
             MFError.ThrowExceptionForHR(hr);
 
-            try
-            {
-                // Use the source resolver to create the media source.
-                MFObjectType ObjectType = MFObjectType.Invalid;
+            // Get the IMFMediaSource interface from the media source.
+            m_pSource = (IMFMediaSource) pSource;
+         } finally {
+            // Clean up
+            Marshal.ReleaseComObject(pSourceResolver);
+         }
+      }
 
-                hr = pSourceResolver.CreateObjectFromURL(
-                        sURL,                       // URL of the source.
-                        MFResolution.MediaSource,   // Create a source object.
-                        null,                       // Optional property store.
-                        out ObjectType,             // Receives the created object type.
-                        out pSource                 // Receives a pointer to the media source.
-                    );
-                MFError.ThrowExceptionForHR(hr);
+      protected void CreateOutputNode(IMFStreamDescriptor pSourceSD, out IMFTopologyNode ppNode)
+      {
+         IMFTopologyNode pNode = null;
+         IMFMediaTypeHandler pHandler = null;
+         IMFActivate pRendererActivate = null;
 
-                // Get the IMFMediaSource interface from the media source.
-                m_pSource = (IMFMediaSource)pSource;
+         var guidMajorType = Guid.Empty;
+         MFError throwonhr;
+
+         // Get the stream ID.
+         var streamID = 0;
+
+         HResult hr;
+
+         hr = pSourceSD.GetStreamIdentifier(out streamID); // Just for debugging, ignore any failures.
+         if (MFError.Failed(hr)) {
+            //TRACE("IMFStreamDescriptor::GetStreamIdentifier" + hr.ToString());
+         }
+
+         // Get the media type handler for the stream.
+         throwonhr = pSourceSD.GetMediaTypeHandler(out pHandler);
+
+         // Get the major media type.
+         throwonhr = pHandler.GetMajorType(out guidMajorType);
+
+         // Create a downstream node.
+         throwonhr = MFExtern.MFCreateTopologyNode(MFTopologyType.OutputNode, out pNode);
+
+         // Create an IMFActivate object for the renderer, based on the media type.
+         if (MFMediaType.Audio == guidMajorType) {
+            // Create the audio renderer.
+            //TRACE(string.Format("Stream {0}: audio stream", streamID));
+            throwonhr = MFExtern.MFCreateAudioRendererActivate(out pRendererActivate);
+
+            // Set the IActivate object on the output node.
+            throwonhr = pNode.SetObject(pRendererActivate);
+         } else if (MFMediaType.Video == guidMajorType) {
+            // Create the video renderer.
+            //TRACE(string.Format("Stream {0}: video stream", streamID));
+            //throwonhr = MFExtern.MFCreateVideoRendererActivate(m_hwndVideo, out pRendererActivate);
+
+            mIMFTopologyNode.GetObject(out pRendererActivate);
+
+            throwonhr = pNode.SetObject(pRendererActivate);
+         }
+
+
+         // Return the IMFTopologyNode pointer to the caller.
+         ppNode = pNode;
+      }
+
+      protected void CreateSourceStreamNode(IMFPresentationDescriptor pSourcePD, IMFStreamDescriptor pSourceSD, out IMFTopologyNode ppNode)
+      {
+         MFError throwonhr;
+         IMFTopologyNode pNode = null;
+
+         // Create the source-stream node.
+         throwonhr = MFExtern.MFCreateTopologyNode(MFTopologyType.SourcestreamNode, out pNode);
+
+         // Set attribute: Pointer to the media source.
+         throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_SOURCE, m_pSource);
+
+         // Set attribute: Pointer to the presentation descriptor.
+         throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_PRESENTATION_DESCRIPTOR, pSourcePD);
+
+         // Set attribute: Pointer to the stream descriptor.
+         throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_STREAM_DESCRIPTOR, pSourceSD);
+
+         // Return the IMFTopologyNode pointer to the caller.
+         ppNode = pNode;
+      }
+
+      protected void CreateTopologyFromSource(out IMFTopology ppTopology)
+      {
+         IMFTopology pTopology = null;
+         IMFPresentationDescriptor pSourcePD = null;
+         var cSourceStreams = 0;
+
+         MFError throwonhr;
+
+         // Create a new topology.
+         throwonhr = MFExtern.MFCreateTopology(out pTopology);
+
+         // Create the presentation descriptor for the media source.
+         throwonhr = m_pSource.CreatePresentationDescriptor(out pSourcePD);
+
+         // Get the number of streams in the media source.
+         throwonhr = pSourcePD.GetStreamDescriptorCount(out cSourceStreams);
+
+         //TRACE(string.Format("Stream count: {0}", cSourceStreams));
+
+         // For each stream, create the topology nodes and add them to the topology.
+         for (var i = 0; i < cSourceStreams; i++) {
+            AddBranchToPartialTopology(pTopology, pSourcePD, i);
+         }
+
+         // Return the IMFTopology pointer to the caller.
+         ppTopology = pTopology;
+      }
+
+      protected void StartPlayback()
+      {
+         var hr = m_pSession.Start(Guid.Empty, new PropVariant());
+
+         if (hr == HResult.S_OK) {
+            mPlayPauseBtn.IsEnabled = true;
+
+            mImageBtn.Source = new BitmapImage(new Uri("pack://application:,,,/WPFMediaFoundationPlayerHandler;component/Images/pause.png", UriKind.Absolute));
+
+            mIsPlaying = true;
+
+            mPresentationClock = null;
+
+            m_pSession.GetClock(out mPresentationClock);
+
+            mTickTimer.Start();
+
+            mIsSeek = false;
+         }
+
+         MFError.ThrowExceptionForHR(hr);
+
+         //m_pSession.
+      }
+
+      #endregion
+
+      #region Private methods
+
+      private void createSession(string sFilePath)
+      {
+         try {
+            MFError throwonhr = null;
+
+            if (m_pSession == null) {
+               throwonhr = MFExtern.MFCreateMediaSession(null, out m_pSession);
+            } else {
+               Stop();
             }
-            finally
-            {
-                // Clean up
-                Marshal.ReleaseComObject(pSourceResolver);
-            }
-        }
 
-        protected void CreateTopologyFromSource(out IMFTopology ppTopology)
-        {
+            // Create the media source.
+
+            CreateMediaSource(sFilePath);
+
+            if (m_pSource == null) {
+               return;
+            }
+
+            IMFPresentationDescriptor lPresentationDescriptor = null;
+
+            m_pSource.CreatePresentationDescriptor(out lPresentationDescriptor);
+
+            if (lPresentationDescriptor == null) {
+               return;
+            }
+
+            lPresentationDescriptor.GetUINT64(MFAttributesClsid.MF_PD_DURATION, out mMediaDuration);
 
             IMFTopology pTopology = null;
-            IMFPresentationDescriptor pSourcePD = null;
-            int cSourceStreams = 0;
 
-            MFError throwonhr;
+            // Create a partial topology.
+            CreateTopologyFromSource(out pTopology);
 
-            try
-            {
-                // Create a new topology.
-                throwonhr = MFExtern.MFCreateTopology(out pTopology);
+            var hr = HResult.S_OK;
+            // Set the topology on the media session.
+            hr = m_pSession.SetTopology(MFSessionSetTopologyFlags.Immediate, pTopology);
 
-                // Create the presentation descriptor for the media source.
-                throwonhr = m_pSource.CreatePresentationDescriptor(out pSourcePD);
+            StartPlayback();
+         } catch (Exception) {
+         }
+      }
 
-                // Get the number of streams in the media source.
-                throwonhr = pSourcePD.GetStreamDescriptorCount(out cSourceStreams);
+      private void m_SelectVideoFileBtn_Click(object sender, RoutedEventArgs e)
+      {
+         do {
+            var lopenFileDialog = new OpenFileDialog();
 
-                //TRACE(string.Format("Stream count: {0}", cSourceStreams));
+            lopenFileDialog.AddExtension = true;
 
-                // For each stream, create the topology nodes and add them to the topology.
-                for (int i = 0; i < cSourceStreams; i++)
-                {
-                    AddBranchToPartialTopology(pTopology, pSourcePD, i);
-                }
+            var lresult = lopenFileDialog.ShowDialog();
 
-                // Return the IMFTopology pointer to the caller.
-                ppTopology = pTopology;
-            }
-            catch
-            {
-                // If we failed, release the topology
-                //SafeRelease(pTopology);
-                throw;
-            }
-            finally
-            {
-                //SafeRelease(pSourcePD);
-            }
-        }
-
-        protected void AddBranchToPartialTopology(
-            IMFTopology pTopology,
-            IMFPresentationDescriptor pSourcePD,
-            int iStream
-            )
-        {
-            MFError throwonhr;
-
-            IMFStreamDescriptor pSourceSD = null;
-            IMFTopologyNode pSourceNode = null;
-            IMFTopologyNode pOutputNode = null;
-            bool fSelected = false;
-
-            try
-            {
-                // Get the stream descriptor for this stream.
-                throwonhr = pSourcePD.GetStreamDescriptorByIndex(iStream, out fSelected, out pSourceSD);
-
-                // Create the topology branch only if the stream is selected.
-                // Otherwise, do nothing.
-                if (fSelected)
-                {
-                    // Create a source node for this stream.
-                    CreateSourceStreamNode(pSourcePD, pSourceSD, out pSourceNode);
-
-                    // Create the output node for the renderer.
-                    CreateOutputNode(pSourceSD, out pOutputNode);
-
-                    // Add both nodes to the topology.
-                    throwonhr = pTopology.AddNode(pSourceNode);
-                    throwonhr = pTopology.AddNode(pOutputNode);
-
-                    // Connect the source node to the output node.
-                    throwonhr = pSourceNode.ConnectOutput(0, pOutputNode, 0);
-                }
-            }
-            finally
-            {
-                // Clean up.
-                //SafeRelease(pSourceSD);
-                //SafeRelease(pSourceNode);
-                //SafeRelease(pOutputNode);
-            }
-        }
-
-        protected void CreateSourceStreamNode(
-            IMFPresentationDescriptor pSourcePD,
-            IMFStreamDescriptor pSourceSD,
-            out IMFTopologyNode ppNode
-            )
-        {
-            MFError throwonhr;
-            IMFTopologyNode pNode = null;
-
-            try
-            {
-                // Create the source-stream node.
-                throwonhr = MFExtern.MFCreateTopologyNode(MFTopologyType.SourcestreamNode, out pNode);
-
-                // Set attribute: Pointer to the media source.
-                throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_SOURCE, m_pSource);
-
-                // Set attribute: Pointer to the presentation descriptor.
-                throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_PRESENTATION_DESCRIPTOR, pSourcePD);
-
-                // Set attribute: Pointer to the stream descriptor.
-                throwonhr = pNode.SetUnknown(MFAttributesClsid.MF_TOPONODE_STREAM_DESCRIPTOR, pSourceSD);
-
-                // Return the IMFTopologyNode pointer to the caller.
-                ppNode = pNode;
-            }
-            catch
-            {
-                // If we failed, release the pnode
-                //SafeRelease(pNode);
-                throw;
-            }
-        }
-
-        protected void CreateOutputNode(
-            IMFStreamDescriptor pSourceSD,
-            out IMFTopologyNode ppNode
-            )
-        {
-            IMFTopologyNode pNode = null;
-            IMFMediaTypeHandler pHandler = null;
-            IMFActivate pRendererActivate = null;
-
-            Guid guidMajorType = Guid.Empty;
-            MFError throwonhr;
-
-            // Get the stream ID.
-            int streamID = 0;
-
-            try
-            {
-                HResult hr;
-
-                hr = pSourceSD.GetStreamIdentifier(out streamID); // Just for debugging, ignore any failures.
-                if (MFError.Failed(hr))
-                {
-                    //TRACE("IMFStreamDescriptor::GetStreamIdentifier" + hr.ToString());
-                }
-
-                // Get the media type handler for the stream.
-                throwonhr = pSourceSD.GetMediaTypeHandler(out pHandler);
-
-                // Get the major media type.
-                throwonhr = pHandler.GetMajorType(out guidMajorType);
-
-                // Create a downstream node.
-                throwonhr = MFExtern.MFCreateTopologyNode(MFTopologyType.OutputNode, out pNode);
-
-                // Create an IMFActivate object for the renderer, based on the media type.
-                if (MFMediaType.Audio == guidMajorType)
-                {
-                    // Create the audio renderer.
-                    //TRACE(string.Format("Stream {0}: audio stream", streamID));
-                    throwonhr = MFExtern.MFCreateAudioRendererActivate(out pRendererActivate);
-                    
-                    // Set the IActivate object on the output node.
-                    throwonhr = pNode.SetObject(pRendererActivate);
-                }
-                else if (MFMediaType.Video == guidMajorType)
-                {
-                    // Create the video renderer.
-                    //TRACE(string.Format("Stream {0}: video stream", streamID));
-                    //throwonhr = MFExtern.MFCreateVideoRendererActivate(m_hwndVideo, out pRendererActivate);
-                    
-                    mIMFTopologyNode.GetObject(out pRendererActivate);
-
-                    throwonhr = pNode.SetObject(pRendererActivate);
-                }
-                else
-                {
-                    //TRACE(string.Format("Stream {0}: Unknown format", streamID));
-                    //throw new COMException("Unknown format", (int)HResult.E_FAIL);
-                }
-
-
-                // Return the IMFTopologyNode pointer to the caller.
-                ppNode = pNode;
-            }
-            catch
-            {
-                // If we failed, release the pNode
-                //SafeRelease(pNode);
-                throw;
-            }
-            finally
-            {
-                // Clean up.
-                //SafeRelease(pHandler);
-                //SafeRelease(pRendererActivate);
-            }
-        }
-
-        public void Stop()
-        {
-            if(m_pSession != null)
-            {
-                HResult hr = m_pSession.Stop();
-            }
-        }
-
-        protected void StartPlayback()
-        {
-            HResult hr = m_pSession.Start(Guid.Empty, new PropVariant());
-
-            if (hr == HResult.S_OK)
-            {
-                mPlayPauseBtn.IsEnabled = true;
-
-                mImageBtn.Source = new BitmapImage(new Uri("pack://application:,,,/WPFMediaFoundationPlayerHandler;component/Images/pause.png", UriKind.Absolute));
-
-                mIsPlaying = true;
-
-                mPresentationClock = null;
-
-                m_pSession.GetClock(out mPresentationClock);
-
-                mTickTimer.Start();
-
-                mIsSeek = false;
+            if (lresult != true) {
+               break;
             }
 
-            MFError.ThrowExceptionForHR(hr);
+            createSession(lopenFileDialog.FileName);
+         } while (false);
+      }
 
-            //m_pSession.
-        }
+      private void mPlayPauseBtn_Click(object sender, RoutedEventArgs e)
+      {
+         mIsSeek = false;
 
-        void onDragDelta(object sender, DragDeltaEventArgs e)
-        {
-            Canvas lParentCanvas = Parent as Canvas;
+         mNewValue = -1.0;
 
-            if (lParentCanvas == null)
-                return;
+         if (mIsPlaying) {
+            var hr = m_pSession.Pause();
 
-            double lLeftPos = Canvas.GetLeft(this);
-            
-            double lTopPos = Canvas.GetTop(this);
+            if (hr == HResult.S_OK) {
+               mImageBtn.Source = new BitmapImage(new Uri("pack://application:,,,/WPFMediaFoundationPlayerHandler;component/Images/play-button.png", UriKind.Absolute));
 
-            //Move the Thumb to the mouse position during the drag operation
-            double yadjust = this.Height + e.VerticalChange;
-            double xadjust = this.Width + e.HorizontalChange;
-            if ((xadjust >= 0) && (yadjust >= 0) &&
-                ((lLeftPos + xadjust) <= lParentCanvas.Width) && ((lTopPos + yadjust) <= lParentCanvas.Height))
-            {
-                this.Width = xadjust;
-                this.Height = yadjust;
+               mIsPlaying = false;
 
-                updatePosition();
+               mTickTimer.Stop();
             }
-        }
+         } else {
+            StartPlayback();
+         }
+      }
 
-        private void updatePosition()
-        {
-            Canvas lParentCanvas = Parent as Canvas;
+      private void mSlider_MouseLeave(object sender, MouseEventArgs e)
+      {
+         mIsSeek = false;
 
-            if (lParentCanvas == null)
-                return;
+         mTickTimer.Start();
+      }
 
-            double lLeftPos = Canvas.GetLeft(this);
+      private void mSlider_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+      {
+         mIsSeek = true;
 
-            double lLeftProp = lLeftPos / lParentCanvas.Width;
+         mTickTimer.Stop();
+      }
 
-            double lRightProp = (lLeftPos + Width) / lParentCanvas.Width;
+      private void mSlider_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+      {
+         mIsSeek = false;
 
-            double lTopPos = Canvas.GetTop(this);
+         if (mIsPlaying && (mNewValue >= 0.0)) {
+            var lselectedProp = mNewValue / mSlider.Maximum;
 
-            double lTopProp = lTopPos / lParentCanvas.Height;
+            var startPosition = lselectedProp * mMediaDuration;
 
-            double lBottomProp = (lTopPos + Height) / lParentCanvas.Height;
+            var lStartTimeSpan = new TimeSpan((long) startPosition);
+
+            var hr = m_pSession.Start(lStartTimeSpan);
+         }
+
+         mTickTimer.Start();
+      }
+
+      private void mSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+      {
+         if (mIsPlaying && mIsSeek) {
+            mNewValue = e.NewValue;
+         }
+      }
+
+      private void mTickTimer_Tick(object sender, EventArgs e)
+      {
+         if (mPresentationClock == null) {
+            return;
+         }
+
+         if (mMediaDuration == 0) {
+            return;
+         }
+
+         if (mIsSeek) {
+            return;
+         }
+
+         long lClockTime = 0;
+
+         long lSystemTime = 0;
+
+         mPresentationClock.GetCorrelatedTime(0, out lClockTime, out lSystemTime);
+
+         mSlider.Value = lClockTime / (double) mMediaDuration * mSlider.Maximum;
+      }
+
+      private void onDragCompleted(object sender, DragCompletedEventArgs e)
+      {
+         myThumb.Background = Brushes.Blue;
+      }
+
+      private void onDragDelta(object sender, DragDeltaEventArgs e)
+      {
+         var lParentCanvas = Parent as Canvas;
+
+         if (lParentCanvas == null) {
+            return;
+         }
+
+         var lLeftPos = Canvas.GetLeft(this);
+
+         var lTopPos = Canvas.GetTop(this);
+
+         //Move the Thumb to the mouse position during the drag operation
+         var yadjust = Height + e.VerticalChange;
+         var xadjust = Width + e.HorizontalChange;
+         if ((xadjust >= 0) &&
+             (yadjust >= 0) &&
+             ((lLeftPos + xadjust) <= lParentCanvas.Width) &&
+             ((lTopPos + yadjust) <= lParentCanvas.Height)) {
+            Width = xadjust;
+            Height = yadjust;
+
+            updatePosition();
+         }
+      }
+
+      private void onDragStarted(object sender, DragStartedEventArgs e)
+      {
+         myThumb.Background = Brushes.Orange;
+      }
+
+      private void updatePosition()
+      {
+         var lParentCanvas = Parent as Canvas;
+
+         if (lParentCanvas == null) {
+            return;
+         }
+
+         var lLeftPos = Canvas.GetLeft(this);
+
+         var lLeftProp = lLeftPos / lParentCanvas.Width;
+
+         var lRightProp = (lLeftPos + Width) / lParentCanvas.Width;
+
+         var lTopPos = Canvas.GetTop(this);
+
+         var lTopProp = lTopPos / lParentCanvas.Height;
+
+         var lBottomProp = (lTopPos + Height) / lParentCanvas.Height;
 
 
-            mIEVRStreamControl.setPosition(
-                mIMFTopologyNode,
-                (float)lLeftProp,
-                (float)lRightProp,
-                (float)lTopProp,
-                (float)lBottomProp);
-        }
+         mIEVRStreamControl.setPosition(mIMFTopologyNode, (float) lLeftProp, (float) lRightProp, (float) lTopProp, (float) lBottomProp);
+      }
 
-        void onDragStarted(object sender, DragStartedEventArgs e)
-        {
-            myThumb.Background = Brushes.Orange;
-        }
+      private void UserControl_MouseLeave(object sender, MouseEventArgs e)
+      {
+         lPress = false;
+      }
 
-        void onDragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            myThumb.Background = Brushes.Blue;
-        }
+      private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+      {
+         lPress = true;
 
-        bool lPress = false;
+         var lParentCanvas = Parent as Canvas;
 
-        Point mPrevPoint = new Point();
+         if (lParentCanvas == null) {
+            return;
+         }
 
-        private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            lPress = true;
+         mPrevPoint = Mouse.GetPosition(lParentCanvas);
 
-            Canvas lParentCanvas = Parent as Canvas;
+         var lcurrZIndex = Panel.GetZIndex(this);
 
-            if (lParentCanvas == null)
-                return;
+         var l = new List<int>();
 
-            mPrevPoint = Mouse.GetPosition(lParentCanvas);
+         foreach (var item in lParentCanvas.Children) {
+            var lZIndex = Panel.GetZIndex((UIElement) item);
 
-            var lcurrZIndex = Canvas.GetZIndex(this);
+            if ((lParentCanvas.Children.Count - 1) == lZIndex) {
+               Panel.SetZIndex(this, lZIndex);
 
-            List<int> l = new List<int>();
+               Panel.SetZIndex((UIElement) item, lcurrZIndex);
 
-            foreach (var item in lParentCanvas.Children)
-            {
-                var lZIndex = Canvas.GetZIndex((UIElement)item);
+               break;
+            }
+         }
 
-                if ((lParentCanvas.Children.Count - 1) == lZIndex)
-                {
-                    Canvas.SetZIndex(this, lZIndex);
+         if (mMaxVideoRenderStreamCount > 0) {
+            mIEVRStreamControl.setZOrder(mIMFTopologyNode, mMaxVideoRenderStreamCount - 1);
+         }
+      }
 
-                    Canvas.SetZIndex((UIElement)item, lcurrZIndex);
+      private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+      {
+         lPress = false;
+      }
 
-                    break;
-                }
+      private void UserControl_MouseMove(object sender, MouseEventArgs e)
+      {
+         if (lPress) {
+            var lParentCanvas = Parent as Canvas;
 
+            if (lParentCanvas == null) {
+               return;
             }
 
-            if (mMaxVideoRenderStreamCount > 0)
-                mIEVRStreamControl.setZOrder(
-                    mIMFTopologyNode,
-                    mMaxVideoRenderStreamCount - 1);
-        }
+            var lPoint = Mouse.GetPosition(lParentCanvas);
 
-        private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            lPress = false;
-        }
+            var ldiff = mPrevPoint - lPoint;
 
-        private void UserControl_MouseMove(object sender, MouseEventArgs e)
-        {
-            if(lPress)
-            {
-                Canvas lParentCanvas = Parent as Canvas;
+            var lLeftPos = Canvas.GetLeft(this);
 
-                if (lParentCanvas == null)
-                    return;
+            var lTopPos = Canvas.GetTop(this);
 
-                Point lPoint = Mouse.GetPosition(lParentCanvas);
+            var lnewLeftPos = lLeftPos - ldiff.X;
 
-                var ldiff = mPrevPoint - lPoint;
-
-                double lLeftPos = Canvas.GetLeft(this);
-                
-                double lTopPos = Canvas.GetTop(this);
-
-                double lnewLeftPos = lLeftPos - ldiff.X;
-
-                if (lnewLeftPos >= 0 && lnewLeftPos <= (lParentCanvas.Width - Width))
-                    Canvas.SetLeft(this, lnewLeftPos);
-
-
-                double lnewTopPos = lTopPos - ldiff.Y;
-
-                if (lnewTopPos >= 0 && lnewTopPos <= (lParentCanvas.Height - Height))
-                    Canvas.SetTop(this, lnewTopPos);
-                
-                mPrevPoint = lPoint;
-
-                updatePosition();
+            if ((lnewLeftPos >= 0) &&
+                (lnewLeftPos <= (lParentCanvas.Width - Width))) {
+               Canvas.SetLeft(this, lnewLeftPos);
             }
-        }
 
-        private void UserControl_MouseLeave(object sender, MouseEventArgs e)
-        {
-            lPress = false;
-        }
 
-        private void mPlayPauseBtn_Click(object sender, RoutedEventArgs e)
-        {
-            mIsSeek = false;
+            var lnewTopPos = lTopPos - ldiff.Y;
 
-            mNewValue = -1.0;
-
-            if(mIsPlaying)
-            {
-                HResult hr = m_pSession.Pause();
-
-                if (hr == HResult.S_OK)
-                {
-                    mImageBtn.Source = new BitmapImage(new Uri("pack://application:,,,/WPFMediaFoundationPlayerHandler;component/Images/play-button.png", UriKind.Absolute));
-
-                    mIsPlaying = false;
-
-                    mTickTimer.Stop();
-                }
+            if ((lnewTopPos >= 0) &&
+                (lnewTopPos <= (lParentCanvas.Height - Height))) {
+               Canvas.SetTop(this, lnewTopPos);
             }
-            else
-            {
-                StartPlayback();
-            }
-        }
 
-        private void mSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (mIsPlaying && mIsSeek)
-            {
-                mNewValue = e.NewValue;
-            }            
-        }
+            mPrevPoint = lPoint;
 
-        private void mSlider_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            mIsSeek = true;
+            updatePosition();
+         }
+      }
 
-            mTickTimer.Stop();
-        }
-
-        private void mSlider_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            mIsSeek = false;
-
-            if (mIsPlaying && mNewValue >= 0.0)
-            {
-                double lselectedProp = mNewValue / mSlider.Maximum;
-
-                double startPosition = lselectedProp * (double)mMediaDuration;
-
-                TimeSpan lStartTimeSpan = new TimeSpan((long)startPosition);
-
-                HResult hr = m_pSession.Start(lStartTimeSpan);
-            } 
-
-            mTickTimer.Start();
-        }
-
-        private void mSlider_MouseLeave(object sender, MouseEventArgs e)
-        {
-            mIsSeek = false;
-
-            mTickTimer.Start();
-        }
-
-    }
+      #endregion
+   }
 }

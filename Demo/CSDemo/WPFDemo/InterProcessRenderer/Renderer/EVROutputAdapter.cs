@@ -22,67 +22,63 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace InterProcessRenderer
 {
-    class EVROutputAdapter
-    {
-        #region Fields
+   internal class EVROutputAdapter
+   {
+      #region Constructors and destructors
 
-        private object _Node = null;
+      public EVROutputAdapter(Program viewer, IntPtr handler)
+      {
+         Viewer = viewer;
 
-        private IntPtr _handler = IntPtr.Zero;
+         _handler = handler;
+      }
 
-        #endregion
+      #endregion
 
-        #region Constructors
+      #region  Fields
 
-        public EVROutputAdapter(Program viewer, IntPtr handler)
-        {
-            Viewer = viewer;
+      private readonly IntPtr _handler = IntPtr.Zero;
 
-            _handler = handler;
-        }
+      private object _Node;
 
-        #endregion
+      #endregion
 
-        #region Properties
+      #region Public properties
 
-        public object Node
-        {
-            get
-            {
-                if (_Node == null)
-                {
-                    IEVRMultiSinkFactory lSinkFactory;
+      public object Node
+      {
+         get
+         {
+            if (_Node == null) {
+               IEVRMultiSinkFactory lSinkFactory;
 
-                    var lSinkControl = Viewer.CaptureManager.createSinkControl();
+               var lSinkControl = Viewer.CaptureManager.createSinkControl();
 
-                    lSinkControl.createSinkFactory(Guid.Empty, out lSinkFactory);
+               lSinkControl.createSinkFactory(Guid.Empty, out lSinkFactory);
 
-                    List<object> ltemp = new List<object>();
+               var ltemp = new List<object>();
 
-                    lSinkFactory.createOutputNodes(
-                            _handler,
-                            1,
-                            out ltemp);
+               lSinkFactory.createOutputNodes(_handler, 1, out ltemp);
 
-                    _Node = ltemp[0];
-                }
-
-                return _Node;
+               _Node = ltemp[0];
             }
-            set { _Node = value; }
-        }
 
-        public Program Viewer { get; private set; }
+            return _Node;
+         }
+         set => _Node = value;
+      }
 
-        #endregion
-    }
+      public Program Viewer
+      {
+         get;
+      }
+
+      #endregion
+   }
 }

@@ -1,9 +1,8 @@
 #pragma once
-
 namespace CaptureManager
 {
-	namespace Core
-	{
+   namespace Core
+   {
 #ifdef _WIN64
 #if defined(_MSC_VER)
 #define APEXCALL __cdecl						//	32-bit on Visual Studio
@@ -13,31 +12,23 @@ namespace CaptureManager
 #else
 #define APEXCALL									//	64-bit - __fastcall is default on 64-bit!
 #endif
+      //_CRTIMP errno_t  __cdecl memcpy_s(_Out_writes_bytes_to_opt_(_DstSize, _MaxCount) void * _Dst, _In_ rsize_t _DstSize, _In_reads_bytes_opt_(_MaxCount) const void * _Src, _In_ rsize_t _MaxCount);
+      typedef void*(APEXCALL *memcpy)(void*, const void*, size_t);
 
-		//_CRTIMP errno_t  __cdecl memcpy_s(_Out_writes_bytes_to_opt_(_DstSize, _MaxCount) void * _Dst, _In_ rsize_t _DstSize, _In_reads_bytes_opt_(_MaxCount) const void * _Src, _In_ rsize_t _MaxCount);
+      typedef void*(APEXCALL *memmove)(void*, const void*, size_t);
 
-		typedef void *(APEXCALL *memcpy)(
-			void*, 
-			const void*, 
-			size_t);
+      class MemoryManager
+      {
+      public:
+         static memcpy memcpy;
+         static memmove memmove;
 
-		typedef void *(APEXCALL *memmove)(
-			void*,
-			const void*,
-			size_t);
-		
-		class MemoryManager
-		{
-		public:
-			static memcpy memcpy;
+         bool initialize();
 
-			static memmove memmove;
+      protected:
+         MemoryManager();
 
-			bool initialize();
-
-		protected:
-			MemoryManager();
-			~MemoryManager();
-		};
-	}
+         ~MemoryManager();
+      };
+   }
 }

@@ -1,8 +1,6 @@
 #pragma once
-
 #include <atomic>
 #include <mutex>
-
 #include "../Common/MFHeaders.h"
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
@@ -11,142 +9,88 @@
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace SampleGrabberPull
-		{
-			class SampleGrabberPullSink;
+   namespace Sinks
+   {
+      namespace SampleGrabberPull
+      {
+         class SampleGrabberPullSink;
 
+         class SampleGrabberPullStream : public BaseUnknown<
+               IMFShutdown, IMFStreamSink, IMFMediaTypeHandler, ISampleGrabberPullStream, SampleGrabberCall::
+               RegularSampleGrabberCall::ReadWriteBufferRegularSync>
+         {
+         public:
+            SampleGrabberPullStream();
 
-			class SampleGrabberPullStream :
-				public BaseUnknown <
-				IMFShutdown,
-				IMFStreamSink,
-				IMFMediaTypeHandler,
-				ISampleGrabberPullStream,
-				SampleGrabberCall::RegularSampleGrabberCall::ReadWriteBufferRegularSync
-				>
-			{
+            virtual ~SampleGrabberPullStream(); // IMFShutdown interface implmenentation
+            HRESULT STDMETHODCALLTYPE Shutdown() override;
 
-			public:
-				SampleGrabberPullStream();
+            HRESULT STDMETHODCALLTYPE GetShutdownStatus(MFSHUTDOWN_STATUS* aPtrStatus) override;
 
-				virtual ~SampleGrabberPullStream();		
+            // IMFStreamSink interface implementation
+            STDMETHODIMP GetMediaSink(IMFMediaSink** aPtrPtrMediaSink) override;
 
-				// IMFShutdown interface implmenentation
+            STDMETHODIMP GetIdentifier(DWORD* aPtrIdentifier) override;
 
-				virtual HRESULT STDMETHODCALLTYPE Shutdown()override;
+            STDMETHODIMP GetMediaTypeHandler(IMFMediaTypeHandler** aPtrPtrHandler) override;
 
-				virtual HRESULT STDMETHODCALLTYPE GetShutdownStatus(MFSHUTDOWN_STATUS * aPtrStatus)override;
+            STDMETHODIMP ProcessSample(IMFSample* aPtrSample) override;
 
+            STDMETHODIMP PlaceMarker(MFSTREAMSINK_MARKER_TYPE aMarkerType, const PROPVARIANT* aPtrVarMarkerValue,
+                                     const PROPVARIANT* aPtrVarContextValue) override;
 
-				// IMFStreamSink interface implementation
-				STDMETHODIMP GetMediaSink(
-					IMFMediaSink** aPtrPtrMediaSink);
-				STDMETHODIMP GetIdentifier(
-					DWORD* aPtrIdentifier);
-				STDMETHODIMP GetMediaTypeHandler(
-					IMFMediaTypeHandler** aPtrPtrHandler);
-				STDMETHODIMP ProcessSample(
-					IMFSample* aPtrSample);
-				STDMETHODIMP PlaceMarker(
-					MFSTREAMSINK_MARKER_TYPE aMarkerType, 
-					const PROPVARIANT* aPtrVarMarkerValue, 
-					const PROPVARIANT* aPtrVarContextValue);
-				STDMETHODIMP Flush();
+            STDMETHODIMP Flush() override; // IMFMediaEventGenerator interface implementation
+            STDMETHODIMP BeginGetEvent(IMFAsyncCallback* aPtrAsyncCallback, IUnknown* aPtrUnkState) override;
 
-				// IMFMediaEventGenerator interface implementation
-				STDMETHODIMP BeginGetEvent(
-					IMFAsyncCallback* aPtrAsyncCallback, 
-					IUnknown* aPtrUnkState);
-				STDMETHODIMP EndGetEvent(
-					IMFAsyncResult* aPtrAsyncResult, 
-					IMFMediaEvent** aPtrPtrEvent);
-				STDMETHODIMP GetEvent(
-					DWORD aFlags, 
-					IMFMediaEvent** aPtrPtrEvent);
-				STDMETHODIMP QueueEvent(
-					MediaEventType aMediaEventType, 
-					REFGUID aRefGUIDExtendedType, 
-					HRESULT aStatus, 
-					const PROPVARIANT* aPtrVarValue);
+            STDMETHODIMP EndGetEvent(IMFAsyncResult* aPtrAsyncResult, IMFMediaEvent** aPtrPtrEvent) override;
 
-				// IMFMediaTypeHandler interface implementation
-				STDMETHODIMP IsMediaTypeSupported(
-					IMFMediaType* aPtrMediaType, 
-					IMFMediaType** aPtrPtrMediaType);
-				STDMETHODIMP GetMediaTypeCount(
-					DWORD* aPtrTypeCount);
-				STDMETHODIMP GetMediaTypeByIndex(
-					DWORD aIndex, 
-					IMFMediaType** aPtrPtrType);
-				STDMETHODIMP SetCurrentMediaType(
-					IMFMediaType* aPtrMediaType);
-				STDMETHODIMP GetCurrentMediaType(
-					IMFMediaType** aPtrPtrMediaType);
-				STDMETHODIMP GetMajorType(
-					GUID* aPtrGUIDMajorType);
+            STDMETHODIMP GetEvent(DWORD aFlags, IMFMediaEvent** aPtrPtrEvent) override;
 
-				// ReadWriteBufferRegularSync interface implementation 
+            STDMETHODIMP QueueEvent(MediaEventType aMediaEventType, REFGUID aRefGUIDExtendedType, HRESULT aStatus,
+                                    const PROPVARIANT* aPtrVarValue) override;
 
-				virtual HRESULT readData(
-					unsigned char* aPtrData,
-					DWORD* aPtrSampleSize);
+            // IMFMediaTypeHandler interface implementation
+            STDMETHODIMP IsMediaTypeSupported(IMFMediaType* aPtrMediaType, IMFMediaType** aPtrPtrMediaType) override;
 
-				// SampleGrabberPullStream interface implementation
+            STDMETHODIMP GetMediaTypeCount(DWORD* aPtrTypeCount) override;
 
-				virtual STDMETHODIMP init(
-					SampleGrabberPullSink* aPtrSink,
-					IMFMediaType* aPtrMediaType);
+            STDMETHODIMP GetMediaTypeByIndex(DWORD aIndex, IMFMediaType** aPtrPtrType) override;
 
-				// ISampleGrabberPullStream interface implementation
+            STDMETHODIMP SetCurrentMediaType(IMFMediaType* aPtrMediaType) override;
 
-				virtual STDMETHODIMP start();
+            STDMETHODIMP GetCurrentMediaType(IMFMediaType** aPtrPtrMediaType) override;
 
-				virtual STDMETHODIMP stop();
+            STDMETHODIMP GetMajorType(GUID* aPtrGUIDMajorType) override;
 
+            // ReadWriteBufferRegularSync interface implementation 
+            HRESULT readData(unsigned char* aPtrData, DWORD* aPtrSampleSize) override;
 
-			protected:
+            // SampleGrabberPullStream interface implementation
+            virtual STDMETHODIMP init(SampleGrabberPullSink* aPtrSink, IMFMediaType* aPtrMediaType);
 
+            // ISampleGrabberPullStream interface implementation
+            STDMETHODIMP start() override;
 
-				virtual bool findInterface(
-					REFIID aRefIID,
-					void** aPtrPtrVoidObject)
-				{
-					if (aRefIID == __uuidof(IMFMediaEventGenerator))
-					{
-						return castInterfaces(
-							aRefIID,
-							aPtrPtrVoidObject,
-							static_cast<IMFMediaEventGenerator*>(this));
-					}
-					else if (aRefIID == __uuidof(IRead))
-					{
-						return castInterfaces(
-							aRefIID,
-							aPtrPtrVoidObject,
-							static_cast<IRead*>(this));
-					}
-					else
-					{
-						return BaseUnknown::findInterface(
-							aRefIID,
-							aPtrPtrVoidObject);
-					}
+            STDMETHODIMP stop() override;
 
-					
-				}
-				
-			private:
-				
-				std::mutex mMutex;
+         protected:
+            bool findInterface(REFIID aRefIID, void** aPtrPtrVoidObject) override
+            {
+               if (aRefIID == __uuidof(IMFMediaEventGenerator)) {
+                  return castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IMFMediaEventGenerator*>(this));
+               }
+               if (aRefIID == __uuidof(IRead)) {
+                  return castInterfaces(aRefIID, aPtrPtrVoidObject, static_cast<IRead*>(this));
+               }
+               return BaseUnknown::findInterface(aRefIID, aPtrPtrVoidObject);
+            }
 
-				SampleGrabberPullSink* mPtrSink;
-
-				CComPtrCustom<IMFMediaType> mMediaType;
-
-				CComPtrCustom<IMFMediaEventQueue> mEventQueue;
-			};
-		}
-	}
+         private:
+            std::mutex mMutex;
+            SampleGrabberPullSink* mPtrSink;
+            CComPtrCustom<IMFMediaType> mMediaType;
+            CComPtrCustom<IMFMediaEventQueue> mEventQueue;
+         };
+      }
+   }
 }

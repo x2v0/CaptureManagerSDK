@@ -22,19 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ICurrentMediaType
-    {
-        void getMediaType(out object aPtrMediaType);
-    
-        void getMediaTypeIndex(out uint aPtrMediaTypeIndex);
-   
-        void getStreamIndex(out uint aPtrStreamIndex);
-    }
+   public interface ICurrentMediaType
+   {
+      #region Public methods
+
+      void getMediaType(out object aPtrMediaType);
+
+      void getMediaTypeIndex(out uint aPtrMediaTypeIndex);
+
+      void getStreamIndex(out uint aPtrStreamIndex);
+
+      #endregion
+   }
 }

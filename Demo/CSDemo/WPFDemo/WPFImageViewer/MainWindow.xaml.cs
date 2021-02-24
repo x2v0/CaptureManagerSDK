@@ -22,255 +22,236 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy;
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Xml;
+using CaptureManagerToCSharpProxy;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace WPFImageViewer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+   /// <summary>
+   ///    Interaction logic for MainWindow.xaml
+   /// </summary>
+   public partial class MainWindow : Window
+   {
+      #region Static fields
 
-    public partial class MainWindow : Window
-    {
-        public static CaptureManager mCaptureManager = null;
+      public static CaptureManager mCaptureManager;
 
-        ISourceControl mISourceControl = null;
+      #endregion
 
-        ISession mISession = null;
-        
-        public MainWindow()
-        {
-            InitializeComponent();
+      #region Constructors and destructors
 
-            try
-            {
-                mCaptureManager = new CaptureManager("CaptureManager.dll");
+      public MainWindow()
+      {
+         InitializeComponent();
+
+         try {
+            mCaptureManager = new CaptureManager("CaptureManager.dll");
+         } catch (Exception) {
+            try {
+               mCaptureManager = new CaptureManager();
+            } catch (Exception) {
             }
-            catch (System.Exception)
-            {
-                try
-                {
-                    mCaptureManager = new CaptureManager();
-                }
-                catch (System.Exception)
-                {
+         }
 
-                }
+         if (mCaptureManager == null) {
+            return;
+         }
+
+         mISourceControl = mCaptureManager.createSourceControl();
+
+         var lxmldoc = "";
+
+         mCaptureManager.getCollectionOfSources(ref lxmldoc);
+
+         if (string.IsNullOrEmpty(lxmldoc)) {
+         }
+      }
+
+      #endregion
+
+      #region  Fields
+
+      private ISession mISession;
+
+      private readonly ISourceControl mISourceControl;
+
+      #endregion
+
+      #region Private methods
+
+      private void mLaunchButton_Click(object sender, RoutedEventArgs e)
+      {
+         if (mLaunchButton.Content.ToString() == "Stop") {
+            if (mISession != null) {
+               mISession.closeSession();
+
+               mLaunchButton.Content = "Launch";
             }
 
-            if (mCaptureManager == null)
-                return;
+            mISession = null;
 
-            mISourceControl = mCaptureManager.createSourceControl();
+            return;
+         }
 
-            string lxmldoc = "";
+         if (mISourceControl == null) {
+            return;
+         }
 
-            mCaptureManager.getCollectionOfSources(ref lxmldoc);
+         var lICaptureProcessor = ImageCaptureProcessor.createCaptureProcessor();
 
-            if (string.IsNullOrEmpty(lxmldoc))
-                return;
-        }
+         if (lICaptureProcessor == null) {
+            return;
+         }
 
-        private void mLaunchButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (mLaunchButton.Content.ToString() == "Stop")
+         object lMediaSource = null;
+
+         mISourceControl.createSourceFromCaptureProcessor(lICaptureProcessor, out lMediaSource);
+
+         if (lMediaSource == null) {
+            return;
+         }
+
+
+         var lxmldoc = "";
+
+         mCaptureManager.getCollectionOfSinks(ref lxmldoc);
+
+         var doc = new XmlDocument();
+
+         doc.LoadXml(lxmldoc);
+
+         var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
+
+         if (lSinkNode == null) {
+            return;
+         }
+
+         var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
+
+         if (lContainerNode == null) {
+            return;
+         }
+
+         IEVRSinkFactory lSinkFactory;
+
+         var lSinkControl = mCaptureManager.createSinkControl();
+
+         lSinkControl.createSinkFactory(Guid.Empty, out lSinkFactory);
+
+         object lEVROutputNode;
+
+         lSinkFactory.createOutputNode(mVideoPanel.Handle, out lEVROutputNode);
+
+         if (lEVROutputNode == null) {
+            return;
+         }
+
+         object lPtrSourceNode;
+
+         var lSourceControl = mCaptureManager.createSourceControl();
+
+         if (lSourceControl == null) {
+            return;
+         }
+
+
+         lSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(lMediaSource, 0, 0, lEVROutputNode, out lPtrSourceNode);
+
+
+         var lSourceMediaNodeList = new List<object>();
+
+         lSourceMediaNodeList.Add(lPtrSourceNode);
+
+         var lSessionControl = mCaptureManager.createSessionControl();
+
+         if (lSessionControl == null) {
+            return;
+         }
+
+         mISession = lSessionControl.createSession(lSourceMediaNodeList.ToArray());
+
+         if (mISession == null) {
+            return;
+         }
+
+
+         mISession.registerUpdateStateDelegate(UpdateStateDelegate);
+
+         mISession.startSession(0, Guid.Empty);
+
+         mLaunchButton.Content = "Stop";
+      }
+
+      private void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor)
+      {
+         var k = (SessionCallbackEventCode) aCallbackEventCode;
+
+         switch (k) {
+            case SessionCallbackEventCode.Unknown:
+               break;
+            case SessionCallbackEventCode.Error:
+               break;
+            case SessionCallbackEventCode.Status_Error:
+               break;
+            case SessionCallbackEventCode.Execution_Error:
+               break;
+            case SessionCallbackEventCode.ItIsReadyToStart:
+               break;
+            case SessionCallbackEventCode.ItIsStarted:
+               break;
+            case SessionCallbackEventCode.ItIsPaused:
+               break;
+            case SessionCallbackEventCode.ItIsStopped:
+               break;
+            case SessionCallbackEventCode.ItIsEnded:
+               break;
+            case SessionCallbackEventCode.ItIsClosed:
+               break;
+            case SessionCallbackEventCode.VideoCaptureDeviceRemoved:
             {
-                if (mISession != null)
-                {
-                    mISession.closeSession();
-
-                    mLaunchButton.Content = "Launch";
-                }
-
-                mISession = null;
-
-                return;
+               Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => mLaunchButton_Click(null, null)));
             }
-
-            if (mISourceControl == null)
-                return;
-
-            var lICaptureProcessor = ImageCaptureProcessor.createCaptureProcessor();
-
-            if (lICaptureProcessor == null)
-                return;
-
-            object lMediaSource = null;
-
-            mISourceControl.createSourceFromCaptureProcessor(
-                lICaptureProcessor,
-                out lMediaSource);
-
-            if (lMediaSource == null)
-                return;
-
-            
-            string lxmldoc = "";
-
-            mCaptureManager.getCollectionOfSinks(ref lxmldoc);
-
-            XmlDocument doc = new XmlDocument();
-
-            doc.LoadXml(lxmldoc);
-
-            var lSinkNode = doc.SelectSingleNode("SinkFactories/SinkFactory[@GUID='{2F34AF87-D349-45AA-A5F1-E4104D5C458E}']");
-
-            if (lSinkNode == null)
-                return;
-
-            var lContainerNode = lSinkNode.SelectSingleNode("Value.ValueParts/ValuePart[1]");
-
-            if (lContainerNode == null)
-                return;
-
-            IEVRSinkFactory lSinkFactory;
-
-            var lSinkControl = mCaptureManager.createSinkControl();
-
-            lSinkControl.createSinkFactory(
-            Guid.Empty,
-            out lSinkFactory);
-
-            object lEVROutputNode;
-
-            lSinkFactory.createOutputNode(
-                mVideoPanel.Handle,
-                out lEVROutputNode);
-
-            if (lEVROutputNode == null)
-                return;
-
-            object lPtrSourceNode;
-
-            var lSourceControl = mCaptureManager.createSourceControl();
-
-            if (lSourceControl == null)
-                return;
+               break;
+         }
+      }
 
 
+      private void Window_Closing(object sender, CancelEventArgs e)
+      {
+         if (mISession != null) {
+            var ltimer = new DispatcherTimer();
 
-            lSourceControl.createSourceNodeFromExternalSourceWithDownStreamConnection(
-                lMediaSource,
-                0,
-                0,
-                lEVROutputNode,
-                out lPtrSourceNode);
+            ltimer.Interval = new TimeSpan(0, 0, 0, 1);
 
-
-            List<object> lSourceMediaNodeList = new List<object>();
-
-            lSourceMediaNodeList.Add(lPtrSourceNode);
-
-            var lSessionControl = mCaptureManager.createSessionControl();
-
-            if (lSessionControl == null)
-                return;
-
-            mISession = lSessionControl.createSession(
-                lSourceMediaNodeList.ToArray());
-
-            if (mISession == null)
-                return;
-
-
-            mISession.registerUpdateStateDelegate(UpdateStateDelegate);
-
-            mISession.startSession(0, Guid.Empty);
-
-            mLaunchButton.Content = "Stop";
-
-        }
-
-        void UpdateStateDelegate(uint aCallbackEventCode, uint aSessionDescriptor)
-        {
-            SessionCallbackEventCode k = (SessionCallbackEventCode)aCallbackEventCode;
-
-            switch (k)
+            ltimer.Tick += delegate(object sender1, EventArgs e1)
             {
-                case SessionCallbackEventCode.Unknown:
-                    break;
-                case SessionCallbackEventCode.Error:
-                    break;
-                case SessionCallbackEventCode.Status_Error:
-                    break;
-                case SessionCallbackEventCode.Execution_Error:
-                    break;
-                case SessionCallbackEventCode.ItIsReadyToStart:
-                    break;
-                case SessionCallbackEventCode.ItIsStarted:
-                    break;
-                case SessionCallbackEventCode.ItIsPaused:
-                    break;
-                case SessionCallbackEventCode.ItIsStopped:
-                    break;
-                case SessionCallbackEventCode.ItIsEnded:
-                    break;
-                case SessionCallbackEventCode.ItIsClosed:
-                    break;
-                case SessionCallbackEventCode.VideoCaptureDeviceRemoved:
-                    {
+               if (mLaunchButton.Content.ToString() == "Stop") {
+                  if (mISession != null) {
+                     mISession.closeSession();
+                  }
 
+                  mLaunchButton.Content = "Launch";
+               }
 
-                        Dispatcher.Invoke(
-                        DispatcherPriority.Normal,
-                        new Action(() => mLaunchButton_Click(null, null)));
+               mISession = null;
 
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-        
+               Close();
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (mISession != null)
-            {
-                var ltimer = new DispatcherTimer();
+               (sender1 as DispatcherTimer).Stop();
+            };
 
-                ltimer.Interval = new TimeSpan(0, 0, 0, 1);
+            ltimer.Start();
 
-                ltimer.Tick += delegate
-                (object sender1, EventArgs e1)
-                {
-                    if (mLaunchButton.Content.ToString() == "Stop")
-                    {
-                        if (mISession != null)
-                        {
-                            mISession.closeSession();
-                        }
+            e.Cancel = true;
+         }
+      }
 
-                        mLaunchButton.Content = "Launch";
-                    }
-
-                    mISession = null;
-
-                    Close();
-
-                    (sender1 as DispatcherTimer).Stop();
-                };
-
-                ltimer.Start();
-
-                e.Cancel = true;
-            }
-        }
-    }
+      #endregion
+   }
 }

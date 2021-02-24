@@ -22,55 +22,60 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SARSinkFactory : ISARSinkFactory
-    {
-        private CaptureManagerLibrary.ISARSinkFactory mISARSinkFactory;
+   internal class SARSinkFactory : ISARSinkFactory
+   {
+      #region Constructors and destructors
 
-        public SARSinkFactory(object aIUnknown)
-        {
-            mISARSinkFactory = aIUnknown as CaptureManagerLibrary.ISARSinkFactory;
-        }
+      public SARSinkFactory(object aIUnknown)
+      {
+         mISARSinkFactory = aIUnknown as CaptureManagerLibrary.ISARSinkFactory;
+      }
 
-        public bool createOutputNode(out object aTopologyOutputNode)
-        {
-            bool lresult = false;
+      #endregion
 
-            aTopologyOutputNode = null;
+      #region  Fields
 
-            do
-            {
-                if (mISARSinkFactory == null)
-                    break;
+      private readonly CaptureManagerLibrary.ISARSinkFactory mISARSinkFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNode(out object aTopologyOutputNode)
+      {
+         var lresult = false;
+
+         aTopologyOutputNode = null;
+
+         do {
+            if (mISARSinkFactory == null) {
+               break;
+            }
 
 
-                try
-                {
-                    object lArrayMediaNodes = new Object();
+            try {
+               var lArrayMediaNodes = new object();
 
-                    mISARSinkFactory.createOutputNode(
-                        out aTopologyOutputNode);
+               mISARSinkFactory.createOutputNode(out aTopologyOutputNode);
 
-                    if (aTopologyOutputNode == null)
-                        break;
-                    
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (aTopologyOutputNode == null) {
+                  break;
+               }
 
-            } while (false);
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
 
-            return lresult;
-        }
-    }
+         return lresult;
+      }
+
+      #endregion
+   }
 }

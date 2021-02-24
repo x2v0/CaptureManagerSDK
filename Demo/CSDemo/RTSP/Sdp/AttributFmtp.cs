@@ -1,58 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Rtsp.Sdp
+﻿namespace Rtsp.Sdp
 {
-    public class AttributFmtp : Attribut
-    {
-        public const string NAME = "fmtp";
+   public class AttributFmtp : Attribut
+   {
+      #region Constants
 
-        public AttributFmtp()
-        {
-        }
+      public const string NAME = "fmtp";
 
-        public override string Key
-        {
-            get
-            {
-                return NAME;
-            }
-        }
+      #endregion
 
-        public override string Value
-        {
-            get
-            {
-                return string.Format("{0} {1}", PayloadNumber, FormatParameter);
-            }
-            protected set
-            {
-                ParseValue(value);
-            }
-        }
+      #region Constructors and destructors
 
-        public int PayloadNumber { get; set; }
+      #endregion
 
-        // temporary aatibute to store remaning data not parsed
-        public string FormatParameter { get; set; }
+      #region Public properties
 
-        protected override void ParseValue(string value)
-        {
-            var parts = value.Split(new char[] { ' ' }, 2);
+      // temporary aatibute to store remaning data not parsed
+      public string FormatParameter
+      {
+         get;
+         set;
+      }
 
-            int payloadNumber;
-            if(int.TryParse(parts[0], out payloadNumber))
-            {
-                this.PayloadNumber = payloadNumber;
-            }
-            if(parts.Length > 1)
-            {
-                FormatParameter = parts[1];
-            }
+      public override string Key => NAME;
 
+      public int PayloadNumber
+      {
+         get;
+         set;
+      }
 
-        }
-    }
+      public override string Value
+      {
+         get => string.Format("{0} {1}", PayloadNumber, FormatParameter);
+         protected set => ParseValue(value);
+      }
+
+      #endregion
+
+      #region Protected methods
+
+      protected override void ParseValue(string value)
+      {
+         var parts = value.Split(new[] {
+            ' '
+         }, 2);
+
+         int payloadNumber;
+         if (int.TryParse(parts[0], out payloadNumber)) {
+            PayloadNumber = payloadNumber;
+         }
+
+         if (parts.Length > 1) {
+            FormatParameter = parts[1];
+         }
+      }
+
+      #endregion
+   }
 }

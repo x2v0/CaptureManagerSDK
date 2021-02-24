@@ -1,20 +1,16 @@
 #pragma once
-
 #include <Unknwn.h>
 #include <d3d9.h>
-
 #include "../Common/Common.h"
-
 struct IDirect3D9;
 struct IDirect3DDeviceManager9;
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		namespace Direct3D9
-		{
-
+   namespace Core
+   {
+      namespace Direct3D9
+      {
 #ifdef _DEBUG_CAPTUREMANAGER
 #define LOG_INVOKE_DX9_FUNCTION(Function, ...) lresult = Direct3D9Manager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -30,8 +26,7 @@ namespace CaptureManager
 		L" Error code: ",\
 		lresult);\
 		break;\
-			}\
-
+			}
 #else
 #define LOG_INVOKE_DX9_FUNCTION(Function, ...) {\
 	lresult = Direct3D9Manager::Function(__VA_ARGS__);\
@@ -42,8 +37,6 @@ namespace CaptureManager
 		}\
 
 #endif
-
-
 #ifdef _DEBUG_CAPTUREMANAGER
 #define LOG_INVOKE_DX9_METHOD(Function, ...) lresult = Direct3D9Manager::Function(__VA_ARGS__);\
 	if (FAILED(lresult))\
@@ -54,162 +47,101 @@ namespace CaptureManager
 		L" Error code: ",\
 		lresult);\
 		break;\
-				}\
-
+				}
 #else
 #define LOG_INVOKE_DX9_METHOD(Function, Object, ...) lresult = Object->Function(__VA_ARGS__);\
 	if (FAILED(lresult))break;\
 
 #endif
+         typedef IDirect3D9*(WINAPI *Direct3DCreate9)(UINT);
 
+         typedef HRESULT (STDAPICALLTYPE *DXVA2CreateDirect3DDeviceManager9)(UINT*, IDirect3DDeviceManager9**);
 
-			typedef IDirect3D9 *(WINAPI *Direct3DCreate9)(
-				UINT);
+         class Direct3D9Manager
+         {
+         public:
+            static Direct3DCreate9 Direct3DCreate9;
+            static DXVA2CreateDirect3DDeviceManager9 DXVA2CreateDirect3DDeviceManager9;
+         public:
+            HRESULT getState();
 
-			typedef HRESULT(STDAPICALLTYPE *DXVA2CreateDirect3DDeviceManager9)(
-				UINT*,
-				IDirect3DDeviceManager9**);
+            static HRESULT GetDeviceCaps(IDirect3D9* aPtrIDirect3D9, UINT aAdapter, D3DDEVTYPE aDeviceType,
+                                         D3DCAPS9* aPtrCaps);
 
-			class Direct3D9Manager
-			{
-			public:
+            static HRESULT GetAdapterDisplayMode(IDirect3D9* aPtrIDirect3D9, UINT aAdapter, D3DDISPLAYMODE* aPtrMode);
 
-				static Direct3DCreate9 Direct3DCreate9;
+            static HRESULT CreateDevice(IDirect3D9* aPtrIDirect3D9, UINT aAdapter, D3DDEVTYPE aDeviceType,
+                                        HWND aHWNDFocusWindow, DWORD aBehaviorFlags,
+                                        D3DPRESENT_PARAMETERS* aPtrPresentationParameters,
+                                        IDirect3DDevice9** aPtrPtrReturnedDeviceInterface);
 
-				static DXVA2CreateDirect3DDeviceManager9 DXVA2CreateDirect3DDeviceManager9;
+            static HRESULT CreateOffscreenPlainSurface(IDirect3DDevice9* aPtrIDirect3DDevice9, UINT aWidth,
+                                                       UINT aHeight, D3DFORMAT aFormat, D3DPOOL aPool,
+                                                       IDirect3DSurface9** aPtrPtrSurface, HANDLE* aPtrSharedHandle);
 
-			public:
+            static HRESULT GetSwapChain(IDirect3DDevice9* aPtrIDirect3DDevice9, UINT aSwapChain,
+                                        IDirect3DSwapChain9** aPtrPtrSwapChain);
 
+            static HRESULT Reset(IDirect3DDevice9* aPtrIDirect3DDevice9,
+                                 D3DPRESENT_PARAMETERS* aPtrPresentationParameters);
 
-				HRESULT getState();
+            static HRESULT ColorFill(IDirect3DDevice9* aPtrIDirect3DDevice9, IDirect3DSurface9* aPtrSurface,
+                                     CONST RECT* aPtrRect, D3DCOLOR aColor);
 
-				static HRESULT GetDeviceCaps(
-					IDirect3D9* aPtrIDirect3D9,
-					UINT aAdapter, 
-					D3DDEVTYPE aDeviceType, 
-					D3DCAPS9* aPtrCaps);
+            static HRESULT GetPresentParameters(IDirect3DSwapChain9* aPtrIDirect3DSwapChain9,
+                                                D3DPRESENT_PARAMETERS* aPtrPresentationParameters);
 
-				static HRESULT GetAdapterDisplayMode(
-					IDirect3D9* aPtrIDirect3D9,
-					UINT aAdapter,
-					D3DDISPLAYMODE* aPtrMode);
+            static HRESULT ResetDevice(IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
+                                       IDirect3DDevice9* aPtrDirect3DDevice9, UINT aResetToken);
 
-				static HRESULT CreateDevice(
-					IDirect3D9* aPtrIDirect3D9,
-					UINT aAdapter, 
-					D3DDEVTYPE aDeviceType, 
-					HWND aHWNDFocusWindow, 
-					DWORD aBehaviorFlags, 
-					D3DPRESENT_PARAMETERS* aPtrPresentationParameters, 
-					IDirect3DDevice9** aPtrPtrReturnedDeviceInterface);
+            static HRESULT OpenDeviceHandle(IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
+                                            HANDLE* aPtrHANDLEDevice);
 
-				static HRESULT CreateOffscreenPlainSurface(
-					IDirect3DDevice9* aPtrIDirect3DDevice9,
-					UINT aWidth, 
-					UINT aHeight, 
-					D3DFORMAT aFormat, 
-					D3DPOOL aPool, 
-					IDirect3DSurface9** aPtrPtrSurface, 
-					HANDLE* aPtrSharedHandle);
+            static HRESULT CloseDeviceHandle(IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
+                                             HANDLE aHANDLEDevice);
 
-				static HRESULT GetSwapChain(
-					IDirect3DDevice9* aPtrIDirect3DDevice9, 
-					UINT aSwapChain, 
-					IDirect3DSwapChain9** aPtrPtrSwapChain);
+            static HRESULT LockDevice(IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9, HANDLE aHANDLEDevice,
+                                      IDirect3DDevice9** aPtrPtrDevice, BOOL aBlock);
 
-				static HRESULT Reset(
-					IDirect3DDevice9* aPtrIDirect3DDevice9, 
-					D3DPRESENT_PARAMETERS* aPtrPresentationParameters);
+            static HRESULT UnlockDevice(IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9, HANDLE aHANDLEDevice,
+                                        BOOL aBlock);
 
-				static HRESULT ColorFill(
-					IDirect3DDevice9* aPtrIDirect3DDevice9,
-					IDirect3DSurface9* aPtrSurface, 
-					CONST RECT* aPtrRect,
-					D3DCOLOR aColor);
+            static HRESULT GetFrontBufferData(IDirect3DDevice9* aPtrIDirect3DDevice9, UINT aSwapChain,
+                                              IDirect3DSurface9* aPtrDestSurface);
 
-				static HRESULT GetPresentParameters(
-					IDirect3DSwapChain9* aPtrIDirect3DSwapChain9,
-					D3DPRESENT_PARAMETERS* aPtrPresentationParameters);
+            static HRESULT GetDC(IDirect3DSurface9* aPtrDestSurface, HDC* aPtrHDC);
 
-				static HRESULT ResetDevice(
-					IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
-					IDirect3DDevice9* aPtrDirect3DDevice9,
-					UINT aResetToken);
+            static HRESULT ReleaseDC(IDirect3DSurface9* aPtrDestSurface, HDC aHDC);
 
-				static HRESULT OpenDeviceHandle(
-					IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
-					HANDLE* aPtrHANDLEDevice);
+            static HRESULT LockRect(IDirect3DSurface9* aPtrDestSurface, D3DLOCKED_RECT* aPtrLockedRect,
+                                    CONST RECT* aPtrRect, DWORD aFlags);
 
-				static HRESULT CloseDeviceHandle(
-					IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
-					HANDLE aHANDLEDevice);							
+            static HRESULT UnlockRect(IDirect3DSurface9* aPtrDestSurface);
 
-				static HRESULT LockDevice(
-					IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
-					HANDLE aHANDLEDevice,
-					IDirect3DDevice9** aPtrPtrDevice,
-					BOOL aBlock);
+            static HRESULT GetBackBuffer(IDirect3DSwapChain9* aPtrIDirect3DSwapChain9, UINT aBackBuffer,
+                                         D3DBACKBUFFER_TYPE aType, IDirect3DSurface9** aPtrPtrBackBuffer);
 
-				static HRESULT UnlockDevice(
-					IDirect3DDeviceManager9* aPtrIDirect3DDeviceManager9,
-					HANDLE aHANDLEDevice,
-					BOOL aBlock);
+         protected:
+            Direct3D9Manager();
 
-				static HRESULT GetFrontBufferData(
-					IDirect3DDevice9* aPtrIDirect3DDevice9,
-					UINT aSwapChain, 
-					IDirect3DSurface9* aPtrDestSurface);
+            ~Direct3D9Manager();
 
-				static HRESULT GetDC(
-					IDirect3DSurface9* aPtrDestSurface,
-					HDC* aPtrHDC);
+         private:
+            HRESULT mState;
 
-				static HRESULT ReleaseDC(
-					IDirect3DSurface9* aPtrDestSurface, 
-					HDC aHDC);
+            static IDirect3D9* WINAPI stubDirect3DCreate9(UINT);
 
-				static HRESULT LockRect(
-					IDirect3DSurface9* aPtrDestSurface, 
-					D3DLOCKED_RECT* aPtrLockedRect,
-					CONST RECT* aPtrRect,
-					DWORD aFlags);
+            static HRESULT STDAPICALLTYPE stubDXVA2CreateDirect3DDeviceManager9(UINT*, IDirect3DDeviceManager9**)
+            {
+               return E_NOTIMPL;
+            }
 
-				static HRESULT UnlockRect(
-					IDirect3DSurface9* aPtrDestSurface);
+            HRESULT initFunctions(HMODULE aModule);
 
-				static HRESULT GetBackBuffer(
-					IDirect3DSwapChain9* aPtrIDirect3DSwapChain9,
-					UINT aBackBuffer, 
-					D3DBACKBUFFER_TYPE aType, 
-					IDirect3DSurface9** aPtrPtrBackBuffer);
+            Direct3D9Manager(const Direct3D9Manager&) = delete;
 
-			protected:
-					Direct3D9Manager();
-					~Direct3D9Manager();
-
-			private:
-
-				HRESULT mState;
-
-
-				static IDirect3D9 * WINAPI stubDirect3DCreate9(
-					UINT);
-
-				static HRESULT STDAPICALLTYPE stubDXVA2CreateDirect3DDeviceManager9(
-					UINT*,
-					IDirect3DDeviceManager9**)
-				{
-					return E_NOTIMPL;
-				}
-
-				HRESULT initFunctions(HMODULE aModule);
-
-				Direct3D9Manager(
-					const Direct3D9Manager&) = delete;
-				Direct3D9Manager& operator=(
-					const Direct3D9Manager&) = delete;
-			};
-
-		}
-	}
+            Direct3D9Manager& operator=(const Direct3D9Manager&) = delete;
+         };
+      }
+   }
 }

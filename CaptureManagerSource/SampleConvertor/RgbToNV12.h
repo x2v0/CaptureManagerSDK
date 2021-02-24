@@ -1,41 +1,32 @@
 #pragma once
-
 #include "../Common/BaseUnknown.h"
 #include "../Common/ComPtrCustom.h"
-#include "ISampleConvertor.h" 
+#include "ISampleConvertor.h"
 #include "../Common/MFHeaders.h"
 #include "../MemoryManager/IMemoryBufferManager.h"
 
-
 namespace CaptureManager
 {
-	namespace SampleConvertorInner
-	{
-		class RgbToNV12 :
-			public BaseUnknown<ISampleConvertor>
-		{
+   namespace SampleConvertorInner
+   {
+      class RgbToNV12 : public BaseUnknown<ISampleConvertor>
+      {
+      public:
+         RgbToNV12();
 
-		public:
-			RgbToNV12();
+         HRESULT Convert(IMFSample* aPtrInputSample, IMFSample** aPtrPtrOutputSample) override;
 
-			virtual HRESULT Convert(IMFSample* aPtrInputSample, IMFSample** aPtrPtrOutputSample) override;
-			
-			HRESULT init(
-				IMFMediaType* aPtrInputMediaType,
-				IMFMediaType* aPtrOutputMediaType);
+         HRESULT init(IMFMediaType* aPtrInputMediaType, IMFMediaType* aPtrOutputMediaType);
 
-		private:
+      private:
+         CComPtrCustom<Core::IMemoryBufferManager> mMemoryBufferManager;
+         int image_width;
+         int image_height;
+         UINT32 mOutputSampleSize;
 
-			CComPtrCustom<Core::IMemoryBufferManager> mMemoryBufferManager;
+         virtual ~RgbToNV12();
 
-			int image_width;
-			int image_height;
-
-			UINT32 mOutputSampleSize;
-
-			virtual ~RgbToNV12();
-
-			void convert(const unsigned char* I, unsigned char* J);
-		};
-	}
+         void convert(const unsigned char* I, unsigned char* J);
+      };
+   }
 }

@@ -24,22 +24,17 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface IEVRMultiSinkFactory
-    {
-        bool createOutputNodes(
-            IntPtr aHWND,
-            uint aOutputNodeAmount,
-            out List<object> aTopologyOutputNodesList);
+   public interface IEVRMultiSinkFactory
+   {
+      #region Public methods
 
-        bool createOutputNodes(
-            IntPtr aHandle,
-            object aPtrUnkSharedResource,
-            uint aOutputNodeAmount,
-            out List<object> aTopologyOutputNodesList);
-    }
+      bool createOutputNodes(IntPtr aHWND, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList);
+
+      bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList);
+
+      #endregion
+   }
 }

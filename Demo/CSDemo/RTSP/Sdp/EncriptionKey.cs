@@ -1,25 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics.Contracts;
 
 namespace Rtsp.Sdp
 {
-    public class EncriptionKey
-    {
-        public EncriptionKey(string p)
-        {
-        }
+   public class EncriptionKey
+   {
+      #region Constructors and destructors
 
-        public static EncriptionKey ParseInvariant(string value)
-        {
-            if (value == null)
-                throw new ArgumentNullException("value");
+      public EncriptionKey(string p)
+      {
+      }
 
-            Contract.EndContractBlock();
+      #endregion
 
-            throw new NotImplementedException();
-        }
-    }
+      #region Public methods
+
+      public static EncriptionKey ParseInvariant(string value)
+      {
+         if (value == null) {
+            throw new ArgumentNullException("value");
+         }
+
+         Contract.EndContractBlock();
+
+         throw new NotImplementedException();
+      }
+
+      #endregion
+   }
 }

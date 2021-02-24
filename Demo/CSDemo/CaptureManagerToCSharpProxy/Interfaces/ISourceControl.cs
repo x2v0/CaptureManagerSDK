@@ -22,64 +22,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CaptureManagerToCSharpProxy.Interfaces
 {
-    public interface ISourceControl
-    {
-        bool getSourceOutputMediaType(
-            string aSymbolicLink,
-            uint aIndexStream,
-            uint aIndexMediaType,
-            out object aPtrPtrOutputMediaType);
+   public interface ISourceControl
+   {
+      #region Public methods
 
-        bool createSource(
-            string aSymbolicLink, 
-            out object aPtrPtrMediaSource);
+      bool createSource(string aSymbolicLink, out object aPtrPtrMediaSource);
 
-        bool createSourceNode(
-            string aSymbolicLink, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            object aPtrDownStreamTopologyNode,
-            out object aPtrPtrTopologyNode);
+      bool createSourceFromCaptureProcessor(object aPtrCaptureProcessor, out object aPtrPtrMediaSource);
 
-        bool createSourceFromCaptureProcessor(
-            object aPtrCaptureProcessor, 
-            out object aPtrPtrMediaSource);
+      bool createSourceNode(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, object aPtrDownStreamTopologyNode, out object aPtrPtrTopologyNode);
 
-        bool createSourceNode(
-            string aSymbolicLink, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrTopologyNode);
+      bool createSourceNode(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrTopologyNode);
 
-        bool createSourceNodeFromExternalSource(
-            object aPtrMediaSource, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrTopologyNode);
+      bool createSourceNodeFromExternalSource(object aPtrMediaSource, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrTopologyNode);
 
-        bool createSourceNodeFromExternalSourceWithDownStreamConnection(
-            object aPtrMediaSource,
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            object aPtrDownStreamTopologyNode, 
-            out object aPtrPtrTopologyNode);
+      bool createSourceNodeFromExternalSourceWithDownStreamConnection(object aPtrMediaSource,
+                                                                      uint aIndexStream,
+                                                                      uint aIndexMediaType,
+                                                                      object aPtrDownStreamTopologyNode,
+                                                                      out object aPtrPtrTopologyNode);
 
-        bool getCollectionOfSources(
-            ref string aPtrPtrXMLstring);
-        
-        bool getSourceOutputMediaTypeFromMediaSource(
-            object aPtrMediaSource, 
-            uint aIndexStream, 
-            uint aIndexMediaType, 
-            out object aPtrPtrOutputMediaType);
+      IWebCamControl createWebCamControl(string aSymbolicLink);
 
-        IWebCamControl createWebCamControl(string aSymbolicLink);
-    }
+      bool getCollectionOfSources(ref string aPtrPtrXMLstring);
+
+      bool getSourceOutputMediaType(string aSymbolicLink, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrOutputMediaType);
+
+      bool getSourceOutputMediaTypeFromMediaSource(object aPtrMediaSource, uint aIndexStream, uint aIndexMediaType, out object aPtrPtrOutputMediaType);
+
+      #endregion
+   }
 }

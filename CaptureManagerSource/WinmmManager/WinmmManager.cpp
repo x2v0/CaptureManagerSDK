@@ -21,17 +21,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "WinmmManager.h"
 #include "../LogPrintOut/LogPrintOut.h"
 
 namespace CaptureManager
 {
-	namespace Core
-	{
-		namespace Winmm
-		{
-
+   namespace Core
+   {
+      namespace Winmm
+      {
 #ifndef CASTFUNCTION
 #define CASTFUNCTION(Function){\
 		auto lPtrFunc = GetProcAddress(aModule, #Function);\
@@ -39,146 +37,78 @@ namespace CaptureManager
 auto lFunc = (CaptureManager::Core::Winmm::Function)(lPtrFunc);\
 if (lFunc != nullptr)Function = lFunc;\
   }\
-			}\
-
+			}
 #endif
-
 #ifndef BINDFUNCTION
 #define BINDFUNCTION(Function)Function WinmmManager::Function = WinmmManager::stub##Function
 #endif
-
-			std::vector<HMODULE> WinmmManager::mModules;
-
-			HRESULT WinmmManager::mResult = E_FAIL;
-
-			BINDFUNCTION(timeKillEvent);
-
-			BINDFUNCTION(timeGetTime);
-
-			BINDFUNCTION(timeBeginPeriod);
-
-			BINDFUNCTION(timeEndPeriod);
-
-			BINDFUNCTION(timeSetEvent);
-
-			BINDFUNCTION(timeGetDevCaps);
-
-			
-			
-
-
-			WinmmManager::WinmmManager()
-			{
-			}
-
-
-			WinmmManager::~WinmmManager()
-			{
-			}
-
-			// Initialize Winmm support
-			HRESULT WinmmManager::initialize()
-			{
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-					lresult = loadLibraries();
-
-					if (FAILED(lresult))
-						break;
-
-					lresult = fillPtrFuncCollection();
-
-					if (FAILED(lresult))
-						break;
-
-
-				} while (false);
-
-				if (FAILED(lresult))
-				{
-					LogPrintOut::getInstance().printOutln(LogPrintOut::ERROR_LEVEL, L"WinmmManager: Winmm cannot be initialized!!!");
-				}
-				else
-				{
-					LogPrintOut::getInstance().printOutln(LogPrintOut::INFO_LEVEL, L"WinmmManager: Winmm is initialized!!!");
-				}
-
-				return mResult = lresult;
-			}
-
-			// load needed libraries dynamically;
-			HRESULT WinmmManager::loadLibraries()
-			{
-
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-
-					auto lModule = LoadLibrary(L"Winmm.dll");
-					
-					if (lModule == nullptr)
-					{
-						lresult = E_HANDLE;
-					}
-
-					mModules.push_back(lModule);
-
-					lresult = S_OK;
-
-				} while (false);
-
-				return lresult;
-			}
-
-			// init collection of pointers on Media Foundation functions
-			HRESULT WinmmManager::initFunctions(HMODULE aModule)
-			{
-
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-					CASTFUNCTION(timeKillEvent);
-
-					CASTFUNCTION(timeGetTime);
-
-					CASTFUNCTION(timeBeginPeriod);
-
-					CASTFUNCTION(timeEndPeriod);
-
-					CASTFUNCTION(timeSetEvent);
-
-					CASTFUNCTION(timeGetDevCaps);					
-					
-					
-					lresult = S_OK;
-
-				} while (false);
-
-				return lresult;
-			}
-
-			// fill collection of pointers on Media Foundation functions
-			HRESULT WinmmManager::fillPtrFuncCollection()
-			{
-				HRESULT lresult = E_FAIL;
-
-				do
-				{
-					for (auto& lModile : mModules)
-					{
-						initFunctions(lModile);
-					}
-
-					lresult = S_OK;
-
-				} while (false);
-
-				return lresult;
-			}
-		}
-	}
+         std::vector<HMODULE> WinmmManager::mModules;
+         HRESULT WinmmManager::mResult = E_FAIL;
+         BINDFUNCTION(timeKillEvent);
+         BINDFUNCTION(timeGetTime);
+         BINDFUNCTION(timeBeginPeriod);
+         BINDFUNCTION(timeEndPeriod);
+         BINDFUNCTION(timeSetEvent);
+         BINDFUNCTION(timeGetDevCaps);
+         WinmmManager::WinmmManager() { }
+         WinmmManager::~WinmmManager() { } // Initialize Winmm support
+         HRESULT WinmmManager::initialize()
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               lresult = loadLibraries();
+               if (FAILED(lresult))
+                  break;
+               lresult = fillPtrFuncCollection();
+               if (FAILED(lresult))
+                  break;
+            } while (false);
+            if (FAILED(lresult)) {
+               LogPrintOut::getInstance().printOutln(LogPrintOut::ERROR_LEVEL,
+                                                     L"WinmmManager: Winmm cannot be initialized!!!");
+            } else {
+               LogPrintOut::getInstance().printOutln(LogPrintOut::INFO_LEVEL, L"WinmmManager: Winmm is initialized!!!");
+            }
+            return mResult = lresult;
+         } // load needed libraries dynamically;
+         HRESULT WinmmManager::loadLibraries()
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               auto lModule = LoadLibrary(L"Winmm.dll");
+               if (lModule == nullptr) {
+                  lresult = E_HANDLE;
+               }
+               mModules.push_back(lModule);
+               lresult = S_OK;
+            } while (false);
+            return lresult;
+         } // init collection of pointers on Media Foundation functions
+         HRESULT WinmmManager::initFunctions(HMODULE aModule)
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               CASTFUNCTION(timeKillEvent);
+               CASTFUNCTION(timeGetTime);
+               CASTFUNCTION(timeBeginPeriod);
+               CASTFUNCTION(timeEndPeriod);
+               CASTFUNCTION(timeSetEvent);
+               CASTFUNCTION(timeGetDevCaps);
+               lresult = S_OK;
+            } while (false);
+            return lresult;
+         } // fill collection of pointers on Media Foundation functions
+         HRESULT WinmmManager::fillPtrFuncCollection()
+         {
+            HRESULT lresult = E_FAIL;
+            do {
+               for (auto& lModile : mModules) {
+                  initFunctions(lModile);
+               }
+               lresult = S_OK;
+            } while (false);
+            return lresult;
+         }
+      }
+   }
 }

@@ -23,67 +23,66 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureManagerToCSharpProxy.Interfaces;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class SampleGrabberCallbackSinkFactory : ISampleGrabberCallbackSinkFactory
-    {
-        private CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory mISampleGrabberCallbackSinkFactory;
+   internal class SampleGrabberCallbackSinkFactory : ISampleGrabberCallbackSinkFactory
+   {
+      #region Constructors and destructors
 
-        public SampleGrabberCallbackSinkFactory(CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory aISampleGrabberCallSinkFactory)
-        {
-            mISampleGrabberCallbackSinkFactory = aISampleGrabberCallSinkFactory;
-        }
+      public SampleGrabberCallbackSinkFactory(CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory aISampleGrabberCallSinkFactory)
+      {
+         mISampleGrabberCallbackSinkFactory = aISampleGrabberCallSinkFactory;
+      }
 
-        public bool createOutputNode(
-            Guid aRefMajorType, 
-            Guid aRefSubType,
-            out ISampleGrabberCallback aISampleGrabberCallback)
-        {
-            bool lresult = false;
+      #endregion
 
-            aISampleGrabberCallback = null;
-            
-            do
-            {
-                if (mISampleGrabberCallbackSinkFactory == null)
-                    break;
+      #region  Fields
+
+      private readonly CaptureManagerLibrary.ISampleGrabberCallbackSinkFactory mISampleGrabberCallbackSinkFactory;
+
+      #endregion
+
+      #region Interface methods
+
+      public bool createOutputNode(Guid aRefMajorType, Guid aRefSubType, out ISampleGrabberCallback aISampleGrabberCallback)
+      {
+         var lresult = false;
+
+         aISampleGrabberCallback = null;
+
+         do {
+            if (mISampleGrabberCallbackSinkFactory == null) {
+               break;
+            }
 
 
-                try
-                {
-                    SampleGrabberCallback lCallback = new SampleGrabberCallback();
+            try {
+               var lCallback = new SampleGrabberCallback();
 
-                    object lIUnknown;
+               object lIUnknown;
 
-                    mISampleGrabberCallbackSinkFactory.createOutputNode(
-                        aRefMajorType, 
-                        aRefSubType,
-                        lCallback,
-                        out lIUnknown);
-                        
-                        
-                    if (lIUnknown == null)
-                        break;
+               mISampleGrabberCallbackSinkFactory.createOutputNode(aRefMajorType, aRefSubType, lCallback, out lIUnknown);
 
-                    lCallback.TopologyNode = lIUnknown;
-                    
-                    aISampleGrabberCallback = lCallback;
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lIUnknown == null) {
+                  break;
+               }
 
-            } while (false);
+               lCallback.TopologyNode = lIUnknown;
 
-            return lresult;
-        }
-    }
+               aISampleGrabberCallback = lCallback;
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

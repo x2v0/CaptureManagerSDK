@@ -1,10 +1,7 @@
 #pragma once
-
-
 #include "../Common/IInnerCaptureProcessor.h"
 #include "../Common/ComPtrCustom.h"
 #include "../Common/IMaker.h"
-
 #include <map>
 #include <memory>
 #include <vector>
@@ -12,41 +9,33 @@
 
 namespace CaptureManager
 {
-	namespace Sources
-	{
-		class ScreenCaptureProcessorFactory
-		{
-		public:
-			
-			static ScreenCaptureProcessorFactory& getInstance();
+   namespace Sources
+   {
+      class ScreenCaptureProcessorFactory
+      {
+      public:
+         static ScreenCaptureProcessorFactory& getInstance();
 
-			HRESULT registerInstanceMaker(
-				const int aPriorety, 
-				const CaptureManager::Core::IMaker* aPtrMaker);
+         HRESULT registerInstanceMaker(int aPriorety, const Core::IMaker* aPtrMaker);
 
-			HRESULT createScreenCaptureProcessors(
-				std::vector<CComPtrCustom<IInnerCaptureProcessor>>& aVectorAudioEndpointCaptureProcessors);
+         HRESULT createScreenCaptureProcessors(
+            std::vector<CComPtrCustom<IInnerCaptureProcessor>>& aVectorAudioEndpointCaptureProcessors);
 
-			HRESULT createScreenCaptureProcessor(
-				std::wstring aSymbolicLink,
-				IInnerCaptureProcessor** aPtrPtrIInnerCaptureProcessor);
+         HRESULT createScreenCaptureProcessor(std::wstring aSymbolicLink,
+                                              IInnerCaptureProcessor** aPtrPtrIInnerCaptureProcessor);
 
-		private:
+      private:
+         std::map<int, const Core::IMaker*> mScreenCaptureProcessorMakers;
+         int mMinPriorety;
+         int mMaxPriorety;
 
-			std::map<int, const CaptureManager::Core::IMaker* > mScreenCaptureProcessorMakers;
+         ScreenCaptureProcessorFactory();
 
-			int mMinPriorety;
+         ~ScreenCaptureProcessorFactory();
 
-			int mMaxPriorety;
+         ScreenCaptureProcessorFactory(const ScreenCaptureProcessorFactory&) = delete;
 
-
-
-			ScreenCaptureProcessorFactory();
-			~ScreenCaptureProcessorFactory();
-			ScreenCaptureProcessorFactory(
-				const ScreenCaptureProcessorFactory&) = delete;
-			ScreenCaptureProcessorFactory& operator=(
-				const ScreenCaptureProcessorFactory&) = delete;
-		};
-	}
+         ScreenCaptureProcessorFactory& operator=(const ScreenCaptureProcessorFactory&) = delete;
+      };
+   }
 }

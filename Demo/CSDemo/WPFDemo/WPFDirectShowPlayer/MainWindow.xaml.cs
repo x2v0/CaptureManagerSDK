@@ -22,137 +22,128 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using DirectShowLib;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using WPFDirectShowPlayer;
+using DirectShowLib;
+using Microsoft.Win32;
 
 namespace WPFDirectShowPlayer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
-    {
-        IGraphBuilder m_pGraph = (IGraphBuilder)new FilterGraph();
+   /// <summary>
+   ///    Interaction logic for MainWindow.xaml
+   /// </summary>
+   public partial class MainWindow : Window
+   {
+      #region Constructors and destructors
 
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+      public MainWindow()
+      {
+         InitializeComponent();
+      }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
+      #endregion
 
-            OpenFileDialog lopenFileDialog = new OpenFileDialog();
+      #region  Fields
 
-            lopenFileDialog.AddExtension = true;
+      private readonly IGraphBuilder m_pGraph = (IGraphBuilder) new FilterGraph();
 
-            var lresult = lopenFileDialog.ShowDialog();
+      #endregion
 
-            if (lresult != true)
-                return;
-            
-            IBaseFilter lDSoundRender = new DSoundRender() as IBaseFilter;
-            
-            m_pGraph.AddFilter(lDSoundRender, "Audio Renderer");
+      #region Private methods
 
+      private void Button_Click(object sender, RoutedEventArgs e)
+      {
+         var lopenFileDialog = new OpenFileDialog();
 
-            int k = 0;
+         lopenFileDialog.AddExtension = true;
 
-            IPin[] lAudioRendererPins = new IPin[1];
+         var lresult = lopenFileDialog.ShowDialog();
 
-            IEnumPins ppEnum;
+         if (lresult != true) {
+            return;
+         }
 
-            k = lDSoundRender.EnumPins(out ppEnum);
+         var lDSoundRender = new DSoundRender() as IBaseFilter;
 
-            k = ppEnum.Next(1, lAudioRendererPins, IntPtr.Zero);
-            
-            var lCaptureManagerEVRMultiSinkFactory = CaptureManagerVideoRendererMultiSinkFactory.getInstance().getICaptureManagerEVRMultiSinkFactory();
-            
-            uint lMaxVideoRenderStreamCount = lCaptureManagerEVRMultiSinkFactory.getMaxVideoRenderStreamCount();
-
-            if (lMaxVideoRenderStreamCount == 0)
-                return;
-
-            List<object> lOutputNodesList = new List<object>();
-
-            lCaptureManagerEVRMultiSinkFactory.createOutputNodes(
-                IntPtr.Zero,
-                mEVRDisplay.Surface.texture,
-                1,// lMaxVideoRenderStreamCount,
-                out lOutputNodesList);
-
-            if (lOutputNodesList.Count == 0)
-                return;
-
-            IBaseFilter lVideoMixingRenderer9 = (IBaseFilter)lOutputNodesList[0];
-
-            var h = m_pGraph.AddFilter(lVideoMixingRenderer9, "lVideoMixingRenderer9");
+         m_pGraph.AddFilter(lDSoundRender, "Audio Renderer");
 
 
-            IPin[] lVideoRendererPin = new IPin[1] ;
+         var k = 0;
+
+         var lAudioRendererPins = new IPin[1];
+
+         IEnumPins ppEnum;
+
+         k = lDSoundRender.EnumPins(out ppEnum);
+
+         k = ppEnum.Next(1, lAudioRendererPins, IntPtr.Zero);
+
+         var lCaptureManagerEVRMultiSinkFactory = CaptureManagerVideoRendererMultiSinkFactory.getInstance().getICaptureManagerEVRMultiSinkFactory();
+
+         var lMaxVideoRenderStreamCount = lCaptureManagerEVRMultiSinkFactory.getMaxVideoRenderStreamCount();
+
+         if (lMaxVideoRenderStreamCount == 0) {
+            return;
+         }
+
+         var lOutputNodesList = new List<object>();
+
+         lCaptureManagerEVRMultiSinkFactory.createOutputNodes(IntPtr.Zero, mEVRDisplay.Surface.texture, 1, // lMaxVideoRenderStreamCount,
+                                                              out lOutputNodesList);
+
+         if (lOutputNodesList.Count == 0) {
+            return;
+         }
+
+         var lVideoMixingRenderer9 = (IBaseFilter) lOutputNodesList[0];
+
+         var h = m_pGraph.AddFilter(lVideoMixingRenderer9, "lVideoMixingRenderer9");
 
 
-            k = lVideoMixingRenderer9.EnumPins(out ppEnum);
+         var lVideoRendererPin = new IPin[1];
 
-            k = ppEnum.Next(1, lVideoRendererPin, IntPtr.Zero);
-                                  
-            
-            IBaseFilter m_SourceFilter = null;
 
-            m_pGraph.AddSourceFilter(lopenFileDialog.FileName, null, out m_SourceFilter);
+         k = lVideoMixingRenderer9.EnumPins(out ppEnum);
 
-            IEnumPins lEnumPins = null;
+         k = ppEnum.Next(1, lVideoRendererPin, IntPtr.Zero);
 
-            m_SourceFilter.EnumPins(out lEnumPins);
 
-            IPin[] lPins = new IPin[1];
-            
-            while (lEnumPins.Next(1, lPins, IntPtr.Zero) == 0)
-            {
-                IEnumMediaTypes lIEnumMediaTypes;
+         IBaseFilter m_SourceFilter = null;
 
-                lPins[0].EnumMediaTypes(out lIEnumMediaTypes);
+         m_pGraph.AddSourceFilter(lopenFileDialog.FileName, null, out m_SourceFilter);
 
-                AMMediaType[] ppMediaTypes = new AMMediaType[1];
+         IEnumPins lEnumPins = null;
 
-                while (lIEnumMediaTypes.Next(1, ppMediaTypes, IntPtr.Zero) == 0)
-                {
-                    var gh = ppMediaTypes[0].subType;
+         m_SourceFilter.EnumPins(out lEnumPins);
 
-                    if (ppMediaTypes[0].majorType == DirectShowLib.MediaType.Video)
-                    {
+         var lPins = new IPin[1];
 
-                        k = m_pGraph.Connect(lPins[0], lVideoRendererPin[0]);
+         while (lEnumPins.Next(1, lPins, IntPtr.Zero) == 0) {
+            IEnumMediaTypes lIEnumMediaTypes;
 
-                    }
-                }
+            lPins[0].EnumMediaTypes(out lIEnumMediaTypes);
 
-                foreach (var item in lPins)
-                {
-                    k = m_pGraph.Render(item);
+            var ppMediaTypes = new AMMediaType[1];
 
-                }  
-                            
+            while (lIEnumMediaTypes.Next(1, ppMediaTypes, IntPtr.Zero) == 0) {
+               var gh = ppMediaTypes[0].subType;
+
+               if (ppMediaTypes[0].majorType == MediaType.Video) {
+                  k = m_pGraph.Connect(lPins[0], lVideoRendererPin[0]);
+               }
             }
-                        
-            IMediaControl lIMediaControl = m_pGraph as IMediaControl;
 
-            k = lIMediaControl.Run();
+            foreach (var item in lPins) {
+               k = m_pGraph.Render(item);
+            }
+         }
 
-        }
-    }
+         var lIMediaControl = m_pGraph as IMediaControl;
+
+         k = lIMediaControl.Run();
+      }
+
+      #endregion
+   }
 }

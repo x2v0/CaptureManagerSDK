@@ -22,114 +22,109 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using CaptureManagerToCSharpProxy.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using CaptureManagerToCSharpProxy.Interfaces;
+using IEVRMultiSinkFactory = CaptureManagerLibrary.IEVRMultiSinkFactory;
 
 namespace CaptureManagerToCSharpProxy
 {
-    class CompatibleEVRMultiSinkFactory : ICompatibleEVRMultiSinkFactory
-    {
-        private CaptureManagerLibrary.IEVRMultiSinkFactory mIEVRMultiSinkFactory;
+   internal class CompatibleEVRMultiSinkFactory : ICompatibleEVRMultiSinkFactory
+   {
+      #region Constructors and destructors
 
-        public CompatibleEVRMultiSinkFactory(
-            CaptureManagerLibrary.IEVRMultiSinkFactory aIEVRMultiSinkFactory)
-        {
-            mIEVRMultiSinkFactory = aIEVRMultiSinkFactory;
-        }
-        
-        public bool createOutputNodes(
-            IntPtr aHWND, 
-            uint aOutputNodeAmount, 
-            out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
-            
-            aTopologyOutputNodesList = new List<object>();
+      public CompatibleEVRMultiSinkFactory(IEVRMultiSinkFactory aIEVRMultiSinkFactory)
+      {
+         mIEVRMultiSinkFactory = aIEVRMultiSinkFactory;
+      }
 
-            do
-            {
-                if (mIEVRMultiSinkFactory == null)
-                    break;
+      #endregion
 
+      #region  Fields
 
-                try
-                {
-                    object lArrayMediaNodes = new Object();
+      private readonly IEVRMultiSinkFactory mIEVRMultiSinkFactory;
 
-                    mIEVRMultiSinkFactory.createOutputNodes(
-                        aHWND,
-                        null,
-                        aOutputNodeAmount,
-                        out lArrayMediaNodes);
+      #endregion
 
-                    if (lArrayMediaNodes == null)
-                        break;
+      #region Interface methods
 
-                    object[] lArray = lArrayMediaNodes as object[];
+      public bool createOutputNodes(IntPtr aHWND, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
 
-                    if (lArray == null)
-                        break;
+         aTopologyOutputNodesList = new List<object>();
 
-                    aTopologyOutputNodesList.AddRange(lArray);
-
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
-
-            } while (false);
-
-            return lresult;
-        }
+         do {
+            if (mIEVRMultiSinkFactory == null) {
+               break;
+            }
 
 
-        public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
-        {
-            bool lresult = false;
+            try {
+               var lArrayMediaNodes = new object();
 
-            aTopologyOutputNodesList = new List<object>();
+               mIEVRMultiSinkFactory.createOutputNodes(aHWND, null, aOutputNodeAmount, out lArrayMediaNodes);
 
-            do
-            {
-                if (mIEVRMultiSinkFactory == null)
-                    break;
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
+
+               var lArray = lArrayMediaNodes as object[];
+
+               if (lArray == null) {
+                  break;
+               }
+
+               aTopologyOutputNodesList.AddRange(lArray);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
 
 
-                try
-                {
-                    object lArrayMediaNodes = new Object();
+      public bool createOutputNodes(IntPtr aHandle, object aPtrUnkSharedResource, uint aOutputNodeAmount, out List<object> aTopologyOutputNodesList)
+      {
+         var lresult = false;
 
-                    mIEVRMultiSinkFactory.createOutputNodes(
-                        aHandle,
-                        aPtrUnkSharedResource,
-                        aOutputNodeAmount,
-                        out lArrayMediaNodes);
+         aTopologyOutputNodesList = new List<object>();
 
-                    if (lArrayMediaNodes == null)
-                        break;
+         do {
+            if (mIEVRMultiSinkFactory == null) {
+               break;
+            }
 
-                    object[] lArray = lArrayMediaNodes as object[];
 
-                    if (lArray == null)
-                        break;
+            try {
+               var lArrayMediaNodes = new object();
 
-                    aTopologyOutputNodesList.AddRange(lArray);
+               mIEVRMultiSinkFactory.createOutputNodes(aHandle, aPtrUnkSharedResource, aOutputNodeAmount, out lArrayMediaNodes);
 
-                    lresult = true;
-                }
-                catch (Exception exc)
-                {
-                    LogManager.getInstance().write(exc.Message);
-                }
+               if (lArrayMediaNodes == null) {
+                  break;
+               }
 
-            } while (false);
+               var lArray = lArrayMediaNodes as object[];
 
-            return lresult;
-        }
-    }
+               if (lArray == null) {
+                  break;
+               }
+
+               aTopologyOutputNodesList.AddRange(lArray);
+
+               lresult = true;
+            } catch (Exception exc) {
+               LogManager.getInstance().write(exc.Message);
+            }
+         } while (false);
+
+         return lresult;
+      }
+
+      #endregion
+   }
 }

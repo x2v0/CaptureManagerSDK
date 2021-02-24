@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "PresenterFactory.h"
 #include "../MediaFoundationManager/MediaFoundationManager.h"
 #include "../Common/MFHeaders.h"
@@ -41,35 +40,22 @@ SOFTWARE.
 
 namespace CaptureManager
 {
-	namespace Sinks
-	{
-		namespace EVR
-		{
-			HRESULT PresenterFactory::createPresenter(
-				HANDLE aHandle,
-				IUnknown* aPtrUnkTarget,
-				DWORD aOutputNodeAmount,
-				IPresenter** aPtrPresenter,
-				IMFTransform** aPtrPtrMixer)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrPresenter);
-
-					LOG_CHECK_PTR_MEMORY(aPtrPtrMixer);									
-
-					if (aHandle != nullptr && aPtrUnkTarget == nullptr)
-					{
-						do
-						{
+   namespace Sinks
+   {
+      namespace EVR
+      {
+         HRESULT PresenterFactory::createPresenter(HANDLE aHandle, IUnknown* aPtrUnkTarget, DWORD aOutputNodeAmount,
+                                                   IPresenter** aPtrPresenter, IMFTransform** aPtrPtrMixer)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrPresenter);
+               LOG_CHECK_PTR_MEMORY(aPtrPtrMixer);
+               if (aHandle != nullptr && aPtrUnkTarget == nullptr) {
+                  do {
 #ifdef ENABLE
 							if (Singleton<ConfigManager>::getInstance().isWindows8Point1_Or_Greater())
 							{
@@ -81,18 +67,12 @@ namespace CaptureManager
 							}
 							else
 #endif //ENABLE
-							{
-								LOG_INVOKE_FUNCTION(createDirect3D9PresenterFromWindowHandler,
-									aHandle,
-									aOutputNodeAmount,
-									aPtrPresenter,
-									aPtrPtrMixer);
-							}
-
-						} while (false);
-
-						if (FAILED(lresult))
-						{
+                     {
+                        LOG_INVOKE_FUNCTION(createDirect3D9PresenterFromWindowHandler, aHandle, aOutputNodeAmount,
+                                            aPtrPresenter, aPtrPtrMixer);
+                     }
+                  } while (false);
+                  if (FAILED(lresult)) {
 #ifdef ENABLE
 							if (Singleton<ConfigManager>::getInstance().isWindows8Point1_Or_Greater())
 							{
@@ -107,17 +87,12 @@ namespace CaptureManager
 							}
 							else
 #endif //ENABLE
-							{
-								LOG_INVOKE_FUNCTION(createFromSharedHandler,
-									aHandle,
-									aOutputNodeAmount,
-									aPtrPresenter,
-									aPtrPtrMixer);
-							}
-						}
-					}
-					else
-					{
+                     {
+                        LOG_INVOKE_FUNCTION(createFromSharedHandler, aHandle, aOutputNodeAmount, aPtrPresenter,
+                                            aPtrPtrMixer);
+                     }
+                  }
+               } else {
 #ifdef ENABLE
 						CComQIPtrCustom<ISwapChainPanelNative> lSwapChainPanelNative = aPtrUnkTarget;
 
@@ -167,308 +142,141 @@ namespace CaptureManager
 							break;
 						}
 #endif //ENABLE
-						
-						CComQIPtrCustom<IDirect3DSurface9> lDirect3DSurface9 = aPtrUnkTarget;
-
-						if (lDirect3DSurface9)
-						{
-
-
-							CComPtrCustom<Direct3D9Presenter> lDirect3D9Presenter(new (std::nothrow) Direct3D9Presenter);
-
-							LOG_CHECK_PTR_MEMORY(lDirect3D9Presenter);
-
-							CComPtrCustom<IMFTransform> lMixer;
-
-							LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor,
-								&lMixer);
-
-							LOG_INVOKE_POINTER_METHOD(lDirect3D9Presenter, initialize,
-								1920,
-								1080,
-								30,
-								1,
-								lMixer);
-
-							CComPtrCustom<IPresenterInit> lPresenterInit;
-
-							LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D9Presenter, &lPresenterInit);
-
-							LOG_CHECK_PTR_MEMORY(lPresenterInit);
-
-							LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget,
-								aHandle,
-								aPtrUnkTarget);
-
-							LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D9Presenter, aPtrPresenter);
-
-							LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
-						}				   
-					}
-				} while (false);
-
-				return lresult;
-			}
-
-			HRESULT PresenterFactory::createDirect3D9PresenterFromWindowHandler(
-				HANDLE aHandle,
-				DWORD aOutputNodeAmount,
-				IPresenter** aPtrPresenter,
-				IMFTransform** aPtrPtrMixer)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-
-					DWORD lMaxInputStreamCount(0);
-
-					LOG_INVOKE_FUNCTION(getMaxInputStreamCount,
-						&lMaxInputStreamCount);
-
-					LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
-					
-					CComPtrCustom<IMFTransform> lMixer;
-
-					CComPtrCustom<Direct3D9Presenter> lPresenter(new (std::nothrow) Direct3D9Presenter);
-
-					LOG_CHECK_PTR_MEMORY(lPresenter);
-
-					LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor,
-						&lMixer);
-
-					LOG_CHECK_PTR_MEMORY(lMixer);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenter, initialize,
-						1920,
-						1080,
-						30,
-						1,
-						lMixer);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenter,
-						setVideoWindowHandle,
-						(HWND)aHandle);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
-
-				} while (false);
-
-				return lresult;
-			}
-
-			HRESULT PresenterFactory::createDirect3D11PresenterFromWindowHandler(
-				HANDLE aHandle,
-				DWORD aOutputNodeAmount,
-				IPresenter** aPtrPresenter,
-				IMFTransform** aPtrPtrMixer)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-
-					DWORD lMaxInputStreamCount(0);
-
-					LOG_INVOKE_FUNCTION(getMaxInputStreamCount,
-						&lMaxInputStreamCount);
-
-					LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
-
-					CComPtrCustom<IMFTransform> lMixer;
-
-					CComPtrCustom<Direct3D11and3D9Presenter> lPresenter(new (std::nothrow) Direct3D11and3D9Presenter);
-
-					//CComPtrCustom<Direct3D11Presenter> lPresenter(new (std::nothrow) Direct3D11Presenter);
-
-					LOG_CHECK_PTR_MEMORY(lPresenter);
-
-					LOG_INVOKE_FUNCTION(EVR::Mixer::Direct3D11VideoProcessor::createProcessor,
-						&lMixer,
-						aOutputNodeAmount);
-
-					LOG_CHECK_PTR_MEMORY(lMixer);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenter, initialize,
-						1920,
-						1080,
-						30,
-						1,
-						lMixer);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenter,
-						setVideoWindowHandle,
-						(HWND)aHandle);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
-
-				} while (false);
-
-				return lresult;
-			}
-
-			HRESULT PresenterFactory::createFromSharedHandler(
-				HANDLE aHandle,
-				DWORD aOutputNodeAmount,
-				IPresenter** aPtrPresenter,
-				IMFTransform** aPtrPtrMixer)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-
-					DWORD lMaxInputStreamCount(0);
-
-					LOG_INVOKE_FUNCTION(getMaxInputStreamCount,
-						&lMaxInputStreamCount);
-
-					LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
-
-					CComPtrCustom<IMFTransform> lMixer;
-
-					CComPtrCustom<Direct3D9Presenter> lPresenter(new (std::nothrow) Direct3D9Presenter);
-
-					LOG_CHECK_PTR_MEMORY(lPresenter);
-
-					LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor,
-						&lMixer);
-
-					LOG_CHECK_PTR_MEMORY(lMixer);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenter, initialize,
-						1920,
-						1080,
-						30,
-						1,
-						lMixer);
-
-					CComPtrCustom<IPresenterInit> lPresenterInit;
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, &lPresenterInit);
-
-					LOG_CHECK_PTR_MEMORY(lPresenterInit);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget,
-						aHandle,
-						nullptr);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
-
-				} while (false);
-
-				return lresult;
-			}
-
-			
-
-			HRESULT PresenterFactory::createDirect3D11Presenter(
-				HANDLE aHandle,
-				IUnknown* aPtrUnkTarget,
-				DWORD aOutputNodeAmount,
-				IPresenter** aPtrPresenter,
-				IMFTransform** aPtrPtrMixer)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-
-					DWORD lMaxInputStreamCount(0);
-
-					LOG_INVOKE_FUNCTION(getMaxInputStreamCount,
-						&lMaxInputStreamCount);
-
-					LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
-
-					CComPtrCustom<Direct3D11Presenter> lDirect3D11Presenter(new (std::nothrow) Direct3D11Presenter);
-
-					LOG_CHECK_PTR_MEMORY(lDirect3D11Presenter);
-
-					CComPtrCustom<IMFTransform> lMixer;
-
-					LOG_INVOKE_FUNCTION(EVR::Mixer::Direct3D11VideoProcessor::createProcessor,
-						&lMixer,
-						aOutputNodeAmount);
-
-					LOG_INVOKE_POINTER_METHOD(lDirect3D11Presenter, initialize,
-						1920,
-						1080,
-						10,
-						1,
-						lMixer);
-
-					CComPtrCustom<IPresenterInit> lPresenterInit;
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D11Presenter, &lPresenterInit);
-
-					LOG_CHECK_PTR_MEMORY(lPresenterInit);
-
-					LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget,
-						aHandle,
-						aPtrUnkTarget);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D11Presenter, aPtrPresenter);
-
-					LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
-
-				} while (false);
-
-				return lresult;
-			}
-						
-			HRESULT PresenterFactory::getMaxInputStreamCount(DWORD* aPtrMaxInputStreamCount)
-			{
-				using namespace Core;
-
-				using namespace Direct3D9;
-
-				using namespace Direct3D11;
-
-				HRESULT lresult(E_FAIL);
-
-				do
-				{
-					LOG_CHECK_PTR_MEMORY(aPtrMaxInputStreamCount);
-					
-					*aPtrMaxInputStreamCount = Singleton<ConfigManager>::getInstance().getMaxVideoRenderStreamCount();
-
-					lresult = S_OK;
-
-				} while (false);
-
-				return lresult;
-			}
-		}
-	}
+                  CComQIPtrCustom<IDirect3DSurface9> lDirect3DSurface9 = aPtrUnkTarget;
+                  if (lDirect3DSurface9) {
+                     CComPtrCustom<Direct3D9Presenter> lDirect3D9Presenter(new(std::nothrow) Direct3D9Presenter);
+                     LOG_CHECK_PTR_MEMORY(lDirect3D9Presenter);
+                     CComPtrCustom<IMFTransform> lMixer;
+                     LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor, &lMixer);
+                     LOG_INVOKE_POINTER_METHOD(lDirect3D9Presenter, initialize, 1920, 1080, 30, 1, lMixer);
+                     CComPtrCustom<IPresenterInit> lPresenterInit;
+                     LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D9Presenter, &lPresenterInit);
+                     LOG_CHECK_PTR_MEMORY(lPresenterInit);
+                     LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget, aHandle, aPtrUnkTarget);
+                     LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D9Presenter, aPtrPresenter);
+                     LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
+                  }
+               }
+            } while (false);
+            return lresult;
+         }
+
+         HRESULT PresenterFactory::createDirect3D9PresenterFromWindowHandler(
+            HANDLE aHandle, DWORD aOutputNodeAmount, IPresenter** aPtrPresenter, IMFTransform** aPtrPtrMixer)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               DWORD lMaxInputStreamCount(0);
+               LOG_INVOKE_FUNCTION(getMaxInputStreamCount, &lMaxInputStreamCount);
+               LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
+               CComPtrCustom<IMFTransform> lMixer;
+               CComPtrCustom<Direct3D9Presenter> lPresenter(new(std::nothrow) Direct3D9Presenter);
+               LOG_CHECK_PTR_MEMORY(lPresenter);
+               LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor, &lMixer);
+               LOG_CHECK_PTR_MEMORY(lMixer);
+               LOG_INVOKE_POINTER_METHOD(lPresenter, initialize, 1920, 1080, 30, 1, lMixer);
+               LOG_INVOKE_POINTER_METHOD(lPresenter, setVideoWindowHandle, static_cast<HWND>(aHandle));
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
+            } while (false);
+            return lresult;
+         }
+
+         HRESULT PresenterFactory::createDirect3D11PresenterFromWindowHandler(
+            HANDLE aHandle, DWORD aOutputNodeAmount, IPresenter** aPtrPresenter, IMFTransform** aPtrPtrMixer)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               DWORD lMaxInputStreamCount(0);
+               LOG_INVOKE_FUNCTION(getMaxInputStreamCount, &lMaxInputStreamCount);
+               LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
+               CComPtrCustom<IMFTransform> lMixer;
+               CComPtrCustom<Direct3D11and3D9Presenter> lPresenter(new(std::nothrow) Direct3D11and3D9Presenter);
+               //CComPtrCustom<Direct3D11Presenter> lPresenter(new (std::nothrow) Direct3D11Presenter);
+               LOG_CHECK_PTR_MEMORY(lPresenter);
+               LOG_INVOKE_FUNCTION(EVR::Mixer::Direct3D11VideoProcessor::createProcessor, &lMixer, aOutputNodeAmount);
+               LOG_CHECK_PTR_MEMORY(lMixer);
+               LOG_INVOKE_POINTER_METHOD(lPresenter, initialize, 1920, 1080, 30, 1, lMixer);
+               LOG_INVOKE_POINTER_METHOD(lPresenter, setVideoWindowHandle, static_cast<HWND>(aHandle));
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
+            } while (false);
+            return lresult;
+         }
+
+         HRESULT PresenterFactory::createFromSharedHandler(HANDLE aHandle, DWORD aOutputNodeAmount,
+                                                           IPresenter** aPtrPresenter, IMFTransform** aPtrPtrMixer)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               DWORD lMaxInputStreamCount(0);
+               LOG_INVOKE_FUNCTION(getMaxInputStreamCount, &lMaxInputStreamCount);
+               LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
+               CComPtrCustom<IMFTransform> lMixer;
+               CComPtrCustom<Direct3D9Presenter> lPresenter(new(std::nothrow) Direct3D9Presenter);
+               LOG_CHECK_PTR_MEMORY(lPresenter);
+               LOG_INVOKE_FUNCTION(EVR::Mixer::DXVAVideoProcessor::createDXVAVideoProcessor, &lMixer);
+               LOG_CHECK_PTR_MEMORY(lMixer);
+               LOG_INVOKE_POINTER_METHOD(lPresenter, initialize, 1920, 1080, 30, 1, lMixer);
+               CComPtrCustom<IPresenterInit> lPresenterInit;
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, &lPresenterInit);
+               LOG_CHECK_PTR_MEMORY(lPresenterInit);
+               LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget, aHandle, nullptr);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lPresenter, aPtrPresenter);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
+            } while (false);
+            return lresult;
+         }
+
+         HRESULT PresenterFactory::createDirect3D11Presenter(HANDLE aHandle, IUnknown* aPtrUnkTarget,
+                                                             DWORD aOutputNodeAmount, IPresenter** aPtrPresenter,
+                                                             IMFTransform** aPtrPtrMixer)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               DWORD lMaxInputStreamCount(0);
+               LOG_INVOKE_FUNCTION(getMaxInputStreamCount, &lMaxInputStreamCount);
+               LOG_CHECK_STATE_DESCR(aOutputNodeAmount > lMaxInputStreamCount, E_INVALIDARG);
+               CComPtrCustom<Direct3D11Presenter> lDirect3D11Presenter(new(std::nothrow) Direct3D11Presenter);
+               LOG_CHECK_PTR_MEMORY(lDirect3D11Presenter);
+               CComPtrCustom<IMFTransform> lMixer;
+               LOG_INVOKE_FUNCTION(EVR::Mixer::Direct3D11VideoProcessor::createProcessor, &lMixer, aOutputNodeAmount);
+               LOG_INVOKE_POINTER_METHOD(lDirect3D11Presenter, initialize, 1920, 1080, 10, 1, lMixer);
+               CComPtrCustom<IPresenterInit> lPresenterInit;
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D11Presenter, &lPresenterInit);
+               LOG_CHECK_PTR_MEMORY(lPresenterInit);
+               LOG_INVOKE_POINTER_METHOD(lPresenterInit, initializeSharedTarget, aHandle, aPtrUnkTarget);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lDirect3D11Presenter, aPtrPresenter);
+               LOG_INVOKE_QUERY_INTERFACE_METHOD(lMixer, aPtrPtrMixer);
+            } while (false);
+            return lresult;
+         }
+
+         HRESULT PresenterFactory::getMaxInputStreamCount(DWORD* aPtrMaxInputStreamCount)
+         {
+            using namespace Core;
+            using namespace Direct3D9;
+            using namespace Direct3D11;
+            HRESULT lresult(E_FAIL);
+            do {
+               LOG_CHECK_PTR_MEMORY(aPtrMaxInputStreamCount);
+               *aPtrMaxInputStreamCount = Singleton<ConfigManager>::getInstance().getMaxVideoRenderStreamCount();
+               lresult = S_OK;
+            } while (false);
+            return lresult;
+         }
+      }
+   }
 }
